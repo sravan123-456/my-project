@@ -1,0 +1,12 @@
+.git
+.github
+__pycache__
+*.pyc
+.env
+.venv
+venv
+data/
+uploads/
+*.db
+README.md
+scripts/

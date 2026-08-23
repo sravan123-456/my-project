@@ -1,0 +1,33 @@
+name: Build and Deploy to GCP VM
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to GCP VM
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.GCP_VM_HOST }}
+          username: ${{ secrets.GCP_VM_USER }}
+          key: ${{ secrets.GCP_VM_SSH_KEY }}
+          port: ${{ secrets.GCP_VM_PORT || 22 }}
+          script_stop: true
+          script: |
+            set -e
+            APP_DIR="$HOME/my-project"
+            REPO_URL="https://github.com/sravan123-456/my-project.git"
+
+            if [ ! -d "$APP_DIR/.git" ]; then
+              git clone "$REPO_URL" "$APP_DIR"
+            fi
+
+            cd "$APP_DIR"
+            chmod +x scripts/deploy.sh
+            APP_DIR="$APP_DIR" BRANCH=main ./scripts/deploy.sh

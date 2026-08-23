@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - {{ festival_name }}{% endblock %}
+
+{% block content %}
+{% if current_user.is_authenticated and not user_can_edit() %}
+<div class="alert alert-info">
+    <i class="bi bi-eye"></i>
+    You have <strong>read-only access</strong>. Contact an admin to grant write permission for adding or editing records.
+</div>
+{% endif %}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="fw-bold mb-0 festival-title">{{ festival_name }}</h2>
+        <small class="text-muted">{{ today.strftime('%d %B %Y') }}</small>
+    </div>
+    <div class="d-flex gap-2">
+        {% if user_can_edit() %}
+        <a href="{{ url_for('donations.add_donation') }}" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> Add Donation
+        </a>
+        <a href="{{ url_for('expenses.add_expense') }}" class="btn btn-danger">
+            <i class="bi bi-plus-circle"></i> Add Expense
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Big Balance Display -->
+<div class="balance-card card border-0 shadow-lg mb-4">
+    <div class="balance-card-pattern"></div>
+    <div class="balance-card-glow"></div>
+
+    <div class="balance-decor balance-decor-left">
+        <img src="{{ url_for('static', filename='images/ganesha-decor.svg') }}" alt="" class="balance-ganesha-img" aria-hidden="true">
+    </div>
+    <div class="balance-decor balance-decor-right">
+        <div class="balance-toran"></div>
+    </div>
+
+    <div class="card-body balance-card-body text-center">
+        <div class="balance-ornament top-ornament">✦ 🪷 ✦</div>
+        <p class="balance-label mb-2">Current Fund Balance</p>
+        <h1 class="balance-amount display-1 fw-bold">
+            ₹{{ "{:,.2f}".format(balance) }}
+        </h1>
+        <p class="balance-subtitle mt-2 mb-0">
+            <i class="bi bi-info-circle"></i>
+            Donations (₹{{ "{:,.2f}".format(total_donations) }}) minus Expenses (₹{{ "{:,.2f}".format(total_expenses) }})
+        </p>
+        <div class="balance-ornament bottom-ornament">🪔 శుభం 🪔</div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-success-subtle text-success me-3">
+                        <i class="bi bi-heart-fill"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted mb-0 small">Total Donations</p>
+                        <h4 class="fw-bold mb-0 text-success">₹{{ "{:,.2f}".format(total_donations) }}</h4>
+                        <small class="text-muted">{{ donation_count }} entries</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-danger-subtle text-danger me-3">
+                        <i class="bi bi-receipt-cutoff"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted mb-0 small">Total Expenses</p>
+                        <h4 class="fw-bold mb-0 text-danger">₹{{ "{:,.2f}".format(total_expenses) }}</h4>
+                        <small class="text-muted">{{ expense_count }} entries</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-primary-subtle text-primary me-3">
+                        <i class="bi bi-pie-chart-fill"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted mb-0 small">Expense Categories</p>
+                        <h4 class="fw-bold mb-0">{{ expense_by_category|length }}</h4>
+                        <small class="text-muted">active categories</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Recent Donations -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-3">
+                <h5 class="mb-0"><i class="bi bi-heart-fill text-success"></i> Recent Donations</h5>
+                <a href="{{ url_for('donations.list_donations') }}" class="btn btn-sm btn-outline-success">View All</a>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_donations %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Donor</th>
+                                <th>Date</th>
+                                <th class="text-end">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for d in recent_donations %}
+                            <tr>
+                                <td>{{ d.donor_name }}</td>
+                                <td><small>{{ d.donation_date.strftime('%d %b %Y') }}</small></td>
+                                <td class="text-end text-success fw-semibold">+₹{{ "{:,.2f}".format(d.amount) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-4 mb-0">No donations recorded yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Expenses -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-3">
+                <h5 class="mb-0"><i class="bi bi-receipt text-danger"></i> Recent Expenses</h5>
+                <a href="{{ url_for('expenses.list_expenses') }}" class="btn btn-sm btn-outline-danger">View All</a>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_expenses %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Title</th>
+                                <th>Date</th>
+                                <th class="text-end">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for e in recent_expenses %}
+                            <tr>
+                                <td>{{ e.title }} <small class="text-muted">({{ e.category }})</small></td>
+                                <td><small>{{ e.expense_date.strftime('%d %b %Y') }}</small></td>
+                                <td class="text-end text-danger fw-semibold">-₹{{ "{:,.2f}".format(e.amount) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-4 mb-0">No expenses recorded yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if expense_by_category %}
+<div class="card border-0 shadow-sm mt-4">
+    <div class="card-header bg-white border-0 py-3">
+        <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Expenses by Category</h5>
+    </div>
+    <div class="card-body">
+        {% for cat, total in expense_by_category %}
+        <div class="mb-3">
+            <div class="d-flex justify-content-between mb-1">
+                <span>{{ cat }}</span>
+                <span class="fw-semibold">₹{{ "{:,.2f}".format(total) }}</span>
+            </div>
+            <div class="progress" style="height: 8px;">
+                <div class="progress-bar bg-warning" style="width: {{ (total / total_expenses * 100) if total_expenses > 0 else 0 }}%"></div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Recent Activity -->
+<div class="card border-0 shadow-sm mt-4">
+    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-3">
+        <h5 class="mb-0"><i class="bi bi-clock-history"></i> Recent Activity</h5>
+        <a href="{{ url_for('activity.activity_log') }}" class="btn btn-sm btn-outline-secondary">View All</a>
+    </div>
+    <div class="card-body p-0">
+        {% if recent_activities %}
+        <div class="list-group list-group-flush">
+            {% for log in recent_activities %}
+            <div class="list-group-item activity-item">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                    <div>
+                        <span class="badge activity-badge activity-{{ log.action }}">{{ log.action|capitalize }}</span>
+                        <span class="badge bg-light text-dark">{{ log.entity_type|capitalize }}</span>
+                        <span class="ms-1">{{ log.description }}</span>
+                    </div>
+                    <small class="text-muted text-nowrap">
+                        <i class="bi bi-person"></i> {{ log.user_name }}
+                        &middot; {{ log.created_at.strftime('%d %b %Y, %I:%M %p') }}
+                    </small>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted text-center py-4 mb-0">No activity recorded yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

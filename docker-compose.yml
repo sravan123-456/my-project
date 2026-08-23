@@ -1,0 +1,16 @@
+services:
+  festival-app:
+    build: .
+    container_name: vinayaka-festival-app
+    ports:
+      - "8080:5000"
+    env_file:
+      - .env
+    volumes:
+      - festival_data:/app/data
+      - festival_uploads:/app/uploads
+    restart: unless-stopped
+
+volumes:
+  festival_data:
+  festival_uploads:

@@ -1,0 +1,324 @@
+:root {
+    --festival-saffron: #FF6F00;
+    --festival-saffron-dark: #E65100;
+    --festival-gold: #FFB300;
+    --festival-maroon: #880E4F;
+    --festival-cream: #FFF8E1;
+}
+
+body {
+    background: linear-gradient(135deg, #FFF8E1 0%, #FFECB3 50%, #FFE0B2 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+.festival-nav {
+    background: linear-gradient(90deg, var(--festival-maroon), var(--festival-saffron-dark));
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+}
+
+.festival-footer {
+    background: var(--festival-maroon);
+    color: #FFECB3;
+    margin-top: auto;
+}
+
+.festival-title {
+    color: var(--festival-maroon);
+}
+
+.hero-icon {
+    font-size: 4rem;
+}
+
+.hero-icon-sm {
+    font-size: 2.5rem;
+}
+
+.btn-festival {
+    background: linear-gradient(135deg, var(--festival-saffron), var(--festival-saffron-dark));
+    border: none;
+    color: white;
+    font-weight: 600;
+}
+
+.btn-festival:hover,
+.btn-festival:focus {
+    background: linear-gradient(135deg, var(--festival-saffron-dark), var(--festival-maroon));
+    color: white;
+    box-shadow: 0 4px 15px rgba(255, 111, 0, 0.4);
+}
+
+.btn-outline-festival {
+    border: 2px solid var(--festival-saffron);
+    color: var(--festival-saffron-dark);
+    font-weight: 600;
+}
+
+.btn-outline-festival:hover {
+    background: var(--festival-saffron);
+    border-color: var(--festival-saffron);
+    color: white;
+}
+
+.hero-section {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+    padding: 2rem;
+    margin-top: 1rem;
+}
+
+.feature-card {
+    border-radius: 16px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.feature-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.12) !important;
+}
+
+.feature-icon {
+    font-size: 2.5rem;
+}
+
+.auth-card {
+    border-radius: 16px;
+}
+
+.balance-card {
+    background: linear-gradient(135deg, #4a0e2e 0%, #880e4f 25%, #bf360c 55%, #e65100 80%, #ff8f00 100%);
+    border-radius: 24px;
+    color: white;
+    overflow: hidden;
+    position: relative;
+    border: 3px solid #ffd54f;
+    box-shadow: 0 12px 40px rgba(136, 14, 79, 0.35), inset 0 0 60px rgba(255, 193, 7, 0.08);
+}
+
+.balance-card-pattern {
+    position: absolute;
+    inset: 0;
+    background-image:
+        radial-gradient(circle at 20% 30%, rgba(255, 213, 79, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(255, 152, 0, 0.12) 0%, transparent 35%),
+        repeating-linear-gradient(
+            45deg,
+            rgba(255, 255, 255, 0.03) 0px,
+            rgba(255, 255, 255, 0.03) 2px,
+            transparent 2px,
+            transparent 12px
+        );
+    pointer-events: none;
+}
+
+.balance-card-glow {
+    position: absolute;
+    top: -40%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 70%;
+    height: 80%;
+    background: radial-gradient(ellipse, rgba(255, 224, 130, 0.25) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.balance-decor {
+    position: absolute;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.balance-decor-left {
+    left: 0;
+    bottom: 0;
+    width: 200px;
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+    padding: 0 0 10px 10px;
+}
+
+.balance-ganesha-img {
+    width: 180px;
+    height: auto;
+    opacity: 0.35;
+    filter: drop-shadow(0 0 20px rgba(255, 193, 7, 0.4));
+}
+
+.balance-decor-right {
+    right: 0;
+    top: 0;
+    width: 120px;
+    height: 100%;
+}
+
+.balance-toran {
+    width: 100%;
+    height: 100%;
+    background:
+        repeating-linear-gradient(
+            180deg,
+            #ffd54f 0px,
+            #ff8f00 8px,
+            #e65100 16px,
+            #43a047 24px,
+            #ffd54f 32px
+        );
+    opacity: 0.12;
+    mask-image: linear-gradient(to left, black, transparent);
+    -webkit-mask-image: linear-gradient(to left, black, transparent);
+}
+
+.balance-card-body {
+    position: relative;
+    z-index: 2;
+    padding: 2.5rem 1.5rem;
+    background: rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(2px);
+    margin: 1rem;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 213, 79, 0.25);
+}
+
+.balance-ornament {
+    color: #ffe082;
+    font-size: 1.1rem;
+    letter-spacing: 0.5rem;
+    opacity: 0.9;
+    text-shadow: 0 0 12px rgba(255, 193, 7, 0.5);
+}
+
+.top-ornament {
+    margin-bottom: 0.75rem;
+}
+
+.bottom-ornament {
+    margin-top: 1rem;
+    font-size: 1rem;
+    letter-spacing: 0.35rem;
+}
+
+.balance-label {
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: #ffe082;
+    font-weight: 600;
+}
+
+.balance-amount {
+    font-size: 4.5rem !important;
+    color: #fffde7 !important;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.35), 0 0 40px rgba(255, 193, 7, 0.3);
+    line-height: 1.1;
+}
+
+.balance-subtitle {
+    color: rgba(255, 248, 225, 0.85);
+    font-size: 0.95rem;
+}
+
+.stat-card {
+    border-radius: 12px;
+    transition: transform 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+}
+
+.card {
+    border-radius: 12px;
+}
+
+.table th {
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+@media (max-width: 768px) {
+    .balance-amount {
+        font-size: 2.5rem !important;
+    }
+
+    .balance-decor-left {
+        width: 100px;
+    }
+
+    .balance-ganesha-img {
+        width: 90px;
+        opacity: 0.2;
+    }
+
+    .balance-decor-right {
+        display: none;
+    }
+
+    .balance-card-body {
+        margin: 0.75rem;
+        padding: 1.75rem 1rem;
+    }
+
+    .balance-ornament {
+        font-size: 0.85rem;
+        letter-spacing: 0.25rem;
+    }
+}
+
+.developer-credit {
+    opacity: 0.75;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    display: inline-block;
+}
+
+.activity-item {
+    font-size: 0.9rem;
+}
+
+.activity-badge {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.activity-added {
+    background-color: #198754 !important;
+}
+
+.activity-updated {
+    background-color: #0d6efd !important;
+}
+
+.activity-deleted {
+    background-color: #dc3545 !important;
+}
+
+.btn-whatsapp {
+    background-color: #25D366;
+    border-color: #25D366;
+    color: #fff;
+}
+
+.btn-whatsapp:hover,
+.btn-whatsapp:focus {
+    background-color: #1da851;
+    border-color: #1da851;
+    color: #fff;
+}

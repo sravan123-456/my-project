@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320" fill="none" aria-hidden="true">
+  <defs>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE082"/>
+      <stop offset="50%" stop-color="#FFB300"/>
+      <stop offset="100%" stop-color="#FF8F00"/>
+    </linearGradient>
+  </defs>
+  <!-- Crown / modak -->
+  <ellipse cx="120" cy="58" rx="42" ry="18" stroke="url(#gold)" stroke-width="3" opacity="0.9"/>
+  <path d="M95 58 Q120 20 145 58" stroke="url(#gold)" stroke-width="2.5" fill="none" opacity="0.85"/>
+  <circle cx="120" cy="34" r="10" fill="url(#gold)" opacity="0.75"/>
+  <!-- Head -->
+  <ellipse cx="120" cy="110" rx="62" ry="54" stroke="url(#gold)" stroke-width="3.5" opacity="0.95"/>
+  <!-- Ears -->
+  <path d="M58 95 Q20 80 30 125 Q45 140 62 118" stroke="url(#gold)" stroke-width="3" fill="none" opacity="0.9"/>
+  <path d="M182 95 Q220 80 210 125 Q195 140 178 118" stroke="url(#gold)" stroke-width="3" fill="none" opacity="0.9"/>
+  <!-- Trunk -->
+  <path d="M120 145 C108 170 95 195 88 230 C86 245 98 252 110 240 C118 230 125 200 128 165" stroke="url(#gold)" stroke-width="3.5" fill="none" opacity="0.95"/>
+  <!-- Eyes -->
+  <ellipse cx="98" cy="108" rx="7" ry="5" fill="url(#gold)" opacity="0.8"/>
+  <ellipse cx="142" cy="108" rx="7" ry="5" fill="url(#gold)" opacity="0.8"/>
+  <!-- Body -->
+  <path d="M72 168 Q120 155 168 168 L175 250 Q120 275 65 250 Z" stroke="url(#gold)" stroke-width="3" fill="none" opacity="0.85"/>
+  <!-- Arms -->
+  <path d="M72 175 Q40 200 48 235" stroke="url(#gold)" stroke-width="2.5" fill="none" opacity="0.8"/>
+  <path d="M168 175 Q200 200 192 235" stroke="url(#gold)" stroke-width="2.5" fill="none" opacity="0.8"/>
+  <!-- Legs -->
+  <path d="M95 250 L88 295 M145 250 L152 295" stroke="url(#gold)" stroke-width="3" opacity="0.8"/>
+  <!-- Decorative halo -->
+  <circle cx="120" cy="115" r="88" stroke="url(#gold)" stroke-width="1.5" opacity="0.35" stroke-dasharray="8 6"/>
+  <circle cx="120" cy="115" r="100" stroke="url(#gold)" stroke-width="1" opacity="0.2"/>
+</svg>

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome - {{ festival_name }}{% endblock %}
+
+{% block content %}
+<div class="hero-section text-center py-5">
+    <div class="hero-icon mb-3">🙏</div>
+    <h1 class="display-4 fw-bold festival-title">{{ festival_name }}</h1>
+    <h2 class="h4 text-muted mb-4">Fund &amp; Expense Manager</h2>
+    <p class="lead col-lg-8 mx-auto mb-4">
+        Track donations, manage festival expenses, upload bills, and keep a transparent
+        account of every rupee for our {{ festival_name }} celebrations.
+    </p>
+    <div class="d-flex gap-3 justify-content-center flex-wrap">
+        <a href="{{ url_for('auth.login') }}" class="btn btn-festival btn-lg px-4">
+            <i class="bi bi-box-arrow-in-right"></i> Login
+        </a>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-outline-festival btn-lg px-4">
+            <i class="bi bi-person-plus"></i> Create Account
+        </a>
+    </div>
+</div>
+
+<div class="row g-4 mt-4">
+    <div class="col-md-4">
+        <div class="feature-card card h-100 border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+                <div class="feature-icon text-success mb-3"><i class="bi bi-heart-fill"></i></div>
+                <h5>Record Donations</h5>
+                <p class="text-muted">Log donor name, amount, and contact details. Every contribution is tracked.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="feature-card card h-100 border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+                <div class="feature-icon text-danger mb-3"><i class="bi bi-receipt-cutoff"></i></div>
+                <h5>Track Expenses</h5>
+                <p class="text-muted">Record spending with categories and upload bill photos for full transparency.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="feature-card card h-100 border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+                <div class="feature-icon text-primary mb-3"><i class="bi bi-bar-chart-fill"></i></div>
+                <h5>Live Balance</h5>
+                <p class="text-muted">See the current fund balance in real time. Donations add, expenses subtract automatically.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
