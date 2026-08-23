@@ -9,7 +9,7 @@ data/
 uploads/
 *.db
 .DS_Store
-Thumbs.db
+.deploy-keys/
 terraform/.terraform/
 terraform/.terraform.lock.hcl
 terraform/terraform.tfstate
