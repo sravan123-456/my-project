@@ -42,16 +42,18 @@ jobs:
             --project "${GCP_PROJECT}" \
             --quiet \
             --command="set -e
-              if [ ! -d '${APP_DIR}/.git' ]; then
-                sudo mkdir -p ${APP_DIR}
-                sudo git clone https://github.com/sravan123-456/my-project.git ${APP_DIR}
-                sudo chown -R \$USER:\$USER ${APP_DIR}
+              APP_DIR='${APP_DIR}'
+              if [ ! -d \"\${APP_DIR}/.git\" ]; then
+                sudo mkdir -p \"\${APP_DIR}\"
+                sudo git clone https://github.com/sravan123-456/my-project.git \"\${APP_DIR}\"
               fi
-              cd ${APP_DIR}
+              sudo chown -R \$USER:\$USER \"\${APP_DIR}\"
+              git config --global --add safe.directory \"\${APP_DIR}\"
+              cd \"\${APP_DIR}\"
               git fetch origin main
               git reset --hard origin/main
               chmod +x scripts/deploy.sh
-              APP_DIR=${APP_DIR} ./scripts/deploy.sh"
+              sudo APP_DIR=\"\${APP_DIR}\" ./scripts/deploy.sh"
 
       - name: Show app URL
         run: |
