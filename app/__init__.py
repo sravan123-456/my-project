@@ -1,17 +1,29 @@
 import os
 from datetime import datetime, timezone
 
-from flask import Flask
+from flask import Flask, jsonify, request
 from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager, current_user
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
 
 load_dotenv()
 
 db = SQLAlchemy()
 login_manager = LoginManager()
 csrf = CSRFProtect()
+
+
+@event.listens_for(Engine, "connect")
+def _set_sqlite_pragma(dbapi_connection, connection_record):
+    if dbapi_connection.__class__.__module__.startswith("sqlite3"):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA synchronous=NORMAL")
+        cursor.execute("PRAGMA busy_timeout=30000")
+        cursor.close()
 
 
 def create_app():
@@ -21,6 +33,10 @@ def create_app():
         "DATABASE_URL", "sqlite:///festival.db"
     )
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+        "connect_args": {"check_same_thread": False},
+        "pool_pre_ping": True,
+    }
     app.config["UPLOAD_FOLDER"] = os.getenv("UPLOAD_FOLDER", "uploads")
     app.config["MAX_CONTENT_LENGTH"] = int(
         os.getenv("MAX_CONTENT_LENGTH", 16 * 1024 * 1024)
@@ -68,6 +84,17 @@ def create_app():
     app.register_blueprint(reports_bp, url_prefix="/reports")
     app.register_blueprint(activity_bp, url_prefix="/activity")
     app.register_blueprint(admin_bp, url_prefix="/admin")
+
+    @app.get("/health")
+    def health():
+        return jsonify({"status": "ok"}), 200
+
+    @app.after_request
+    def add_cache_headers(response):
+        if response.status_code == 200 and request.endpoint == "static":
+            response.cache_control.public = True
+            response.cache_control.max_age = 86400
+        return response
 
     with app.app_context():
         db.create_all()

@@ -10,6 +10,18 @@ services:
       - festival_data:/app/data
       - festival_uploads:/app/uploads
     restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health', timeout=5)",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
 
 volumes:
   festival_data:

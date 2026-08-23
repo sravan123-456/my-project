@@ -25,8 +25,7 @@ git fetch origin
 git reset --hard "origin/$BRANCH"
 
 echo "==> Building and starting containers..."
-docker compose down || true
-docker compose up --build -d
+docker compose up --build -d --remove-orphans
 
 echo "==> Cleaning old images..."
 docker image prune -f
