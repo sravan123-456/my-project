@@ -12,6 +12,39 @@
     {% endif %}
 </div>
 
+<!-- Donation group summary -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100 border-start border-primary border-4">
+            <div class="card-body">
+                <p class="text-muted mb-1 small"><i class="bi bi-people-fill"></i> Youth (Our Team)</p>
+                <h4 class="fw-bold text-primary mb-0">₹{{ "{:,.2f}".format(youth_total) }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100 border-start border-success border-4">
+            <div class="card-body">
+                <p class="text-muted mb-1 small"><i class="bi bi-house-heart"></i> Village Members</p>
+                <h4 class="fw-bold text-success mb-0">₹{{ "{:,.2f}".format(village_total) }}</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter tabs -->
+<ul class="nav nav-pills mb-3">
+    <li class="nav-item">
+        <a class="nav-link {% if group_filter == 'all' %}active{% endif %}" href="{{ url_for('donations.list_donations') }}">All</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if group_filter == 'youth' %}active{% endif %}" href="{{ url_for('donations.list_donations', group='youth') }}">Youth (Our Team)</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if group_filter == 'village' %}active{% endif %}" href="{{ url_for('donations.list_donations', group='village') }}">Village Members</a>
+    </li>
+</ul>
+
 <div class="card border-0 shadow-sm">
     <div class="card-body p-0">
         {% if donations %}
@@ -21,6 +54,7 @@
                     <tr>
                         <th>#</th>
                         <th>Donor Name</th>
+                        <th>From</th>
                         <th>Phone</th>
                         <th>Date</th>
                         <th>Notes</th>
@@ -34,6 +68,13 @@
                     <tr>
                         <td>{{ loop.index }}</td>
                         <td class="fw-semibold">{{ d.donor_name }}</td>
+                        <td>
+                            {% if d.donor_group == 'youth' %}
+                            <span class="badge bg-primary">Youth</span>
+                            {% else %}
+                            <span class="badge bg-success">Village</span>
+                            {% endif %}
+                        </td>
                         <td>{{ d.phone or '-' }}</td>
                         <td>{{ d.donation_date.strftime('%d %b %Y') }}</td>
                         <td><small class="text-muted">{{ d.notes or '-' }}</small></td>
@@ -66,7 +107,7 @@
                 </tbody>
                 <tfoot class="table-light">
                     <tr>
-                        <td colspan="5" class="text-end fw-bold">Total</td>
+                        <td colspan="6" class="text-end fw-bold">Total</td>
                         <td class="text-end fw-bold text-success">₹{{ "{:,.2f}".format(donations|sum(attribute='amount')) }}</td>
                         <td colspan="2"></td>
                     </tr>
@@ -76,8 +117,10 @@
         {% else %}
         <div class="text-center py-5">
             <i class="bi bi-heart display-4 text-muted"></i>
-            <p class="text-muted mt-3">No donations recorded yet.</p>
-            <a href="{{ url_for('donations.add_donation') }}" class="btn btn-success">Record First Donation</a>
+            <p class="text-muted mt-3">No donations in this category yet.</p>
+            {% if user_can_edit() %}
+            <a href="{{ url_for('donations.add_donation') }}" class="btn btn-success">Record Donation</a>
+            {% endif %}
         </div>
         {% endif %}
     </div>

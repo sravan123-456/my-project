@@ -34,6 +34,21 @@
     </div>
 </div>
 
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm text-center p-3 border-start border-primary border-4">
+            <p class="text-muted mb-1">Youth (Our Team)</p>
+            <h4 class="text-primary fw-bold mb-0">₹{{ "{:,.2f}".format(youth_donations) }}</h4>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm text-center p-3 border-start border-success border-4">
+            <p class="text-muted mb-1">Village Members</p>
+            <h4 class="text-success fw-bold mb-0">₹{{ "{:,.2f}".format(village_donations) }}</h4>
+        </div>
+    </div>
+</div>
+
 {% if expense_by_category %}
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-header bg-white border-0 py-3">
@@ -75,6 +90,7 @@
                     <tr>
                         <th>Date</th>
                         <th>Donor</th>
+                        <th>From</th>
                         <th>Phone</th>
                         <th class="text-end">Amount</th>
                     </tr>
@@ -84,6 +100,7 @@
                     <tr>
                         <td>{{ d.donation_date.strftime('%d %b %Y') }}</td>
                         <td>{{ d.donor_name }}</td>
+                        <td>{{ d.donor_group_label() }}</td>
                         <td>{{ d.phone or '-' }}</td>
                         <td class="text-end">₹{{ "{:,.2f}".format(d.amount) }}</td>
                     </tr>

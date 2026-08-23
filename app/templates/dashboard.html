@@ -105,6 +105,30 @@
     </div>
 </div>
 
+<!-- Donation breakdown -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm border-start border-primary border-4">
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted"><i class="bi bi-people-fill"></i> Youth (Our Team)</span>
+                    <span class="fw-bold text-primary">₹{{ "{:,.2f}".format(youth_donations) }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm border-start border-success border-4">
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted"><i class="bi bi-house-heart"></i> Village Members</span>
+                    <span class="fw-bold text-success">₹{{ "{:,.2f}".format(village_donations) }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row g-4">
     <!-- Recent Donations -->
     <div class="col-lg-6">
@@ -120,6 +144,7 @@
                         <thead class="table-light">
                             <tr>
                                 <th>Donor</th>
+                                <th>From</th>
                                 <th>Date</th>
                                 <th class="text-end">Amount</th>
                             </tr>
@@ -128,6 +153,13 @@
                             {% for d in recent_donations %}
                             <tr>
                                 <td>{{ d.donor_name }}</td>
+                                <td>
+                                    {% if d.donor_group == 'youth' %}
+                                    <span class="badge bg-primary">Youth</span>
+                                    {% else %}
+                                    <span class="badge bg-success">Village</span>
+                                    {% endif %}
+                                </td>
                                 <td><small>{{ d.donation_date.strftime('%d %b %Y') }}</small></td>
                                 <td class="text-end text-success fw-semibold">+₹{{ "{:,.2f}".format(d.amount) }}</td>
                             </tr>

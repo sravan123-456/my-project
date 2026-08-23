@@ -1,7 +1,7 @@
 from sqlalchemy import inspect, text
 
 from app import db
-from app.models import User
+from app.models import Donation, User
 
 
 def migrate_user_roles():
@@ -27,3 +27,23 @@ def migrate_user_roles():
             first_user.is_admin = True
             first_user.can_write = True
             db.session.commit()
+
+
+def migrate_donation_groups():
+    inspector = inspect(db.engine)
+    if "donations" not in inspector.get_table_names():
+        return
+
+    columns = {column["name"] for column in inspector.get_columns("donations")}
+    if "donor_group" not in columns:
+        with db.engine.begin() as conn:
+            conn.execute(
+                text(
+                    "ALTER TABLE donations ADD COLUMN donor_group VARCHAR(20) NOT NULL DEFAULT 'village'"
+                )
+            )
+
+
+def run_migrations():
+    migrate_user_roles()
+    migrate_donation_groups()

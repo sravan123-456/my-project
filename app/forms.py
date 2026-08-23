@@ -30,6 +30,7 @@ class RegisterForm(FlaskForm):
 
 class DonationForm(FlaskForm):
     donor_name = StringField("Donor Name", validators=[DataRequired(), Length(max=120)])
+    donor_group = SelectField("Donation From", validators=[DataRequired()])
     amount = FloatField(
         "Amount (₹)", validators=[DataRequired(), NumberRange(min=0.01, message="Amount must be greater than 0.")]
     )

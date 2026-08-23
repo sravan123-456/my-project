@@ -12,6 +12,20 @@ from app.models import Donation, Expense
 reports_bp = Blueprint("reports", __name__)
 
 
+def _donation_group_totals():
+    youth = (
+        db.session.query(func.coalesce(func.sum(Donation.amount), 0))
+        .filter(Donation.donor_group == "youth")
+        .scalar()
+    )
+    village = (
+        db.session.query(func.coalesce(func.sum(Donation.amount), 0))
+        .filter(Donation.donor_group == "village")
+        .scalar()
+    )
+    return youth, village
+
+
 @reports_bp.route("/")
 @login_required
 def reports():
@@ -28,11 +42,15 @@ def reports():
         .all()
     )
 
+    youth_donations, village_donations = _donation_group_totals()
+
     return render_template(
         "reports/index.html",
         total_donations=total_donations,
         total_expenses=total_expenses,
         balance=total_donations - total_expenses,
+        youth_donations=youth_donations,
+        village_donations=village_donations,
         donations=donations,
         expenses=expenses,
         expense_by_category=expense_by_category,
@@ -50,11 +68,13 @@ def export_csv():
     writer.writerow([])
 
     writer.writerow(["DONATIONS"])
-    writer.writerow(["Date", "Donor Name", "Phone", "Amount", "Notes"])
+    writer.writerow(["Date", "Donor Name", "From", "Phone", "Amount", "Notes"])
     for d in Donation.query.order_by(Donation.donation_date).all():
+        group_label = "Youth" if d.donor_group == "youth" else "Village Member"
         writer.writerow([
             d.donation_date.strftime("%Y-%m-%d"),
             d.donor_name,
+            group_label,
             d.phone or "",
             f"{d.amount:.2f}",
             d.notes or "",

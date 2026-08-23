@@ -39,6 +39,17 @@ def dashboard():
     donation_count = Donation.query.count()
     expense_count = Expense.query.count()
 
+    youth_donations = (
+        db.session.query(func.coalesce(func.sum(Donation.amount), 0))
+        .filter(Donation.donor_group == "youth")
+        .scalar()
+    )
+    village_donations = (
+        db.session.query(func.coalesce(func.sum(Donation.amount), 0))
+        .filter(Donation.donor_group == "village")
+        .scalar()
+    )
+
     recent_activities = (
         ActivityLog.query.order_by(ActivityLog.created_at.desc(), ActivityLog.id.desc()).limit(10).all()
     )
@@ -53,6 +64,8 @@ def dashboard():
         expense_by_category=expense_by_category,
         donation_count=donation_count,
         expense_count=expense_count,
+        youth_donations=youth_donations,
+        village_donations=village_donations,
         recent_activities=recent_activities,
         today=date.today(),
     )

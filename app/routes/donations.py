@@ -2,37 +2,68 @@ import os
 import uuid
 from datetime import date
 
-from flask import Blueprint, current_app, flash, redirect, render_template, url_for
+from flask import Blueprint, current_app, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
+from sqlalchemy import func
 
 from app import db
 from app.activity import log_activity
 from app.forms import DonationForm
-from app.models import Donation
+from app.models import DONOR_GROUP_CHOICES, DONOR_GROUP_VILLAGE, Donation
 from app.permissions import write_required
 from app.whatsapp import build_whatsapp_url, donation_thank_you_message
 
 donations_bp = Blueprint("donations", __name__)
 
 
+def _donation_totals():
+    youth = (
+        db.session.query(func.coalesce(func.sum(Donation.amount), 0))
+        .filter(Donation.donor_group == "youth")
+        .scalar()
+    )
+    village = (
+        db.session.query(func.coalesce(func.sum(Donation.amount), 0))
+        .filter(Donation.donor_group == "village")
+        .scalar()
+    )
+    return youth, village
+
+
 @donations_bp.route("/")
 @login_required
 def list_donations():
-    donations = Donation.query.order_by(
+    group_filter = request.args.get("group", "all")
+    query = Donation.query
+    if group_filter in ("youth", "village"):
+        query = query.filter_by(donor_group=group_filter)
+
+    donations = query.order_by(
         Donation.donation_date.desc(), Donation.id.desc()
     ).all()
-    return render_template("donations/list.html", donations=donations)
+    youth_total, village_total = _donation_totals()
+
+    return render_template(
+        "donations/list.html",
+        donations=donations,
+        group_filter=group_filter,
+        youth_total=youth_total,
+        village_total=village_total,
+    )
 
 
 @donations_bp.route("/add", methods=["GET", "POST"])
 @write_required
 def add_donation():
     form = DonationForm()
+    form.donor_group.choices = DONOR_GROUP_CHOICES
     form.donation_date.data = date.today()
+    form.donor_group.data = DONOR_GROUP_VILLAGE
 
     if form.validate_on_submit():
         donation = Donation(
             donor_name=form.donor_name.data.strip(),
+            donor_group=form.donor_group.data,
             amount=form.amount.data,
             phone=form.phone.data.strip() if form.phone.data else None,
             notes=form.notes.data.strip() if form.notes.data else None,
@@ -45,7 +76,7 @@ def add_donation():
             current_user,
             "added",
             "donation",
-            f"Added donation of ₹{donation.amount:,.2f} from {donation.donor_name}",
+            f"Added {donation.donor_group_label()} donation of ₹{donation.amount:,.2f} from {donation.donor_name}",
             donation.id,
         )
         db.session.commit()
@@ -66,8 +97,11 @@ def edit_donation(donation_id):
         return redirect(url_for("donations.list_donations"))
 
     form = DonationForm(obj=donation)
+    form.donor_group.choices = DONOR_GROUP_CHOICES
+
     if form.validate_on_submit():
         donation.donor_name = form.donor_name.data.strip()
+        donation.donor_group = form.donor_group.data
         donation.amount = form.amount.data
         donation.phone = form.phone.data.strip() if form.phone.data else None
         donation.notes = form.notes.data.strip() if form.notes.data else None
@@ -76,7 +110,7 @@ def edit_donation(donation_id):
             current_user,
             "updated",
             "donation",
-            f"Updated donation from {donation.donor_name} to ₹{donation.amount:,.2f}",
+            f"Updated {donation.donor_group_label()} donation from {donation.donor_name} to ₹{donation.amount:,.2f}",
             donation.id,
         )
         db.session.commit()

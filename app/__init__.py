@@ -37,13 +37,14 @@ def create_app():
     login_manager.login_view = "auth.login"
     login_manager.login_message_category = "info"
 
-    from app.models import FESTIVAL_NAME, DEVELOPER_NAME, User
+    from app.models import DONOR_GROUP_LABELS, FESTIVAL_NAME, DEVELOPER_NAME, User
 
     @app.context_processor
     def inject_globals():
         return {
             "festival_name": FESTIVAL_NAME,
             "developer_name": DEVELOPER_NAME,
+            "donor_group_labels": DONOR_GROUP_LABELS,
             "user_can_edit": lambda: current_user.is_authenticated and current_user.can_edit(),
             "user_is_admin": lambda: current_user.is_authenticated and current_user.is_admin,
         }
@@ -70,9 +71,9 @@ def create_app():
 
     with app.app_context():
         db.create_all()
-        from app.migrations import migrate_user_roles
+        from app.migrations import run_migrations
 
-        migrate_user_roles()
+        run_migrations()
 
     return app
 

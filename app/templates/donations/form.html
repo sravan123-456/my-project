@@ -28,6 +28,13 @@
                             {% endfor %}
                         </div>
                         <div class="col-md-6">
+                            {{ form.donor_group.label(class="form-label") }}
+                            {{ form.donor_group(class="form-select" + (" is-invalid" if form.donor_group.errors else "")) }}
+                            {% for error in form.donor_group.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6">
                             {{ form.phone.label(class="form-label") }}
                             {{ form.phone(class="form-control", placeholder="10-digit mobile for WhatsApp thank you") }}
                             <small class="text-muted">Required to send Telugu thank-you message on WhatsApp</small>

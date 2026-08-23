@@ -3,7 +3,7 @@ from flask_login import current_user, login_required
 
 from app import db
 from app.activity import log_activity
-from app.models import User
+from app.models import ActivityLog, Donation, Expense, User
 from app.permissions import admin_required
 
 admin_bp = Blueprint("admin", __name__)
@@ -81,4 +81,41 @@ def toggle_admin(user_id):
         flash(f"{user.full_name} is now an admin.", "success")
 
     db.session.commit()
+    return redirect(url_for("admin.users"))
+
+
+@admin_bp.route("/users/<int:user_id>/delete", methods=["POST"])
+@admin_required
+def delete_user(user_id):
+    user = db.session.get(User, user_id)
+    if not user:
+        flash("User not found.", "danger")
+        return redirect(url_for("admin.users"))
+
+    if user.id == current_user.id:
+        flash("You cannot delete your own account.", "warning")
+        return redirect(url_for("admin.users"))
+
+    if user.is_admin and User.query.filter_by(is_admin=True).count() <= 1:
+        flash("Cannot delete the only admin account.", "warning")
+        return redirect(url_for("admin.users"))
+
+    full_name = user.full_name
+    Donation.query.filter_by(recorded_by_id=user.id).update(
+        {"recorded_by_id": current_user.id}
+    )
+    Expense.query.filter_by(recorded_by_id=user.id).update(
+        {"recorded_by_id": current_user.id}
+    )
+    ActivityLog.query.filter_by(user_id=user.id).delete()
+    db.session.delete(user)
+    log_activity(
+        current_user,
+        "deleted",
+        "user",
+        f"Deleted user account: {full_name}",
+        user_id,
+    )
+    db.session.commit()
+    flash(f"User {full_name} has been deleted.", "info")
     return redirect(url_for("admin.users"))
