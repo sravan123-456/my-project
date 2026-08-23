@@ -57,8 +57,10 @@ def list_donations():
 def add_donation():
     form = DonationForm()
     form.donor_group.choices = DONOR_GROUP_CHOICES
-    form.donation_date.data = date.today()
-    form.donor_group.data = DONOR_GROUP_VILLAGE
+
+    if request.method == "GET":
+        form.donation_date.data = date.today()
+        form.donor_group.data = DONOR_GROUP_VILLAGE
 
     if form.validate_on_submit():
         donation = Donation(
@@ -81,11 +83,29 @@ def add_donation():
         )
         db.session.commit()
         flash(f"Donation of ₹{donation.amount:,.2f} from {donation.donor_name} recorded.", "success")
-        if donation.phone and build_whatsapp_url(donation.phone, donation_thank_you_message(donation)):
-            return redirect(url_for("donations.send_whatsapp", donation_id=donation.id))
-        return redirect(url_for("donations.list_donations"))
+        return redirect(url_for("donations.donation_saved", donation_id=donation.id))
 
     return render_template("donations/form.html", form=form, title="Add Donation")
+
+
+@donations_bp.route("/<int:donation_id>/saved")
+@write_required
+def donation_saved(donation_id):
+    donation = db.session.get(Donation, donation_id)
+    if not donation:
+        flash("Donation not found.", "danger")
+        return redirect(url_for("donations.list_donations"))
+
+    whatsapp_url = None
+    if donation.phone:
+        message = donation_thank_you_message(donation)
+        whatsapp_url = build_whatsapp_url(donation.phone, message)
+
+    return render_template(
+        "donations/saved.html",
+        donation=donation,
+        whatsapp_url=whatsapp_url,
+    )
 
 
 @donations_bp.route("/<int:donation_id>/edit", methods=["GET", "POST"])
