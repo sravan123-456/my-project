@@ -1,0 +1,11 @@
+project_id     = "business-account-506411"
+region         = "us-central1"
+zone           = "us-central1-a"
+vm_name        = "vinayaka-festival"
+machine_type   = "e2-micro"
+boot_disk_size_gb = 10
+app_port       = 8080
+secret_key     = "CHANGE_ME_TO_A_LONG_RANDOM_SECRET"
+github_repo_url = "https://github.com/sravan123-456/my-project.git"
+ssh_user       = "vandana"
+ssh_public_key = "ssh-ed25519 AAAA... your-public-key ... user@host"

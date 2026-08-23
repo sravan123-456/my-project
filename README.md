@@ -60,7 +60,20 @@ Data is preserved in Docker volumes (`festival_data`, `festival_uploads`).
 docker compose logs -f
 ```
 
-## CI/CD — Auto deploy to GCP VM (GitHub Actions)
+## GCP deployment (Terraform + GitHub Actions)
+
+Full step-by-step guide: **[DEPLOYMENT.md](DEPLOYMENT.md)**
+
+| Workflow | Purpose |
+|----------|---------|
+| **Provision GCP VM (Terraform)** | Creates `e2-micro` VM in project `business-account-506411` |
+| **Deploy Application to GCP VM** | Deploys Docker app to `http://<VM_IP>:8080` |
+
+**Required GitHub secrets:** `GCP_SA_KEY`, `SECRET_KEY`, `SSH_PUBLIC_KEY`
+
+---
+
+## CI/CD — SSH deploy (legacy)
 
 Every push to `main` automatically deploys to your GCP VM.
 

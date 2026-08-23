@@ -1,15 +1,23 @@
 #!/bin/bash
-# Deployment script run on the GCP VM (manually or via GitHub Actions).
 set -euo pipefail
 
-APP_DIR="${APP_DIR:-$HOME/my-project}"
+APP_DIR="${APP_DIR:-/opt/vinayaka-festival}"
 BRANCH="${BRANCH:-main}"
+
+if [ ! -d "$APP_DIR" ] && [ -d "$HOME/my-project" ]; then
+  APP_DIR="$HOME/my-project"
+fi
 
 cd "$APP_DIR"
 
 if [ ! -f .env ]; then
-  echo "ERROR: .env file missing. Copy .env.example to .env and set SECRET_KEY."
-  exit 1
+  if [ -f .env.example ]; then
+    cp .env.example .env
+    echo "WARNING: Created .env from example. Set SECRET_KEY before production use."
+  else
+    echo "ERROR: .env file missing."
+    exit 1
+  fi
 fi
 
 echo "==> Pulling latest code..."

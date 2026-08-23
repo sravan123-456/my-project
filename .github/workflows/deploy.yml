@@ -1,33 +1,69 @@
-name: Build and Deploy to GCP VM
+name: Deploy Application to GCP VM
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
-  workflow_dispatch:
+    paths-ignore:
+      - "terraform/**"
+      - "README.md"
+      - "DEPLOYMENT.md"
+
+concurrency:
+  group: vinayaka-app-deploy
+  cancel-in-progress: false
+
+env:
+  GCP_PROJECT: business-account-506411
+  GCP_ZONE: us-central1-a
+  GCE_INSTANCE: vinayaka-festival
+  APP_DIR: /opt/vinayaka-festival
 
 jobs:
   deploy:
-    name: Deploy to GCP VM
+    name: Deploy Docker App
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.2.0
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
         with:
-          host: ${{ secrets.GCP_VM_HOST }}
-          username: ${{ secrets.GCP_VM_USER }}
-          key: ${{ secrets.GCP_VM_SSH_KEY }}
-          port: ${{ secrets.GCP_VM_PORT || 22 }}
-          script_stop: true
-          script: |
-            set -e
-            APP_DIR="$HOME/my-project"
-            REPO_URL="https://github.com/sravan123-456/my-project.git"
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-            if [ ! -d "$APP_DIR/.git" ]; then
-              git clone "$REPO_URL" "$APP_DIR"
-            fi
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.GCP_PROJECT }}
 
-            cd "$APP_DIR"
-            chmod +x scripts/deploy.sh
-            APP_DIR="$APP_DIR" BRANCH=main ./scripts/deploy.sh
+      - name: Deploy latest code on VM
+        run: |
+          gcloud compute ssh "${GCE_INSTANCE}" \
+            --zone "${GCP_ZONE}" \
+            --project "${GCP_PROJECT}" \
+            --quiet \
+            --command="set -e
+              if [ ! -d '${APP_DIR}/.git' ]; then
+                sudo mkdir -p ${APP_DIR}
+                sudo git clone https://github.com/sravan123-456/my-project.git ${APP_DIR}
+                sudo chown -R \$USER:\$USER ${APP_DIR}
+              fi
+              cd ${APP_DIR}
+              git fetch origin main
+              git reset --hard origin/main
+              chmod +x scripts/deploy.sh
+              APP_DIR=${APP_DIR} ./scripts/deploy.sh"
+
+      - name: Show app URL
+        run: |
+          IP=$(gcloud compute instances describe "${GCE_INSTANCE}" \
+            --zone "${GCP_ZONE}" --project "${GCP_PROJECT}" \
+            --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
+          echo "## App deployed" >> "$GITHUB_STEP_SUMMARY"
+          echo "Open: http://${IP}:8080" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Health check
+        run: |
+          IP=$(gcloud compute instances describe "${GCE_INSTANCE}" \
+            --zone "${GCP_ZONE}" --project "${GCP_PROJECT}" \
+            --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
+          curl -sSf -m 10 "http://${IP}:8080"
