@@ -11,4 +11,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Health check
-        run: curl -fsS -m 15 "http://35.255.110.80:8080/health"
+        run: curl -fsS -m 15 "https://indukuru.online/health"
