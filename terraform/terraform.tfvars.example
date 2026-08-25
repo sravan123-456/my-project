@@ -5,6 +5,7 @@ vm_name        = "vinayaka-festival"
 machine_type   = "e2-micro"
 boot_disk_size_gb = 10
 app_port       = 8080
+domain_name    = "indukuru.online"
 secret_key     = "CHANGE_ME_TO_A_LONG_RANDOM_SECRET"
 github_repo_url = "https://github.com/sravan123-456/my-project.git"
 ssh_user       = "vandana"

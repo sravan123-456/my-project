@@ -57,6 +57,12 @@ variable "ssh_user" {
   default     = "vandana"
 }
 
+variable "domain_name" {
+  description = "Public domain name for the festival app (DNS A record target is the static IP)."
+  type        = string
+  default     = "indukuru.online"
+}
+
 variable "ssh_public_key" {
   description = "SSH public key for VM access (full openssh format)."
   type        = string

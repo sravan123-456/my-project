@@ -51,6 +51,7 @@ jobs:
           machine_type    = "e2-micro"
           boot_disk_size_gb = 10
           app_port        = 8080
+          domain_name     = "indukuru.online"
           secret_key      = "${SECRET_KEY}"
           github_repo_url = "https://github.com/sravan123-456/my-project.git"
           ssh_user        = "vandana"
@@ -70,7 +71,8 @@ jobs:
         run: |
           echo "## Deployment URLs" >> "$GITHUB_STEP_SUMMARY"
           echo "- App URL: $(terraform output -raw app_url)" >> "$GITHUB_STEP_SUMMARY"
-          echo "- VM IP: $(terraform output -raw vm_external_ip)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Static IP (DNS A record): $(terraform output -raw dns_a_record_value)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Domain: $(terraform output -raw domain_name)" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Reset VM to run startup script
         run: |
