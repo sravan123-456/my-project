@@ -53,8 +53,8 @@ jobs:
               cd \"\${APP_DIR}\"
               git fetch origin main
               git reset --hard origin/main
-              chmod +x scripts/deploy.sh
-              sudo APP_DIR=\"\${APP_DIR}\" ./scripts/deploy.sh"
+              chmod +x scripts/deploy.sh scripts/apply-nginx-domain-only.sh
+              sudo APP_DIR=\"\${APP_DIR}\" DOMAIN=indukuru.online ./scripts/deploy.sh"
 
       - name: Show app URL
         run: |

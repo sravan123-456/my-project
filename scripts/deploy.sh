@@ -27,6 +27,12 @@ git reset --hard "origin/$BRANCH"
 echo "==> Building and starting containers..."
 docker compose up --build -d --remove-orphans
 
+if [ -f scripts/apply-nginx-domain-only.sh ]; then
+  echo "==> Applying domain-only Nginx config..."
+  chmod +x scripts/apply-nginx-domain-only.sh
+  sudo DOMAIN="${DOMAIN:-indukuru.online}" APP_DIR="$APP_DIR" ./scripts/apply-nginx-domain-only.sh
+fi
+
 echo "==> Cleaning old images..."
 docker image prune -f
 

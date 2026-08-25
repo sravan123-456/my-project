@@ -82,13 +82,10 @@ jobs:
 
       - name: Wait for app
         run: |
-          IP=$(gcloud compute instances describe "${GCE_INSTANCE}" \
-            --zone "${GCP_ZONE}" --project "${GCP_PROJECT}" \
-            --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
-          echo "Polling http://${IP}:8080 for up to 8 min..."
+          echo "Polling https://indukuru.online for up to 8 min..."
           for i in $(seq 1 96); do
-            if curl -sSf -m 5 "http://${IP}:8080" > /dev/null; then
-              echo "App is up at http://${IP}:8080"
+            if curl -sSf -m 5 "https://indukuru.online/health" > /dev/null; then
+              echo "App is up at https://indukuru.online"
               exit 0
             fi
             sleep 5
