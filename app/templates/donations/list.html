@@ -56,7 +56,6 @@
                         <th>Donor Name</th>
                         <th>From</th>
                         <th>Payment</th>
-                        <th>Receipt</th>
                         <th>Phone</th>
                         <th>Date</th>
                         <th>Notes</th>
@@ -84,27 +83,14 @@
                             <span class="badge bg-secondary">Cash</span>
                             {% endif %}
                         </td>
-                        <td><small>{{ d.receipt_number or '-' }}</small></td>
                         <td>{{ d.phone or '-' }}</td>
                         <td>{{ d.donation_date.strftime('%d %b %Y') }}</td>
                         <td><small class="text-muted">{{ d.notes or '-' }}</small></td>
                         <td class="text-end text-success fw-bold">₹{{ "{:,.2f}".format(d.amount) }}</td>
                         <td><small>{{ d.recorded_by.full_name }}</small></td>
                         <td class="text-center text-nowrap">
-                            <a href="{{ url_for('donations.donation_receipt_pdf', donation_id=d.id) }}"
-                               class="btn btn-sm btn-outline-danger" title="Download PDF receipt">
-                                <i class="bi bi-file-earmark-pdf"></i>
-                            </a>
-                            <a href="{{ url_for('donations.donation_receipt_png', donation_id=d.id) }}"
-                               class="btn btn-sm btn-outline-warning" title="Download photo receipt">
-                                <i class="bi bi-image"></i>
-                            </a>
                             {% if user_can_edit() %}
                             {% if d.phone %}
-                            <a href="{{ url_for('donations.donation_saved', donation_id=d.id) }}"
-                               class="btn btn-sm btn-outline-secondary" title="Send receipt + thank you (manual steps)">
-                                <i class="bi bi-send"></i>
-                            </a>
                             <a href="{{ url_for('donations.send_whatsapp', donation_id=d.id) }}"
                                class="btn btn-sm btn-whatsapp" title="Send Telugu thank-you on WhatsApp"
                                target="_blank" rel="noopener">
@@ -129,7 +115,7 @@
                 </tbody>
                 <tfoot class="table-light">
                     <tr>
-                        <td colspan="8" class="text-end fw-bold">Total</td>
+                        <td colspan="7" class="text-end fw-bold">Total</td>
                         <td class="text-end fw-bold text-success">₹{{ "{:,.2f}".format(donations|sum(attribute='amount')) }}</td>
                         <td colspan="2"></td>
                     </tr>

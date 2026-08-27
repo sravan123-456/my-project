@@ -1,6 +1,6 @@
 from datetime import date
 
-from flask import Blueprint, Response, flash, redirect, render_template, request, url_for
+from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 from sqlalchemy import func
 
@@ -15,27 +15,9 @@ from app.models import (
     Donation,
 )
 from app.permissions import write_required
-from app.receipt_pdf import generate_receipt_pdf, generate_receipt_png
-from app.receipt_utils import amount_in_words, new_receipt_token, next_receipt_number, RECEIPT_PURPOSE
-from app.whatsapp import build_whatsapp_url, donation_thank_you_message, receipt_send_instructions
+from app.whatsapp import build_whatsapp_url, donation_thank_you_message
 
 donations_bp = Blueprint("donations", __name__)
-
-
-def _receipt_file_response(donation, file_type):
-    words = amount_in_words(donation.amount)
-    if file_type == "pdf":
-        content = generate_receipt_pdf(donation, words, RECEIPT_PURPOSE)
-        mime_type = "application/pdf"
-    else:
-        content = generate_receipt_png(donation, words, RECEIPT_PURPOSE)
-        mime_type = "image/png"
-    filename = f"{donation.receipt_number}.{file_type}"
-    return Response(
-        content,
-        mimetype=mime_type,
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-    )
 
 
 def _donation_totals():
@@ -72,11 +54,8 @@ def _save_donation_from_form(form, recorded_by_id):
         notes=form.notes.data.strip() if form.notes.data else None,
         donation_date=form.donation_date.data,
         recorded_by_id=recorded_by_id,
-        receipt_token=new_receipt_token(),
     )
     db.session.add(donation)
-    db.session.flush()
-    donation.receipt_number = next_receipt_number(donation.donation_date)
     return donation
 
 
@@ -130,53 +109,6 @@ def add_donation():
     return render_template("donations/form.html", form=form, title="Add Donation")
 
 
-@donations_bp.route("/<int:donation_id>/receipt/pdf")
-@login_required
-def donation_receipt_pdf(donation_id):
-    donation = db.session.get(Donation, donation_id)
-    if not donation:
-        flash("Donation not found.", "danger")
-        return redirect(url_for("donations.list_donations"))
-    return _receipt_file_response(donation, "pdf")
-
-
-@donations_bp.route("/<int:donation_id>/receipt/png")
-@login_required
-def donation_receipt_png(donation_id):
-    donation = db.session.get(Donation, donation_id)
-    if not donation:
-        flash("Donation not found.", "danger")
-        return redirect(url_for("donations.list_donations"))
-    return _receipt_file_response(donation, "png")
-
-
-@donations_bp.route("/receipt/<receipt_token>")
-def public_receipt(receipt_token):
-    donation = Donation.query.filter_by(receipt_token=receipt_token).first()
-    if not donation:
-        flash("Receipt not found.", "danger")
-        return redirect(url_for("auth.login"))
-    return _receipt_file_response(donation, "pdf")
-
-
-@donations_bp.route("/<int:donation_id>/receipt")
-@login_required
-def donation_receipt(donation_id):
-    donation = db.session.get(Donation, donation_id)
-    if not donation:
-        flash("Donation not found.", "danger")
-        return redirect(url_for("donations.list_donations"))
-    return render_template(
-        "donations/receipt.html",
-        donation=donation,
-        amount_words=amount_in_words(donation.amount),
-        receipt_purpose=RECEIPT_PURPOSE,
-        printable=True,
-        pdf_url=url_for("donations.donation_receipt_pdf", donation_id=donation.id),
-        png_url=url_for("donations.donation_receipt_png", donation_id=donation.id),
-    )
-
-
 @donations_bp.route("/<int:donation_id>/saved")
 @write_required
 def donation_saved(donation_id):
@@ -185,8 +117,6 @@ def donation_saved(donation_id):
         flash("Donation not found.", "danger")
         return redirect(url_for("donations.list_donations"))
 
-    pdf_url = url_for("donations.donation_receipt_pdf", donation_id=donation.id)
-    png_url = url_for("donations.donation_receipt_png", donation_id=donation.id)
     whatsapp_url = None
     if donation.phone:
         message = donation_thank_you_message(donation)
@@ -196,9 +126,6 @@ def donation_saved(donation_id):
         "donations/saved.html",
         donation=donation,
         whatsapp_url=whatsapp_url,
-        pdf_url=pdf_url,
-        png_url=png_url,
-        receipt_instructions=receipt_send_instructions(),
     )
 
 
@@ -270,14 +197,14 @@ def delete_donation(donation_id):
     else:
         donor_name = donation.donor_name
         amount = donation.amount
-        donation_id = donation.id
+        deleted_id = donation.id
         db.session.delete(donation)
         log_activity(
             current_user,
             "deleted",
             "donation",
             f"Deleted donation of ₹{amount:,.2f} from {donor_name}",
-            donation_id,
+            deleted_id,
         )
         db.session.commit()
         flash("Donation deleted.", "info")

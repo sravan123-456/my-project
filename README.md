@@ -10,7 +10,7 @@ A Docker-based web application to manage Vinayaka Chaturthi festival donations, 
 - **Expenses** — Record spending with categories and bill/receipt upload (PNG, JPG, PDF)
 - **Reports** — Full summary with category breakdown and CSV export
 - **Role-based access** — Read-only by default; admin grants write access
-- **WhatsApp thank-you** — Telugu donation receipt via WhatsApp link
+- **WhatsApp thank-you** — Telugu thank-you message via WhatsApp link
 - **Activity log** — Tracks who added, edited, or deleted records
 
 ## Quick Start (Local Docker)

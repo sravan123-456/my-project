@@ -57,7 +57,7 @@ def create_app():
     def require_approved_account():
         if not current_user.is_authenticated or current_user.is_approved:
             return None
-        allowed = {"auth.logout", "main.pending", "static", "health", "donations.public_receipt"}
+        allowed = {"auth.logout", "main.pending", "static", "health"}
         if request.endpoint in allowed:
             return None
         flash("Your account is pending admin approval.", "warning")

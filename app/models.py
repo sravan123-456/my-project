@@ -71,8 +71,6 @@ class Donation(db.Model):
     donor_group = db.Column(db.String(20), nullable=False, default=DONOR_GROUP_VILLAGE)
     payment_mode = db.Column(db.String(20), nullable=False, default=PAYMENT_CASH)
     upi_transaction_id = db.Column(db.String(100))
-    receipt_number = db.Column(db.String(30), unique=True, index=True)
-    receipt_token = db.Column(db.String(64), unique=True, index=True)
     amount = db.Column(db.Float, nullable=False)
     phone = db.Column(db.String(20))
     notes = db.Column(db.Text)

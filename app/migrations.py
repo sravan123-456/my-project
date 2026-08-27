@@ -1,9 +1,7 @@
-import uuid
-
 from sqlalchemy import inspect, text
 
 from app import db
-from app.models import Donation, User
+from app.models import User
 
 
 def migrate_user_roles():
@@ -55,7 +53,7 @@ def migrate_donation_groups():
             )
 
 
-def migrate_donation_payments_and_receipts():
+def migrate_donation_payments():
     inspector = inspect(db.engine)
     if "donations" not in inspector.get_table_names():
         return
@@ -68,32 +66,14 @@ def migrate_donation_payments_and_receipts():
         )
     if "upi_transaction_id" not in columns:
         statements.append("ALTER TABLE donations ADD COLUMN upi_transaction_id VARCHAR(100)")
-    if "receipt_number" not in columns:
-        statements.append("ALTER TABLE donations ADD COLUMN receipt_number VARCHAR(30)")
-    if "receipt_token" not in columns:
-        statements.append("ALTER TABLE donations ADD COLUMN receipt_token VARCHAR(64)")
 
     if statements:
         with db.engine.begin() as conn:
             for statement in statements:
                 conn.execute(text(statement))
 
-    from app.receipt_utils import next_receipt_number
-
-    donations = Donation.query.order_by(Donation.id.asc()).all()
-    changed = False
-    for donation in donations:
-        if not donation.receipt_number:
-            donation.receipt_number = next_receipt_number(donation.donation_date)
-            changed = True
-        if not donation.receipt_token:
-            donation.receipt_token = uuid.uuid4().hex
-            changed = True
-    if changed:
-        db.session.commit()
-
 
 def run_migrations():
     migrate_user_roles()
     migrate_donation_groups()
-    migrate_donation_payments_and_receipts()
+    migrate_donation_payments()
