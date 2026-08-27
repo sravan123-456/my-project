@@ -5,7 +5,7 @@ from flask_login import current_user, login_required
 from sqlalchemy import func
 
 from app import db
-from app.models import ActivityLog, Donation, Expense
+from app.models import ActivityLog, DONOR_GROUP_COMMITTEE, DONOR_GROUP_OTHER, Donation, Expense
 from app.org_scope import org_query
 
 main_bp = Blueprint("main", __name__)
@@ -64,15 +64,15 @@ def dashboard():
     donation_count = org_query(Donation).count()
     expense_count = org_query(Expense).count()
 
-    youth_donations = (
+    committee_donations = (
         org_query(Donation)
-        .filter(Donation.donor_group == "youth")
+        .filter(Donation.donor_group == DONOR_GROUP_COMMITTEE)
         .with_entities(func.coalesce(func.sum(Donation.amount), 0))
         .scalar()
     )
-    village_donations = (
+    other_donations = (
         org_query(Donation)
-        .filter(Donation.donor_group == "village")
+        .filter(Donation.donor_group == DONOR_GROUP_OTHER)
         .with_entities(func.coalesce(func.sum(Donation.amount), 0))
         .scalar()
     )
@@ -94,8 +94,8 @@ def dashboard():
         expense_by_category=expense_by_category,
         donation_count=donation_count,
         expense_count=expense_count,
-        youth_donations=youth_donations,
-        village_donations=village_donations,
+        committee_donations=committee_donations,
+        other_donations=other_donations,
         recent_activities=recent_activities,
         today=date.today(),
     )

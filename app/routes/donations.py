@@ -9,7 +9,8 @@ from app.activity import log_activity
 from app.forms import DonationForm
 from app.models import (
     DONOR_GROUP_CHOICES,
-    DONOR_GROUP_VILLAGE,
+    DONOR_GROUP_COMMITTEE,
+    DONOR_GROUP_OTHER,
     PAYMENT_CASH,
     PAYMENT_MODE_CHOICES,
     Donation,
@@ -22,19 +23,19 @@ donations_bp = Blueprint("donations", __name__)
 
 
 def _donation_totals():
-    youth = (
+    committee = (
         org_query(Donation)
-        .filter(Donation.donor_group == "youth")
+        .filter(Donation.donor_group == DONOR_GROUP_COMMITTEE)
         .with_entities(func.coalesce(func.sum(Donation.amount), 0))
         .scalar()
     )
-    village = (
+    other = (
         org_query(Donation)
-        .filter(Donation.donor_group == "village")
+        .filter(Donation.donor_group == DONOR_GROUP_OTHER)
         .with_entities(func.coalesce(func.sum(Donation.amount), 0))
         .scalar()
     )
-    return youth, village
+    return committee, other
 
 
 def _prepare_donation_form(form):
@@ -68,20 +69,20 @@ def _save_donation_from_form(form, recorded_by_id, organization_id):
 def list_donations():
     group_filter = request.args.get("group", "all")
     query = org_query(Donation)
-    if group_filter in ("youth", "village"):
+    if group_filter in (DONOR_GROUP_COMMITTEE, DONOR_GROUP_OTHER):
         query = query.filter_by(donor_group=group_filter)
 
     donations = query.order_by(
         Donation.donation_date.desc(), Donation.id.desc()
     ).all()
-    youth_total, village_total = _donation_totals()
+    committee_total, other_total = _donation_totals()
 
     return render_template(
         "donations/list.html",
         donations=donations,
         group_filter=group_filter,
-        youth_total=youth_total,
-        village_total=village_total,
+        committee_total=committee_total,
+        other_total=other_total,
     )
 
 
@@ -93,7 +94,7 @@ def add_donation():
 
     if request.method == "GET":
         form.donation_date.data = date.today()
-        form.donor_group.data = DONOR_GROUP_VILLAGE
+        form.donor_group.data = DONOR_GROUP_COMMITTEE
         form.payment_mode.data = PAYMENT_CASH
 
     if form.validate_on_submit():

@@ -65,9 +65,22 @@ def migrate_donation_groups():
         with db.engine.begin() as conn:
             conn.execute(
                 text(
-                    "ALTER TABLE donations ADD COLUMN donor_group VARCHAR(20) NOT NULL DEFAULT 'village'"
+                    "ALTER TABLE donations ADD COLUMN donor_group VARCHAR(20) NOT NULL DEFAULT 'committee_member'"
                 )
             )
+
+
+def migrate_donor_group_labels():
+    if "donations" not in inspect(db.engine).get_table_names():
+        return
+
+    Donation.query.filter_by(donor_group="youth").update(
+        {"donor_group": "committee_member"}, synchronize_session=False
+    )
+    Donation.query.filter_by(donor_group="village").update(
+        {"donor_group": "other"}, synchronize_session=False
+    )
+    db.session.commit()
 
 
 def migrate_donation_payments():
@@ -160,5 +173,6 @@ def migrate_organizations():
 def run_migrations():
     migrate_user_roles()
     migrate_donation_groups()
+    migrate_donor_group_labels()
     migrate_donation_payments()
     migrate_organizations()

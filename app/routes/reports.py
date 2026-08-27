@@ -7,26 +7,26 @@ from flask_login import current_user, login_required
 from sqlalchemy import func
 
 from app import db
-from app.models import Donation, Expense
+from app.models import DONOR_GROUP_COMMITTEE, DONOR_GROUP_OTHER, Donation, Expense
 from app.org_scope import org_query
 
 reports_bp = Blueprint("reports", __name__)
 
 
 def _donation_group_totals():
-    youth = (
+    committee = (
         org_query(Donation)
-        .filter(Donation.donor_group == "youth")
+        .filter(Donation.donor_group == DONOR_GROUP_COMMITTEE)
         .with_entities(func.coalesce(func.sum(Donation.amount), 0))
         .scalar()
     )
-    village = (
+    other = (
         org_query(Donation)
-        .filter(Donation.donor_group == "village")
+        .filter(Donation.donor_group == DONOR_GROUP_OTHER)
         .with_entities(func.coalesce(func.sum(Donation.amount), 0))
         .scalar()
     )
-    return youth, village
+    return committee, other
 
 
 @reports_bp.route("/")
@@ -55,18 +55,25 @@ def reports():
         .all()
     )
 
-    youth_donations, village_donations = _donation_group_totals()
+    committee_donations, other_donations = _donation_group_totals()
+
+    expense_chart_labels = [category for category, _total in expense_by_category]
+    expense_chart_values = [float(total) for _category, total in expense_by_category]
 
     return render_template(
         "reports/index.html",
         total_donations=total_donations,
         total_expenses=total_expenses,
         balance=total_donations - total_expenses,
-        youth_donations=youth_donations,
-        village_donations=village_donations,
+        committee_donations=committee_donations,
+        other_donations=other_donations,
         donations=donations,
         expenses=expenses,
         expense_by_category=expense_by_category,
+        expense_chart_labels=expense_chart_labels,
+        expense_chart_values=expense_chart_values,
+        donation_chart_labels=["Committee Member", "Other"],
+        donation_chart_values=[float(committee_donations), float(other_donations)],
     )
 
 
@@ -86,11 +93,10 @@ def export_csv():
     writer.writerow(["DONATIONS"])
     writer.writerow(["Date", "Donor Name", "From", "Payment", "UPI Txn ID", "Phone", "Amount", "Notes"])
     for d in org_query(Donation).order_by(Donation.donation_date).all():
-        group_label = "Youth" if d.donor_group == "youth" else "Village Member"
         writer.writerow([
             d.donation_date.strftime("%Y-%m-%d"),
             d.donor_name,
-            group_label,
+            d.donor_group_label(),
             d.payment_mode_label(),
             d.upi_transaction_id or "",
             d.phone or "",

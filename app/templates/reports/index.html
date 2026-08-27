@@ -10,7 +10,6 @@
     </a>
 </div>
 
-<!-- Summary -->
 <div class="row g-3 mb-4">
     <div class="col-md-4">
         <div class="card border-0 shadow-sm text-center p-3">
@@ -37,17 +36,66 @@
 <div class="row g-3 mb-4">
     <div class="col-md-6">
         <div class="card border-0 shadow-sm text-center p-3 border-start border-primary border-4">
-            <p class="text-muted mb-1">Youth (Our Team)</p>
-            <h4 class="text-primary fw-bold mb-0">₹{{ "{:,.2f}".format(youth_donations) }}</h4>
+            <p class="text-muted mb-1">Committee Member Donations</p>
+            <h4 class="text-primary fw-bold mb-0">₹{{ "{:,.2f}".format(committee_donations) }}</h4>
         </div>
     </div>
     <div class="col-md-6">
-        <div class="card border-0 shadow-sm text-center p-3 border-start border-success border-4">
-            <p class="text-muted mb-1">Village Members</p>
-            <h4 class="text-success fw-bold mb-0">₹{{ "{:,.2f}".format(village_donations) }}</h4>
+        <div class="card border-0 shadow-sm text-center p-3 border-start border-secondary border-4">
+            <p class="text-muted mb-1">Other Donations</p>
+            <h4 class="text-secondary fw-bold mb-0">₹{{ "{:,.2f}".format(other_donations) }}</h4>
         </div>
     </div>
 </div>
+
+{% if expense_chart_labels or donation_chart_values[0] > 0 or donation_chart_values[1] > 0 %}
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white border-0 py-3">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="mb-0"><i class="bi bi-bar-chart-fill"></i> Visual Reports</h5>
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+                <label for="expenseChartType" class="small text-muted mb-0">Expense chart:</label>
+                <select id="expenseChartType" class="form-select form-select-sm" style="width: auto;">
+                    <option value="pie">Pie Chart</option>
+                    <option value="doughnut">Doughnut Chart</option>
+                    <option value="bar" selected>Bar Chart</option>
+                    <option value="horizontalBar">Horizontal Bar</option>
+                </select>
+                <label for="donationChartType" class="small text-muted mb-0 ms-2">Donation chart:</label>
+                <select id="donationChartType" class="form-select form-select-sm" style="width: auto;">
+                    <option value="pie" selected>Pie Chart</option>
+                    <option value="doughnut">Doughnut Chart</option>
+                    <option value="bar">Bar Chart</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <h6 class="text-muted mb-3">Where We Spent More (by Category)</h6>
+                {% if expense_chart_labels %}
+                <div class="chart-wrap" style="min-height: 320px;">
+                    <canvas id="expenseChart"></canvas>
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">No expense data yet for charts.</p>
+                {% endif %}
+            </div>
+            <div class="col-lg-5">
+                <h6 class="text-muted mb-3">Donations by Source</h6>
+                {% if donation_chart_values[0] > 0 or donation_chart_values[1] > 0 %}
+                <div class="chart-wrap" style="min-height: 280px;">
+                    <canvas id="donationChart"></canvas>
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">No donation data yet for charts.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 {% if expense_by_category %}
 <div class="card border-0 shadow-sm mb-4">
@@ -77,7 +125,6 @@
 </div>
 {% endif %}
 
-<!-- Full Donation List -->
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-header bg-white border-0 py-3">
         <h5 class="mb-0 text-success"><i class="bi bi-heart-fill"></i> All Donations</h5>
@@ -114,7 +161,6 @@
     </div>
 </div>
 
-<!-- Full Expense List -->
 <div class="card border-0 shadow-sm">
     <div class="card-header bg-white border-0 py-3">
         <h5 class="mb-0 text-danger"><i class="bi bi-receipt"></i> All Expenses</h5>
@@ -150,4 +196,82 @@
         {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+  var palette = [
+    "#c0392b", "#e67e22", "#f1c40f", "#27ae60", "#2980b9",
+    "#8e44ad", "#16a085", "#d35400", "#2c3e50", "#7f8c8d"
+  ];
+
+  function buildChartConfig(type, labels, values, title) {
+    var chartType = type === "horizontalBar" ? "bar" : type;
+    var config = {
+      type: chartType,
+      data: {
+        labels: labels,
+        datasets: [{
+          label: title,
+          data: values,
+          backgroundColor: labels.map(function (_, i) { return palette[i % palette.length]; }),
+          borderColor: "#ffffff",
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: type === "bar" || type === "horizontalBar" ? "top" : "right" },
+          tooltip: {
+            callbacks: {
+              label: function (ctx) {
+                var value = ctx.raw != null ? ctx.raw : (ctx.parsed.y != null ? ctx.parsed.y : ctx.parsed.x);
+                var total = values.reduce(function (a, b) { return a + b; }, 0);
+                var pct = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                return ctx.label + ": ₹" + Number(value).toLocaleString("en-IN") + " (" + pct + "%)";
+              }
+            }
+          }
+        }
+      }
+    };
+    if (type === "horizontalBar") {
+      config.options.indexAxis = "y";
+    }
+    return config;
+  }
+
+  var expenseLabels = {{ expense_chart_labels|tojson }};
+  var expenseValues = {{ expense_chart_values|tojson }};
+  var donationLabels = {{ donation_chart_labels|tojson }};
+  var donationValues = {{ donation_chart_values|tojson }};
+
+  var expenseChart = null;
+  var donationChart = null;
+
+  var expenseCanvas = document.getElementById("expenseChart");
+  if (expenseCanvas && expenseLabels.length) {
+    var expenseTypeSelect = document.getElementById("expenseChartType");
+    expenseChart = new Chart(expenseCanvas, buildChartConfig(expenseTypeSelect.value, expenseLabels, expenseValues, "Expenses"));
+    expenseTypeSelect.addEventListener("change", function () {
+      expenseChart.destroy();
+      expenseChart = new Chart(expenseCanvas, buildChartConfig(expenseTypeSelect.value, expenseLabels, expenseValues, "Expenses"));
+    });
+  }
+
+  var donationCanvas = document.getElementById("donationChart");
+  if (donationCanvas && (donationValues[0] > 0 || donationValues[1] > 0)) {
+    var donationTypeSelect = document.getElementById("donationChartType");
+    donationChart = new Chart(donationCanvas, buildChartConfig(donationTypeSelect.value, donationLabels, donationValues, "Donations"));
+    donationTypeSelect.addEventListener("change", function () {
+      donationChart.destroy();
+      donationChart = new Chart(donationCanvas, buildChartConfig(donationTypeSelect.value, donationLabels, donationValues, "Donations"));
+    });
+  }
+})();
+</script>
 {% endblock %}

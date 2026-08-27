@@ -25,10 +25,22 @@ def users():
         .order_by(User.created_at.desc())
         .all()
     )
+    invite_url = None
+    committee_code = None
+    if current_user.organization:
+        committee_code = current_user.organization.slug
+        invite_url = url_for(
+            "auth.login",
+            org=committee_code,
+            _anchor="existing-committee",
+            _external=True,
+        )
     return render_template(
         "admin/users.html",
         pending_users=pending_users,
         users=approved_users,
+        invite_url=invite_url,
+        committee_code=committee_code,
     )
 
 

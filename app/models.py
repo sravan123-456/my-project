@@ -90,15 +90,20 @@ class User(UserMixin, db.Model):
         return self.is_admin and not self.is_site_admin
 
 
-DONOR_GROUP_YOUTH = "youth"
-DONOR_GROUP_VILLAGE = "village"
+DONOR_GROUP_COMMITTEE = "committee_member"
+DONOR_GROUP_OTHER = "other"
 
 DONOR_GROUP_CHOICES = [
-    (DONOR_GROUP_YOUTH, "Youth (Our Team)"),
-    (DONOR_GROUP_VILLAGE, "Village Member"),
+    (DONOR_GROUP_COMMITTEE, "Committee Member"),
+    (DONOR_GROUP_OTHER, "Other"),
 ]
 
 DONOR_GROUP_LABELS = dict(DONOR_GROUP_CHOICES)
+
+LEGACY_DONOR_GROUP_LABELS = {
+    "youth": "Committee Member",
+    "village": "Other",
+}
 
 PAYMENT_CASH = "cash"
 PAYMENT_UPI = "upi"
@@ -117,7 +122,7 @@ class Donation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     organization_id = db.Column(db.Integer, db.ForeignKey("organizations.id"), nullable=False, index=True)
     donor_name = db.Column(db.String(120), nullable=False)
-    donor_group = db.Column(db.String(20), nullable=False, default=DONOR_GROUP_VILLAGE)
+    donor_group = db.Column(db.String(20), nullable=False, default=DONOR_GROUP_COMMITTEE)
     payment_mode = db.Column(db.String(20), nullable=False, default=PAYMENT_CASH)
     upi_transaction_id = db.Column(db.String(100))
     amount = db.Column(db.Float, nullable=False)
@@ -128,7 +133,10 @@ class Donation(db.Model):
     recorded_by_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
 
     def donor_group_label(self):
-        return DONOR_GROUP_LABELS.get(self.donor_group, self.donor_group)
+        return LEGACY_DONOR_GROUP_LABELS.get(
+            self.donor_group,
+            DONOR_GROUP_LABELS.get(self.donor_group, self.donor_group),
+        )
 
     def payment_mode_label(self):
         return PAYMENT_MODE_LABELS.get(self.payment_mode, self.payment_mode)
