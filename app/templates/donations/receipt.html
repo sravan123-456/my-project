@@ -9,7 +9,12 @@
 <body>
     {% if printable %}
     <div class="receipt-toolbar no-print">
+        {% if pdf_url is defined %}
+        <a href="{{ pdf_url }}" class="btn-print">Download PDF</a>
+        <a href="{{ png_url }}" class="btn-back">Download Photo</a>
+        {% else %}
         <button type="button" onclick="window.print()" class="btn-print">Print / Save as PDF</button>
+        {% endif %}
         {% if current_user.is_authenticated %}
         <a href="{{ url_for('donations.list_donations') }}" class="btn-back">Back to Donations</a>
         {% endif %}

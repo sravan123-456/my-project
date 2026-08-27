@@ -25,11 +25,11 @@ def format_phone_for_whatsapp(phone):
     return digits if len(digits) >= 10 else None
 
 
-def donation_thank_you_message(donation, receipt_url=None):
+def donation_thank_you_message(donation):
     date_str = donation.donation_date.strftime("%d-%m-%Y")
     amount_str = f"{donation.amount:,.2f}"
 
-    message = (
+    return (
         f"{EMOJI_PARTY} ఇందుకూరు వినాయక చవితి వేడుకలు {EMOJI_PARTY}\n"
         f"ప్రియమైన {donation.donor_name} గారికి,\n\n"
         f"మీ విరాళం ₹{amount_str} సాదరంగా నమోదు చేయబడింది.\n"
@@ -39,11 +39,10 @@ def donation_thank_you_message(donation, receipt_url=None):
         f"మన కార్యక్రమానికి మీరు అందించిన చందా సహాయానికి ధన్యవాదాలు. "
         f"మీ సహకారం మనకు ఎంతో విలువైనది. మీకు, మీ కుటుంబ సభ్యులకు "
         f"ఆయురారోగ్యాలు, సుఖసంతోషాలు కలగాలని మనస్ఫూర్తిగా కోరుకుంటున్నాము. {EMOJI_PRAY}\n\n"
-        f"మీ అమూల్యమైన సహకారానికి మరోసారి ధన్యవాదాలు. {EMOJI_ROSE}"
+        f"మీ అమూల్యమైన సహకారానికి మరోసారి ధన్యవాదాలు. {EMOJI_ROSE}\n\n"
+        f"Please find the donation receipt PDF/photo downloaded on our device. "
+        f"Kindly attach it to this message."
     )
-    if receipt_url:
-        message += f"\n\nDonation receipt: {receipt_url}"
-    return message
 
 
 def build_whatsapp_url(phone, message):
