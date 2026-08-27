@@ -4,13 +4,13 @@
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-lg-7">
+    <div class="col-lg-8">
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white border-0 py-3">
                 <h4 class="mb-0"><i class="bi bi-heart-fill text-success"></i> {{ title }}</h4>
             </div>
             <div class="card-body p-4">
-                <form method="POST" novalidate>
+                <form method="POST" novalidate id="donationForm">
                     {{ form.hidden_tag() }}
                     <div class="row g-3">
                         <div class="col-md-8">
@@ -35,9 +35,23 @@
                             {% endfor %}
                         </div>
                         <div class="col-md-6">
+                            {{ form.payment_mode.label(class="form-label") }}
+                            {{ form.payment_mode(class="form-select" + (" is-invalid" if form.payment_mode.errors else ""), id="paymentMode") }}
+                            {% for error in form.payment_mode.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6" id="upiField" style="display:none;">
+                            {{ form.upi_transaction_id.label(class="form-label") }}
+                            {{ form.upi_transaction_id(class="form-control", placeholder="Optional UPI reference / transaction ID") }}
+                            <small class="text-muted">Optional — leave blank if not available</small>
+                        </div>
+                        <div class="col-md-6">
                             {{ form.phone.label(class="form-label") }}
-                            {{ form.phone(class="form-control", placeholder="10-digit mobile for WhatsApp thank you") }}
-                            <small class="text-muted">Required to send Telugu thank-you message on WhatsApp</small>
+                            {{ form.phone(class="form-control" + (" is-invalid" if form.phone.errors else ""), placeholder="10-digit mobile for WhatsApp thank you") }}
+                            {% for error in form.phone.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
                         </div>
                         <div class="col-md-6">
                             {{ form.donation_date.label(class="form-label") }}
@@ -60,4 +74,18 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const paymentMode = document.getElementById("paymentMode");
+  const upiField = document.getElementById("upiField");
+
+  function toggleUpiField() {
+    upiField.style.display = paymentMode.value === "upi" ? "block" : "none";
+  }
+
+  paymentMode.addEventListener("change", toggleUpiField);
+  toggleUpiField();
+</script>
 {% endblock %}

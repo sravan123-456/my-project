@@ -12,8 +12,69 @@ admin_bp = Blueprint("admin", __name__)
 @admin_bp.route("/users")
 @admin_required
 def users():
-    users_list = User.query.order_by(User.created_at.desc()).all()
-    return render_template("admin/users.html", users=users_list)
+    pending_users = User.query.filter_by(is_approved=False).order_by(User.created_at.asc()).all()
+    approved_users = User.query.filter_by(is_approved=True).order_by(User.created_at.desc()).all()
+    return render_template(
+        "admin/users.html",
+        pending_users=pending_users,
+        users=approved_users,
+    )
+
+
+@admin_bp.route("/users/<int:user_id>/approve", methods=["POST"])
+@admin_required
+def approve_user(user_id):
+    user = db.session.get(User, user_id)
+    if not user:
+        flash("User not found.", "danger")
+        return redirect(url_for("admin.users"))
+
+    if user.is_approved:
+        flash(f"{user.full_name} is already approved.", "info")
+        return redirect(url_for("admin.users"))
+
+    user.is_approved = True
+    log_activity(
+        current_user,
+        "updated",
+        "user",
+        f"Approved join request for {user.full_name}",
+        user.id,
+    )
+    db.session.commit()
+    flash(f"{user.full_name} can now log in.", "success")
+    return redirect(url_for("admin.users"))
+
+
+@admin_bp.route("/users/<int:user_id>/reject", methods=["POST"])
+@admin_required
+def reject_user(user_id):
+    user = db.session.get(User, user_id)
+    if not user:
+        flash("User not found.", "danger")
+        return redirect(url_for("admin.users"))
+
+    if user.is_admin:
+        flash("Cannot reject an admin account.", "warning")
+        return redirect(url_for("admin.users"))
+
+    if user.id == current_user.id:
+        flash("You cannot reject your own account.", "warning")
+        return redirect(url_for("admin.users"))
+
+    full_name = user.full_name
+    ActivityLog.query.filter_by(user_id=user.id).delete()
+    db.session.delete(user)
+    log_activity(
+        current_user,
+        "deleted",
+        "user",
+        f"Rejected join request and removed account: {full_name}",
+        user_id,
+    )
+    db.session.commit()
+    flash(f"Join request from {full_name} was rejected.", "info")
+    return redirect(url_for("admin.users"))
 
 
 @admin_bp.route("/users/<int:user_id>/toggle-write", methods=["POST"])

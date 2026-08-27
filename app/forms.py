@@ -34,7 +34,13 @@ class DonationForm(FlaskForm):
     amount = FloatField(
         "Amount (₹)", validators=[DataRequired(), NumberRange(min=0.01, message="Amount must be greater than 0.")]
     )
-    phone = StringField("Phone (optional)", validators=[Optional(), Length(max=20)])
+    payment_mode = SelectField("Payment Mode", validators=[DataRequired()])
+    upi_transaction_id = StringField(
+        "UPI Transaction ID (optional)", validators=[Optional(), Length(max=100)]
+    )
+    phone = StringField(
+        "Phone", validators=[DataRequired(), Length(min=10, max=20, message="Enter a valid mobile number.")]
+    )
     notes = TextAreaField("Notes (optional)", validators=[Optional(), Length(max=500)])
     donation_date = DateField("Date", validators=[DataRequired()], format="%Y-%m-%d")
     submit = SubmitField("Save Donation")

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt {{ donation.receipt_number }}</title>
+    <link href="{{ url_for('static', filename='css/receipt.css') }}" rel="stylesheet">
+</head>
+<body>
+    {% if printable %}
+    <div class="receipt-toolbar no-print">
+        <button type="button" onclick="window.print()" class="btn-print">Print / Save as PDF</button>
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('donations.list_donations') }}" class="btn-back">Back to Donations</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="receipt-page">
+        <div class="receipt-frame">
+            <div class="receipt-top">
+                <img src="{{ url_for('static', filename='images/ganesha-decor.svg') }}" alt="" class="receipt-ganesha-left">
+                <div class="receipt-header-text">
+                    <p class="receipt-invocation">|| శ్రీ గణేశాయ నమః ||</p>
+                    <h1>VINAYAKA FESTIVAL 2026</h1>
+                    <h2>CHANDA / DONATION RECEIPT</h2>
+                </div>
+                <img src="{{ url_for('static', filename='images/ganesha-decor.svg') }}" alt="" class="receipt-ganesha-right">
+            </div>
+
+            <div class="receipt-meta">
+                <div class="meta-box">
+                    <span class="meta-label">Receipt No.</span>
+                    <span class="meta-value">{{ donation.receipt_number }}</span>
+                </div>
+                <div class="meta-box">
+                    <span class="meta-label">Date</span>
+                    <span class="meta-value">{{ donation.donation_date.strftime('%d / %m / %Y') }}</span>
+                </div>
+            </div>
+
+            <div class="receipt-body">
+                <div class="receipt-row">
+                    <span class="row-icon"><i class="bi bi-person-fill"></i></span>
+                    <span class="row-label">Donor Name</span>
+                    <span class="row-value">{{ donation.donor_name }}</span>
+                </div>
+                <div class="receipt-row amount-row">
+                    <span class="row-icon"><i class="bi bi-currency-rupee"></i></span>
+                    <span class="row-label">Donation Amount</span>
+                    <span class="row-value amount-value">₹ {{ "{:,.0f}".format(donation.amount) }}</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="row-icon"><i class="bi bi-wallet2"></i></span>
+                    <span class="row-label">Payment Mode (Cash / UPI)</span>
+                    <span class="row-value">
+                        {{ donation.payment_mode_label() }}
+                        {% if donation.payment_mode == 'upi' %}<span class="mode-check">✓</span>{% endif %}
+                    </span>
+                </div>
+                <div class="receipt-row">
+                    <span class="row-icon"><i class="bi bi-type"></i></span>
+                    <span class="row-label">Amount in Words</span>
+                    <span class="row-value">{{ amount_words }}</span>
+                </div>
+                {% if donation.payment_mode == 'upi' %}
+                <div class="receipt-row">
+                    <span class="row-icon"><i class="bi bi-qr-code"></i></span>
+                    <span class="row-label">UPI Transaction ID</span>
+                    <span class="row-value">{{ donation.upi_transaction_id or '—' }}</span>
+                </div>
+                {% endif %}
+                <div class="receipt-row">
+                    <span class="row-icon"><i class="bi bi-bell-fill"></i></span>
+                    <span class="row-label">Purpose</span>
+                    <span class="row-value">{{ receipt_purpose }}</span>
+                </div>
+            </div>
+
+            <p class="receipt-thanks">
+                Thank you for your generous contribution towards
+                <strong>Vinayaka Festival 2026 celebrations</strong>.
+                Your support helps us organize the celebrations successfully.
+            </p>
+
+            <div class="receipt-footer">
+                <p class="committee-name">VINAYAKA FESTIVAL COMMITTEE</p>
+                <p class="committee-address"><i class="bi bi-geo-alt-fill"></i> Indukuru, Mudigubba - 515511</p>
+            </div>
+        </div>
+    </div>
+
+    <link href="{{ url_for('static', filename='vendor/bootstrap-icons.min.css') }}" rel="stylesheet">
+</body>
+</html>

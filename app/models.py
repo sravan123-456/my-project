@@ -18,6 +18,7 @@ class User(UserMixin, db.Model):
     full_name = db.Column(db.String(120), nullable=False)
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
     can_write = db.Column(db.Boolean, default=False, nullable=False)
+    is_approved = db.Column(db.Boolean, default=False, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     donations = db.relationship("Donation", backref="recorded_by", lazy=True)
@@ -51,6 +52,16 @@ DONOR_GROUP_CHOICES = [
 
 DONOR_GROUP_LABELS = dict(DONOR_GROUP_CHOICES)
 
+PAYMENT_CASH = "cash"
+PAYMENT_UPI = "upi"
+
+PAYMENT_MODE_CHOICES = [
+    (PAYMENT_CASH, "Cash"),
+    (PAYMENT_UPI, "UPI"),
+]
+
+PAYMENT_MODE_LABELS = dict(PAYMENT_MODE_CHOICES)
+
 
 class Donation(db.Model):
     __tablename__ = "donations"
@@ -58,6 +69,10 @@ class Donation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     donor_name = db.Column(db.String(120), nullable=False)
     donor_group = db.Column(db.String(20), nullable=False, default=DONOR_GROUP_VILLAGE)
+    payment_mode = db.Column(db.String(20), nullable=False, default=PAYMENT_CASH)
+    upi_transaction_id = db.Column(db.String(100))
+    receipt_number = db.Column(db.String(30), unique=True, index=True)
+    receipt_token = db.Column(db.String(64), unique=True, index=True)
     amount = db.Column(db.Float, nullable=False)
     phone = db.Column(db.String(20))
     notes = db.Column(db.Text)
@@ -67,6 +82,9 @@ class Donation(db.Model):
 
     def donor_group_label(self):
         return DONOR_GROUP_LABELS.get(self.donor_group, self.donor_group)
+
+    def payment_mode_label(self):
+        return PAYMENT_MODE_LABELS.get(self.payment_mode, self.payment_mode)
 
 
 class Expense(db.Model):

@@ -1,16 +1,21 @@
-import os
-import uuid
 from datetime import date
 
-from flask import Blueprint, current_app, flash, redirect, render_template, request, url_for
+from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 from sqlalchemy import func
 
 from app import db
 from app.activity import log_activity
 from app.forms import DonationForm
-from app.models import DONOR_GROUP_CHOICES, DONOR_GROUP_VILLAGE, Donation
+from app.models import (
+    DONOR_GROUP_CHOICES,
+    DONOR_GROUP_VILLAGE,
+    PAYMENT_CASH,
+    PAYMENT_MODE_CHOICES,
+    Donation,
+)
 from app.permissions import write_required
+from app.receipt_utils import amount_in_words, new_receipt_token, next_receipt_number, RECEIPT_PURPOSE
 from app.whatsapp import build_whatsapp_url, donation_thank_you_message
 
 donations_bp = Blueprint("donations", __name__)
@@ -28,6 +33,34 @@ def _donation_totals():
         .scalar()
     )
     return youth, village
+
+
+def _prepare_donation_form(form):
+    form.donor_group.choices = DONOR_GROUP_CHOICES
+    form.payment_mode.choices = PAYMENT_MODE_CHOICES
+
+
+def _save_donation_from_form(form, recorded_by_id):
+    donation = Donation(
+        donor_name=form.donor_name.data.strip(),
+        donor_group=form.donor_group.data,
+        payment_mode=form.payment_mode.data,
+        upi_transaction_id=(
+            form.upi_transaction_id.data.strip()
+            if form.payment_mode.data == "upi" and form.upi_transaction_id.data
+            else None
+        ),
+        amount=form.amount.data,
+        phone=form.phone.data.strip(),
+        notes=form.notes.data.strip() if form.notes.data else None,
+        donation_date=form.donation_date.data,
+        recorded_by_id=recorded_by_id,
+        receipt_token=new_receipt_token(),
+    )
+    db.session.add(donation)
+    db.session.flush()
+    donation.receipt_number = next_receipt_number(donation.donation_date)
+    return donation
 
 
 @donations_bp.route("/")
@@ -56,29 +89,21 @@ def list_donations():
 @write_required
 def add_donation():
     form = DonationForm()
-    form.donor_group.choices = DONOR_GROUP_CHOICES
+    _prepare_donation_form(form)
 
     if request.method == "GET":
         form.donation_date.data = date.today()
         form.donor_group.data = DONOR_GROUP_VILLAGE
+        form.payment_mode.data = PAYMENT_CASH
 
     if form.validate_on_submit():
-        donation = Donation(
-            donor_name=form.donor_name.data.strip(),
-            donor_group=form.donor_group.data,
-            amount=form.amount.data,
-            phone=form.phone.data.strip() if form.phone.data else None,
-            notes=form.notes.data.strip() if form.notes.data else None,
-            donation_date=form.donation_date.data,
-            recorded_by_id=current_user.id,
-        )
-        db.session.add(donation)
-        db.session.flush()
+        donation = _save_donation_from_form(form, current_user.id)
         log_activity(
             current_user,
             "added",
             "donation",
-            f"Added {donation.donor_group_label()} donation of ₹{donation.amount:,.2f} from {donation.donor_name}",
+            f"Added {donation.donor_group_label()} {donation.payment_mode_label()} donation "
+            f"of ₹{donation.amount:,.2f} from {donation.donor_name}",
             donation.id,
         )
         db.session.commit()
@@ -86,6 +111,37 @@ def add_donation():
         return redirect(url_for("donations.donation_saved", donation_id=donation.id))
 
     return render_template("donations/form.html", form=form, title="Add Donation")
+
+
+@donations_bp.route("/receipt/<receipt_token>")
+def public_receipt(receipt_token):
+    donation = Donation.query.filter_by(receipt_token=receipt_token).first()
+    if not donation:
+        flash("Receipt not found.", "danger")
+        return redirect(url_for("auth.login"))
+    return render_template(
+        "donations/receipt.html",
+        donation=donation,
+        amount_words=amount_in_words(donation.amount),
+        receipt_purpose=RECEIPT_PURPOSE,
+        printable=True,
+    )
+
+
+@donations_bp.route("/<int:donation_id>/receipt")
+@login_required
+def donation_receipt(donation_id):
+    donation = db.session.get(Donation, donation_id)
+    if not donation:
+        flash("Donation not found.", "danger")
+        return redirect(url_for("donations.list_donations"))
+    return render_template(
+        "donations/receipt.html",
+        donation=donation,
+        amount_words=amount_in_words(donation.amount),
+        receipt_purpose=RECEIPT_PURPOSE,
+        printable=True,
+    )
 
 
 @donations_bp.route("/<int:donation_id>/saved")
@@ -96,15 +152,21 @@ def donation_saved(donation_id):
         flash("Donation not found.", "danger")
         return redirect(url_for("donations.list_donations"))
 
+    receipt_url = url_for(
+        "donations.public_receipt",
+        receipt_token=donation.receipt_token,
+        _external=True,
+    )
     whatsapp_url = None
     if donation.phone:
-        message = donation_thank_you_message(donation)
+        message = donation_thank_you_message(donation, receipt_url=receipt_url)
         whatsapp_url = build_whatsapp_url(donation.phone, message)
 
     return render_template(
         "donations/saved.html",
         donation=donation,
         whatsapp_url=whatsapp_url,
+        receipt_url=receipt_url,
     )
 
 
@@ -117,13 +179,19 @@ def edit_donation(donation_id):
         return redirect(url_for("donations.list_donations"))
 
     form = DonationForm(obj=donation)
-    form.donor_group.choices = DONOR_GROUP_CHOICES
+    _prepare_donation_form(form)
 
     if form.validate_on_submit():
         donation.donor_name = form.donor_name.data.strip()
         donation.donor_group = form.donor_group.data
+        donation.payment_mode = form.payment_mode.data
+        donation.upi_transaction_id = (
+            form.upi_transaction_id.data.strip()
+            if form.payment_mode.data == "upi" and form.upi_transaction_id.data
+            else None
+        )
         donation.amount = form.amount.data
-        donation.phone = form.phone.data.strip() if form.phone.data else None
+        donation.phone = form.phone.data.strip()
         donation.notes = form.notes.data.strip() if form.notes.data else None
         donation.donation_date = form.donation_date.data
         log_activity(
@@ -149,16 +217,10 @@ def send_whatsapp(donation_id):
         return redirect(url_for("donations.list_donations"))
 
     if not donation.phone:
-        flash("No phone number on file for this donor. Add a phone number to send WhatsApp thank you.", "warning")
+        flash("No phone number on file for this donor.", "warning")
         return redirect(url_for("donations.edit_donation", donation_id=donation.id))
 
-    message = donation_thank_you_message(donation)
-    whatsapp_url = build_whatsapp_url(donation.phone, message)
-    if not whatsapp_url:
-        flash("Invalid phone number. Please use a valid 10-digit Indian mobile number.", "warning")
-        return redirect(url_for("donations.edit_donation", donation_id=donation.id))
-
-    return redirect(whatsapp_url)
+    return redirect(url_for("donations.donation_saved", donation_id=donation.id))
 
 
 @donations_bp.route("/<int:donation_id>/delete", methods=["POST"])

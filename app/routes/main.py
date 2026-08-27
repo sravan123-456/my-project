@@ -15,6 +15,14 @@ def index():
     return render_template("index.html")
 
 
+@main_bp.route("/pending")
+@login_required
+def pending():
+    if current_user.is_approved:
+        return redirect(url_for("main.dashboard"))
+    return render_template("main/pending.html")
+
+
 @main_bp.route("/dashboard")
 @login_required
 def dashboard():

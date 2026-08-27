@@ -68,13 +68,16 @@ def export_csv():
     writer.writerow([])
 
     writer.writerow(["DONATIONS"])
-    writer.writerow(["Date", "Donor Name", "From", "Phone", "Amount", "Notes"])
+    writer.writerow(["Date", "Receipt No", "Donor Name", "From", "Payment", "UPI Txn ID", "Phone", "Amount", "Notes"])
     for d in Donation.query.order_by(Donation.donation_date).all():
         group_label = "Youth" if d.donor_group == "youth" else "Village Member"
         writer.writerow([
             d.donation_date.strftime("%Y-%m-%d"),
+            d.receipt_number or "",
             d.donor_name,
             group_label,
+            d.payment_mode_label(),
+            d.upi_transaction_id or "",
             d.phone or "",
             f"{d.amount:.2f}",
             d.notes or "",

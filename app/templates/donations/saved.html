@@ -4,24 +4,32 @@
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-lg-7">
+    <div class="col-lg-8">
         <div class="card border-0 shadow-sm text-center">
             <div class="card-body p-5">
                 <div class="display-4 text-success mb-3"><i class="bi bi-check-circle-fill"></i></div>
                 <h3 class="fw-bold mb-2">Donation Recorded!</h3>
-                <p class="text-muted mb-4">
+                <p class="text-muted mb-2">
                     ₹{{ "{:,.2f}".format(donation.amount) }} from <strong>{{ donation.donor_name }}</strong>
-                    ({{ donation.donor_group_label() }}) has been saved.
+                    ({{ donation.donor_group_label() }}) via <strong>{{ donation.payment_mode_label() }}</strong>
                 </p>
+                <p class="mb-4"><span class="badge bg-primary">Receipt No: {{ donation.receipt_number }}</span></p>
+
+                <div class="d-flex gap-2 justify-content-center flex-wrap mb-4">
+                    <a href="{{ receipt_url }}" target="_blank" rel="noopener" class="btn btn-warning">
+                        <i class="bi bi-receipt"></i> View / Print Receipt
+                    </a>
+                    {% if whatsapp_url %}
+                    <a href="{{ whatsapp_url }}" target="_blank" rel="noopener" class="btn btn-success">
+                        <i class="bi bi-whatsapp"></i> Open WhatsApp Again
+                    </a>
+                    {% endif %}
+                </div>
 
                 {% if whatsapp_url %}
-                <p class="mb-3">
-                    <i class="bi bi-whatsapp text-success"></i>
-                    WhatsApp thank-you opens in a new tab. You can continue here after sending the message.
+                <p class="text-muted small mb-4">
+                    WhatsApp thank-you and receipt link open in a new tab. Share the receipt link with the donor after sending the message.
                 </p>
-                <a href="{{ whatsapp_url }}" target="_blank" rel="noopener" class="btn btn-success mb-4">
-                    <i class="bi bi-whatsapp"></i> Open WhatsApp Again
-                </a>
                 {% endif %}
 
                 <div class="d-flex gap-2 justify-content-center flex-wrap">
@@ -45,6 +53,11 @@
 {% if whatsapp_url %}
 <script>
   window.open({{ whatsapp_url|tojson }}, "_blank", "noopener");
+  window.open({{ receipt_url|tojson }}, "_blank", "noopener");
+</script>
+{% else %}
+<script>
+  window.open({{ receipt_url|tojson }}, "_blank", "noopener");
 </script>
 {% endif %}
 {% endblock %}

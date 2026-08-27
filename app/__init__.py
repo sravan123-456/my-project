@@ -1,7 +1,7 @@
 import os
 from datetime import datetime, timezone
 
-from flask import Flask, jsonify, request
+from flask import Flask, flash, jsonify, redirect, request, url_for
 from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager, current_user
 from flask_sqlalchemy import SQLAlchemy
@@ -53,16 +53,30 @@ def create_app():
     login_manager.login_view = "auth.login"
     login_manager.login_message_category = "info"
 
+    @app.before_request
+    def require_approved_account():
+        if not current_user.is_authenticated or current_user.is_approved:
+            return None
+        allowed = {"auth.logout", "main.pending", "static", "health", "donations.public_receipt"}
+        if request.endpoint in allowed:
+            return None
+        flash("Your account is pending admin approval.", "warning")
+        return redirect(url_for("main.pending"))
+
     from app.models import DONOR_GROUP_LABELS, FESTIVAL_NAME, DEVELOPER_NAME, User
 
     @app.context_processor
     def inject_globals():
+        pending_count = 0
+        if current_user.is_authenticated and current_user.is_admin:
+            pending_count = User.query.filter_by(is_approved=False).count()
         return {
             "festival_name": FESTIVAL_NAME,
             "developer_name": DEVELOPER_NAME,
             "donor_group_labels": DONOR_GROUP_LABELS,
             "user_can_edit": lambda: current_user.is_authenticated and current_user.can_edit(),
             "user_is_admin": lambda: current_user.is_authenticated and current_user.is_admin,
+            "pending_user_count": pending_count,
         }
 
     @login_manager.user_loader
