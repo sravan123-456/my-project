@@ -1,15 +1,40 @@
 from datetime import date, datetime, timedelta
 
-from flask import Blueprint, flash, redirect, render_template, url_for
+import os
+
+from flask import Blueprint, current_app, flash, redirect, render_template, url_for
 from flask_login import current_user
 from sqlalchemy import func
 
 from app import db
 from app.forms import CreateOrganizationForm
-from app.models import ORG_STATUS_ACTIVE, Donation, Expense, LoginEvent, Organization, User
+from app.models import (
+    ORG_STATUS_ACTIVE,
+    ActivityLog,
+    Donation,
+    Expense,
+    LoginEvent,
+    Organization,
+    User,
+)
 from app.permissions import site_admin_required
 
 site_admin_bp = Blueprint("site_admin", __name__, url_prefix="/site-admin")
+
+
+def _delete_organization(org):
+    for expense in Expense.query.filter_by(organization_id=org.id).all():
+        if expense.bill_filename:
+            bill_path = os.path.join(current_app.config["UPLOAD_FOLDER"], expense.bill_filename)
+            if os.path.exists(bill_path):
+                os.remove(bill_path)
+
+    LoginEvent.query.filter_by(organization_id=org.id).delete(synchronize_session=False)
+    ActivityLog.query.filter_by(organization_id=org.id).delete(synchronize_session=False)
+    Donation.query.filter_by(organization_id=org.id).delete(synchronize_session=False)
+    Expense.query.filter_by(organization_id=org.id).delete(synchronize_session=False)
+    User.query.filter_by(organization_id=org.id).delete(synchronize_session=False)
+    db.session.delete(org)
 
 
 @site_admin_bp.route("/")
@@ -100,8 +125,8 @@ def create_organization():
         db.session.add(org)
         db.session.commit()
         flash(
-            f"Committee '{org.display_name()}' created. Share register link: "
-            f"{url_for('auth.register', org=org.slug, _external=True)}",
+            f"Committee '{org.display_name()}' created. Share login link: "
+            f"{url_for('auth.login', org=org.slug, _external=True)}",
             "success",
         )
         return redirect(url_for("site_admin.organization_detail", org_id=org.id))
@@ -134,7 +159,7 @@ def organization_detail(org_id):
         users=users,
         login_count=login_count,
         donation_total=donation_total,
-        register_url=url_for("auth.register", org=org.slug, _external=True),
+        register_url=url_for("auth.login", org=org.slug, _external=True),
     )
 
 
@@ -171,3 +196,22 @@ def approve_organization(org_id):
     db.session.commit()
     flash(f"{org.display_name()} approved. The committee admin can now log in.", "success")
     return redirect(url_for("site_admin.organization_detail", org_id=org.id))
+
+
+@site_admin_bp.route("/organizations/<int:org_id>/delete", methods=["POST"])
+@site_admin_required
+def delete_organization(org_id):
+    org = db.session.get(Organization, org_id)
+    if not org:
+        flash("Committee not found.", "danger")
+        return redirect(url_for("site_admin.organizations"))
+
+    if org.slug == "indukuru":
+        flash("The Indukuru committee cannot be deleted.", "warning")
+        return redirect(url_for("site_admin.organization_detail", org_id=org.id))
+
+    org_name = org.display_name()
+    _delete_organization(org)
+    db.session.commit()
+    flash(f"Committee '{org_name}' and all its data were permanently deleted.", "info")
+    return redirect(url_for("site_admin.organizations"))

@@ -4,44 +4,168 @@
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-5">
+    <div class="col-lg-7">
         <div class="card shadow border-0 auth-card">
             <div class="card-body p-4">
                 <div class="text-center mb-4">
                     <div class="hero-icon-sm">🙏</div>
                     <h3 class="fw-bold">{{ platform_name }}</h3>
-                    <p class="text-muted mb-0">Sign in to your village festival committee account</p>
+                    <p class="text-muted mb-0">Choose how you want to continue</p>
                 </div>
-                <form method="POST" novalidate>
-                    {{ form.hidden_tag() }}
-                    <div class="mb-3">
-                        {{ form.username.label(class="form-label") }}
-                        {{ form.username(class="form-control form-control-lg" + (" is-invalid" if form.username.errors else "")) }}
-                        {% for error in form.username.errors %}
-                            <div class="invalid-feedback">{{ error }}</div>
-                        {% endfor %}
+
+                <ul class="nav nav-pills nav-fill mb-4" id="loginTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link {% if active_tab == 'existing' %}active{% endif %}" id="existing-tab"
+                                data-bs-toggle="pill" data-bs-target="#existing-committee" type="button" role="tab">
+                            Existing Committee
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link {% if active_tab == 'new' %}active{% endif %}" id="new-tab"
+                                data-bs-toggle="pill" data-bs-target="#new-committee" type="button" role="tab">
+                            New Committee
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+                    <div class="tab-pane fade {% if active_tab == 'existing' %}show active{% endif %}" id="existing-committee" role="tabpanel">
+                        <div class="mb-4">
+                            <h5 class="fw-semibold mb-3">Login to your committee</h5>
+                            <form method="POST" novalidate>
+                                {{ login_form.hidden_tag() }}
+                                <input type="hidden" name="active_tab" value="existing">
+                                <div class="mb-3">
+                                    {{ login_form.committee_code.label(class="form-label") }}
+                                    {{ login_form.committee_code(class="form-control form-control-lg" + (" is-invalid" if login_form.committee_code.errors else ""), placeholder="e.g. indukuru") }}
+                                    <div class="form-text">Enter the committee code shared by your festival admin.</div>
+                                </div>
+                                <div class="mb-3">
+                                    {{ login_form.username.label(class="form-label") }}
+                                    {{ login_form.username(class="form-control form-control-lg" + (" is-invalid" if login_form.username.errors else "")) }}
+                                </div>
+                                <div class="mb-4">
+                                    {{ login_form.password.label(class="form-label") }}
+                                    {{ login_form.password(class="form-control form-control-lg" + (" is-invalid" if login_form.password.errors else "")) }}
+                                </div>
+                                {{ login_form.login_submit(class="btn btn-festival btn-lg w-100") }}
+                            </form>
+                        </div>
+
+                        <hr>
+
+                        <div>
+                            <h5 class="fw-semibold mb-2">New member joining an existing committee?</h5>
+                            <p class="text-muted small mb-3">
+                                Submit a join request below. Your committee admin must approve it before you can log in.
+                            </p>
+                            <form method="POST" novalidate>
+                                {{ join_form.hidden_tag() }}
+                                <input type="hidden" name="active_tab" value="existing">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        {{ join_form.committee_code.label(class="form-label") }}
+                                        {{ join_form.committee_code(class="form-control", placeholder="Committee code") }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        {{ join_form.full_name.label(class="form-label") }}
+                                        {{ join_form.full_name(class="form-control") }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        {{ join_form.username.label(class="form-label") }}
+                                        {{ join_form.username(class="form-control") }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        {{ join_form.password.label(class="form-label") }}
+                                        {{ join_form.password(class="form-control") }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        {{ join_form.confirm_password.label(class="form-label") }}
+                                        {{ join_form.confirm_password(class="form-control") }}
+                                    </div>
+                                    <div class="col-12">
+                                        {{ join_form.join_submit(class="btn btn-outline-festival") }}
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
                     </div>
-                    <div class="mb-4">
-                        {{ form.password.label(class="form-label") }}
-                        {{ form.password(class="form-control form-control-lg" + (" is-invalid" if form.password.errors else "")) }}
-                        {% for error in form.password.errors %}
-                            <div class="invalid-feedback">{{ error }}</div>
-                        {% endfor %}
+
+                    <div class="tab-pane fade {% if active_tab == 'new' %}show active{% endif %}" id="new-committee" role="tabpanel">
+                        <h5 class="fw-semibold mb-2">Register a new village / committee</h5>
+                        <p class="text-muted small mb-3">
+                            Create a new festival fund page. The site admin will approve your committee first.
+                            You will become the committee admin after approval.
+                        </p>
+                        <form method="POST" novalidate>
+                            {{ start_form.hidden_tag() }}
+                            <input type="hidden" name="active_tab" value="new">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    {{ start_form.name.label(class="form-label") }}
+                                    {{ start_form.name(class="form-control", placeholder="Committee name") }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ start_form.slug.label(class="form-label") }}
+                                    {{ start_form.slug(class="form-control", placeholder="Committee code") }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ start_form.village.label(class="form-label") }}
+                                    {{ start_form.village(class="form-control") }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ start_form.festival_name.label(class="form-label") }}
+                                    {{ start_form.festival_name(class="form-control") }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ start_form.festival_year.label(class="form-label") }}
+                                    {{ start_form.festival_year(class="form-control") }}
+                                </div>
+                                <div class="col-12"><hr></div>
+                                <div class="col-md-6">
+                                    {{ start_form.full_name.label(class="form-label") }}
+                                    {{ start_form.full_name(class="form-control") }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ start_form.username.label(class="form-label") }}
+                                    {{ start_form.username(class="form-control") }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ start_form.password.label(class="form-label") }}
+                                    {{ start_form.password(class="form-control") }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ start_form.confirm_password.label(class="form-label") }}
+                                    {{ start_form.confirm_password(class="form-control") }}
+                                </div>
+                                <div class="col-12">
+                                    {{ start_form.start_submit(class="btn btn-festival btn-lg") }}
+                                </div>
+                            </div>
+                        </form>
                     </div>
-                    {{ form.submit(class="btn btn-festival btn-lg w-100") }}
-                </form>
-                <div class="text-center mt-4">
-                    <p class="mb-2">
-                        Join an existing committee?
-                        <a href="{{ url_for('auth.register_hub') }}">Register with committee code</a>
-                    </p>
-                    <p class="mb-0 small text-muted">
-                        New village or committee?
-                        <a href="{{ url_for('auth.start_committee') }}">Register your committee here</a>
-                    </p>
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    var hash = window.location.hash;
+    if (hash === "#new-committee") {
+      document.getElementById("new-tab").click();
+    } else if (hash === "#existing-committee") {
+      document.getElementById("existing-tab").click();
+    }
+    var org = new URLSearchParams(window.location.search).get("org");
+    if (org) {
+      document.getElementById("existing-tab").click();
+      var codeInputs = document.querySelectorAll('input[name="committee_code"]');
+      codeInputs.forEach(function (input) { input.value = org; });
+    }
+  })();
+</script>
 {% endblock %}

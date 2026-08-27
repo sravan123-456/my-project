@@ -34,8 +34,8 @@
 
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body">
-        <h5 class="mb-2">Registration Link</h5>
-        <p class="mb-2">Share this with the new committee so members can register:</p>
+        <h5 class="mb-2">Committee Login Link</h5>
+        <p class="mb-2">Share this with committee members so they can log in or request to join:</p>
         <code class="d-block p-2 bg-light rounded">{{ register_url }}</code>
         <div class="d-flex gap-2 flex-wrap mt-3">
             {% if org.is_pending() %}
@@ -53,6 +53,13 @@
             <form method="POST" action="{{ url_for('site_admin.toggle_organization_status', org_id=org.id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn btn-sm btn-outline-success">Activate Committee</button>
+            </form>
+            {% endif %}
+            {% if org.slug != 'indukuru' %}
+            <form method="POST" action="{{ url_for('site_admin.delete_organization', org_id=org.id) }}"
+                  onsubmit="return confirm('Delete {{ org.display_name() }} permanently? All users, donations, and expenses will be removed.');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-outline-danger">Delete Committee</button>
             </form>
             {% endif %}
         </div>

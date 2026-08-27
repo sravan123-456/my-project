@@ -60,7 +60,7 @@ def create_app():
         allowed = {
             "auth.logout",
             "auth.login",
-            "auth.register_hub",
+            "auth.register",
             "auth.register_hub",
             "auth.start_committee",
             "main.pending",
@@ -73,6 +73,7 @@ def create_app():
             "site_admin.organization_detail",
             "site_admin.toggle_organization_status",
             "site_admin.approve_organization",
+            "site_admin.delete_organization",
         }
         if request.endpoint in allowed:
             return None

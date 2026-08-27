@@ -13,9 +13,28 @@ from wtforms.validators import DataRequired, EqualTo, Length, NumberRange, Optio
 
 
 class LoginForm(FlaskForm):
+    committee_code = StringField(
+        "Committee Code",
+        validators=[DataRequired(), Length(min=3, max=80)],
+    )
     username = StringField("Username", validators=[DataRequired(), Length(min=3, max=80)])
     password = PasswordField("Password", validators=[DataRequired()])
-    submit = SubmitField("Login")
+    login_submit = SubmitField("Login")
+
+
+class JoinRegisterForm(FlaskForm):
+    committee_code = StringField(
+        "Committee Code",
+        validators=[DataRequired(), Length(min=3, max=80)],
+    )
+    full_name = StringField("Full Name", validators=[DataRequired(), Length(max=120)])
+    username = StringField("Username", validators=[DataRequired(), Length(min=3, max=80)])
+    password = PasswordField("Password", validators=[DataRequired(), Length(min=6)])
+    confirm_password = PasswordField(
+        "Confirm Password",
+        validators=[DataRequired(), EqualTo("password", message="Passwords must match.")],
+    )
+    join_submit = SubmitField("Submit Join Request")
 
 
 class RegisterForm(FlaskForm):
@@ -53,7 +72,7 @@ class StartCommitteeForm(FlaskForm):
         "Confirm Password",
         validators=[DataRequired(), EqualTo("password", message="Passwords must match.")],
     )
-    submit = SubmitField("Register Committee")
+    start_submit = SubmitField("Register Committee")
 
 
 class CreateOrganizationForm(FlaskForm):
