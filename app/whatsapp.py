@@ -39,9 +39,14 @@ def donation_thank_you_message(donation):
         f"మన కార్యక్రమానికి మీరు అందించిన చందా సహాయానికి ధన్యవాదాలు. "
         f"మీ సహకారం మనకు ఎంతో విలువైనది. మీకు, మీ కుటుంబ సభ్యులకు "
         f"ఆయురారోగ్యాలు, సుఖసంతోషాలు కలగాలని మనస్ఫూర్తిగా కోరుకుంటున్నాము. {EMOJI_PRAY}\n\n"
-        f"మీ అమూల్యమైన సహకారానికి మరోసారి ధన్యవాదాలు. {EMOJI_ROSE}\n\n"
-        f"Please find the donation receipt PDF/photo downloaded on our device. "
-        f"Kindly attach it to this message."
+        f"మీ అమూల్యమైన సహకారానికి మరోసారి ధన్యవాదాలు. {EMOJI_ROSE}"
+    )
+
+
+def receipt_send_instructions():
+    return (
+        "WhatsApp లో సందేశం పంపే ముందు, రసీద PDF లేదా ఫోటోను "
+        "Attach (📎) ద్వారా జోడించి పంపండి."
     )
 
 

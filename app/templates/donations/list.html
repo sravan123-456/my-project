@@ -90,7 +90,7 @@
                         <td><small class="text-muted">{{ d.notes or '-' }}</small></td>
                         <td class="text-end text-success fw-bold">₹{{ "{:,.2f}".format(d.amount) }}</td>
                         <td><small>{{ d.recorded_by.full_name }}</small></td>
-                        <td class="text-center">
+                        <td class="text-center text-nowrap">
                             <a href="{{ url_for('donations.donation_receipt_pdf', donation_id=d.id) }}"
                                class="btn btn-sm btn-outline-danger" title="Download PDF receipt">
                                 <i class="bi bi-file-earmark-pdf"></i>
@@ -102,7 +102,11 @@
                             {% if user_can_edit() %}
                             {% if d.phone %}
                             <a href="{{ url_for('donations.donation_saved', donation_id=d.id) }}"
-                               class="btn btn-sm btn-whatsapp" title="WhatsApp thank you + receipt"
+                               class="btn btn-sm btn-outline-secondary" title="Send receipt + thank you (manual steps)">
+                                <i class="bi bi-send"></i>
+                            </a>
+                            <a href="{{ url_for('donations.send_whatsapp', donation_id=d.id) }}"
+                               class="btn btn-sm btn-whatsapp" title="Send Telugu thank-you on WhatsApp"
                                target="_blank" rel="noopener">
                                 <i class="bi bi-whatsapp"></i>
                             </a>

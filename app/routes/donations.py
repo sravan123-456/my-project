@@ -17,7 +17,7 @@ from app.models import (
 from app.permissions import write_required
 from app.receipt_pdf import generate_receipt_pdf, generate_receipt_png
 from app.receipt_utils import amount_in_words, new_receipt_token, next_receipt_number, RECEIPT_PURPOSE
-from app.whatsapp import build_whatsapp_url, donation_thank_you_message
+from app.whatsapp import build_whatsapp_url, donation_thank_you_message, receipt_send_instructions
 
 donations_bp = Blueprint("donations", __name__)
 
@@ -198,6 +198,7 @@ def donation_saved(donation_id):
         whatsapp_url=whatsapp_url,
         pdf_url=pdf_url,
         png_url=png_url,
+        receipt_instructions=receipt_send_instructions(),
     )
 
 
@@ -251,7 +252,13 @@ def send_whatsapp(donation_id):
         flash("No phone number on file for this donor.", "warning")
         return redirect(url_for("donations.edit_donation", donation_id=donation.id))
 
-    return redirect(url_for("donations.donation_saved", donation_id=donation.id))
+    message = donation_thank_you_message(donation)
+    whatsapp_url = build_whatsapp_url(donation.phone, message)
+    if not whatsapp_url:
+        flash("Invalid phone number for WhatsApp.", "warning")
+        return redirect(url_for("donations.edit_donation", donation_id=donation.id))
+
+    return redirect(whatsapp_url)
 
 
 @donations_bp.route("/<int:donation_id>/delete", methods=["POST"])

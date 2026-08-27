@@ -30,5 +30,10 @@ def generate_receipt_pdf(donation, amount_words, receipt_purpose):
 
 
 def generate_receipt_png(donation, amount_words, receipt_purpose):
-    html_string = _render_html(donation, amount_words, receipt_purpose)
-    return _html_document(html_string).write_png()
+    """Render receipt PNG from the PDF (WeasyPrint has no HTML.write_png)."""
+    import fitz
+
+    pdf_bytes = generate_receipt_pdf(donation, amount_words, receipt_purpose)
+    with fitz.open(stream=pdf_bytes, filetype="pdf") as doc:
+        pixmap = doc[0].get_pixmap(matrix=fitz.Matrix(2, 2))
+        return pixmap.tobytes("png")
