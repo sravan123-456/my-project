@@ -24,6 +24,7 @@ jobs:
   deploy:
     name: Deploy Docker App
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     steps:
       - name: Authenticate to Google Cloud
@@ -42,6 +43,8 @@ jobs:
             --zone "${GCP_ZONE}" \
             --project "${GCP_PROJECT}" \
             --quiet \
+            --ssh-flag=-oServerAliveInterval=30 \
+            --ssh-flag=-oServerAliveCountMax=60 \
             --command="set -e
               APP_DIR='${APP_DIR}'
               if [ ! -d \"\${APP_DIR}/.git\" ]; then
@@ -66,7 +69,7 @@ jobs:
         run: |
           URL="https://${APP_DOMAIN}/health"
           echo "Waiting for app at ${URL}..."
-          for attempt in $(seq 1 24); do
+          for attempt in $(seq 1 60); do
             if curl -sSf -m 10 "${URL}" > /dev/null; then
               echo "Health check passed on attempt ${attempt}"
               exit 0
@@ -74,5 +77,5 @@ jobs:
             echo "Attempt ${attempt} failed (app still starting), retrying in 5s..."
             sleep 5
           done
-          echo "Health check failed: app did not respond after 2 minutes"
+          echo "Health check failed: app did not respond after 5 minutes"
           exit 1
