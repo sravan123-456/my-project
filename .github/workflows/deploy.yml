@@ -49,12 +49,13 @@ jobs:
                 sudo git clone https://github.com/sravan123-456/my-project.git \"\${APP_DIR}\"
               fi
               sudo chown -R \$USER:\$USER \"\${APP_DIR}\"
+              sudo chmod -R u+rwX \"\${APP_DIR}/.git\" 2>/dev/null || true
               git config --global --add safe.directory \"\${APP_DIR}\"
               cd \"\${APP_DIR}\"
               git fetch origin main
               git reset --hard origin/main
               chmod +x scripts/deploy.sh scripts/apply-nginx-domain-only.sh
-              sudo APP_DIR=\"\${APP_DIR}\" DOMAIN=indukuru.online ./scripts/deploy.sh"
+              SKIP_GIT_PULL=1 APP_DIR=\"\${APP_DIR}\" DOMAIN=indukuru.online ./scripts/deploy.sh"
 
       - name: Show app URL
         run: |
