@@ -3,6 +3,8 @@ from datetime import date, datetime
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
+from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 
 from app import db
 from app.forms import JoinRegisterForm, LoginForm, RegisterForm, StartCommitteeForm
@@ -11,6 +13,8 @@ from app.models import ORG_STATUS_PENDING, LoginEvent, Organization, User
 auth_bp = Blueprint("auth", __name__)
 
 SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+NAME_IN_USE_MESSAGE = "This name is already in use. Please choose another name."
+USERNAME_IN_USE_MESSAGE = "This username is already in use. Please choose another username."
 
 
 def _client_ip():
@@ -71,6 +75,29 @@ def _org_login_blocked_message(user):
     return None
 
 
+def _join_registration_conflicts(org_id, username, full_name):
+    normalized_username = username.strip().lower()
+    normalized_full_name = full_name.strip().lower()
+
+    existing_username = User.query.filter_by(username=normalized_username).first()
+    if existing_username:
+        return "username", USERNAME_IN_USE_MESSAGE
+
+    existing_full_name = User.query.filter(
+        User.organization_id == org_id,
+        func.lower(User.full_name) == normalized_full_name,
+    ).first()
+    if existing_full_name:
+        return "full_name", NAME_IN_USE_MESSAGE
+
+    return None, None
+
+
+def _mark_join_form_error(join_form, field_name, message):
+    getattr(join_form, field_name).errors.append(message)
+    flash(message, "danger")
+
+
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if current_user.is_authenticated:
@@ -128,12 +155,16 @@ def login():
             flash(org_error, "danger")
         else:
             username = join_form.username.data.strip().lower()
-            if User.query.filter_by(username=username).first():
-                flash("Username already taken. Please choose another.", "warning")
+            full_name = join_form.full_name.data.strip()
+            conflict_field, conflict_message = _join_registration_conflicts(
+                org.id, username, full_name
+            )
+            if conflict_field:
+                _mark_join_form_error(join_form, conflict_field, conflict_message)
             else:
                 user = User(
                     username=username,
-                    full_name=join_form.full_name.data.strip(),
+                    full_name=full_name,
                     organization_id=org.id,
                     is_admin=False,
                     can_write=False,
@@ -141,14 +172,23 @@ def login():
                 )
                 user.set_password(join_form.password.data)
                 db.session.add(user)
-                db.session.commit()
-                flash(
-                    "Join request submitted. Your committee admin will approve your account. "
-                    "Then log in with your committee code, username, and password.",
-                    "success",
-                )
-                login_form.committee_code.data = committee_code
-                join_form.committee_code.data = committee_code
+                try:
+                    db.session.commit()
+                except IntegrityError:
+                    db.session.rollback()
+                    _mark_join_form_error(join_form, "username", USERNAME_IN_USE_MESSAGE)
+                else:
+                    flash(
+                        "Join request submitted. Your committee admin will approve your account. "
+                        "Then log in with your committee code, username, and password.",
+                        "success",
+                    )
+                    login_form.committee_code.data = committee_code
+                    join_form.committee_code.data = committee_code
+
+    elif join_form.join_submit.data and request.method == "POST":
+        active_tab = "existing"
+        flash("Please correct the errors in the join request form below.", "danger")
 
     elif start_form.start_submit.data and start_form.validate_on_submit():
         active_tab = "new"
@@ -160,7 +200,8 @@ def login():
         else:
             username = start_form.username.data.strip().lower()
             if User.query.filter_by(username=username).first():
-                flash("Username already taken. Please choose another.", "warning")
+                start_form.username.errors.append(USERNAME_IN_USE_MESSAGE)
+                flash(USERNAME_IN_USE_MESSAGE, "danger")
             else:
                 org = Organization(
                     name=start_form.name.data.strip(),

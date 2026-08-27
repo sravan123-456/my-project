@@ -54,34 +54,54 @@
 
                         <hr>
 
-                        <div>
+                        <div id="join-request">
                             <h5 class="fw-semibold mb-2">New member joining an existing committee?</h5>
                             <p class="text-muted small mb-3">
                                 Submit a join request below. Your committee admin must approve it before you can log in.
                             </p>
+                            {% if join_form.errors %}
+                            <div class="alert alert-danger py-2">
+                                Please fix the highlighted fields below.
+                            </div>
+                            {% endif %}
                             <form method="POST" novalidate>
                                 {{ join_form.hidden_tag() }}
                                 <input type="hidden" name="active_tab" value="existing">
                                 <div class="row g-3">
                                     <div class="col-md-6">
                                         {{ join_form.committee_code.label(class="form-label") }}
-                                        {{ join_form.committee_code(class="form-control", placeholder="Committee code") }}
+                                        {{ join_form.committee_code(class="form-control" + (" is-invalid" if join_form.committee_code.errors else ""), placeholder="Committee code") }}
+                                        {% for error in join_form.committee_code.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
                                     </div>
                                     <div class="col-md-6">
                                         {{ join_form.full_name.label(class="form-label") }}
-                                        {{ join_form.full_name(class="form-control") }}
+                                        {{ join_form.full_name(class="form-control" + (" is-invalid" if join_form.full_name.errors else "")) }}
+                                        {% for error in join_form.full_name.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
                                     </div>
                                     <div class="col-md-6">
                                         {{ join_form.username.label(class="form-label") }}
-                                        {{ join_form.username(class="form-control") }}
+                                        {{ join_form.username(class="form-control" + (" is-invalid" if join_form.username.errors else "")) }}
+                                        {% for error in join_form.username.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
                                     </div>
                                     <div class="col-md-6">
                                         {{ join_form.password.label(class="form-label") }}
-                                        {{ join_form.password(class="form-control") }}
+                                        {{ join_form.password(class="form-control" + (" is-invalid" if join_form.password.errors else "")) }}
+                                        {% for error in join_form.password.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
                                     </div>
                                     <div class="col-md-6">
                                         {{ join_form.confirm_password.label(class="form-label") }}
-                                        {{ join_form.confirm_password(class="form-control") }}
+                                        {{ join_form.confirm_password(class="form-control" + (" is-invalid" if join_form.confirm_password.errors else "")) }}
+                                        {% for error in join_form.confirm_password.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
                                     </div>
                                     <div class="col-12">
                                         {{ join_form.join_submit(class="btn btn-outline-festival") }}
@@ -165,6 +185,11 @@
       document.getElementById("existing-tab").click();
       var codeInputs = document.querySelectorAll('input[name="committee_code"]');
       codeInputs.forEach(function (input) { input.value = org; });
+    }
+    var joinSection = document.getElementById("join-request");
+    if (joinSection && joinSection.querySelector(".is-invalid")) {
+      document.getElementById("existing-tab").click();
+      joinSection.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   })();
 </script>
