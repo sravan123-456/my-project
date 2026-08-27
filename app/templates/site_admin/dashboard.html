@@ -40,6 +40,40 @@
     </div>
 </div>
 
+{% if pending_organizations %}
+<div class="card border-0 shadow-sm mb-4 border-start border-warning border-4">
+    <div class="card-header bg-white border-0 py-3">
+        <h5 class="mb-0">Pending Committee Approvals</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Festival</th>
+                        <th>Code</th>
+                        <th>Village</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for org in pending_organizations %}
+                    <tr>
+                        <td>{{ org.display_name() }}</td>
+                        <td><code>{{ org.slug }}</code></td>
+                        <td>{{ org.village or '-' }}</td>
+                        <td class="text-end">
+                            <a href="{{ url_for('site_admin.organization_detail', org_id=org.id) }}" class="btn btn-sm btn-outline-primary">Review</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <div class="row g-4">
     <div class="col-lg-7">
         <div class="card border-0 shadow-sm">
@@ -69,6 +103,8 @@
                                 <td>
                                     {% if org.is_active() %}
                                     <span class="badge bg-success">Active</span>
+                                    {% elif org.is_pending() %}
+                                    <span class="badge bg-warning text-dark">Pending</span>
                                     {% else %}
                                     <span class="badge bg-secondary">Suspended</span>
                                     {% endif %}

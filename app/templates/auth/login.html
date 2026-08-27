@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Login - {{ festival_name }}{% endblock %}
+{% block title %}Login - {{ platform_name }}{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
@@ -9,8 +9,8 @@
             <div class="card-body p-4">
                 <div class="text-center mb-4">
                     <div class="hero-icon-sm">🙏</div>
-                    <h3 class="fw-bold">Welcome Back</h3>
-                    <p class="text-muted">Sign in to manage festival funds</p>
+                    <h3 class="fw-bold">{{ platform_name }}</h3>
+                    <p class="text-muted mb-0">Sign in to your village festival committee account</p>
                 </div>
                 <form method="POST" novalidate>
                     {{ form.hidden_tag() }}
@@ -30,10 +30,16 @@
                     </div>
                     {{ form.submit(class="btn btn-festival btn-lg w-100") }}
                 </form>
-                <p class="text-center mt-3 mb-0">
-                    Don't have an account?
-                    <a href="{{ url_for('auth.register') }}">Register here</a>
-                </p>
+                <div class="text-center mt-4">
+                    <p class="mb-2">
+                        Join an existing committee?
+                        <a href="{{ url_for('auth.register_hub') }}">Register with committee code</a>
+                    </p>
+                    <p class="mb-0 small text-muted">
+                        New village or committee?
+                        <a href="{{ url_for('auth.start_committee') }}">Register your committee here</a>
+                    </p>
+                </div>
             </div>
         </div>
     </div>

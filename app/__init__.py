@@ -57,7 +57,23 @@ def create_app():
     def require_approved_account():
         if not current_user.is_authenticated or current_user.is_approved:
             return None
-        allowed = {"auth.logout", "auth.login", "auth.register", "main.pending", "main.index", "static", "health", "site_admin.dashboard", "site_admin.organizations", "site_admin.create_organization", "site_admin.organization_detail", "site_admin.toggle_organization_status"}
+        allowed = {
+            "auth.logout",
+            "auth.login",
+            "auth.register_hub",
+            "auth.register_hub",
+            "auth.start_committee",
+            "main.pending",
+            "main.index",
+            "static",
+            "health",
+            "site_admin.dashboard",
+            "site_admin.organizations",
+            "site_admin.create_organization",
+            "site_admin.organization_detail",
+            "site_admin.toggle_organization_status",
+            "site_admin.approve_organization",
+        }
         if request.endpoint in allowed:
             return None
         flash("Your account is pending admin approval.", "warning")
@@ -68,7 +84,7 @@ def create_app():
     @app.context_processor
     def inject_globals():
         pending_count = 0
-        festival_name = FESTIVAL_NAME
+        festival_name = PLATFORM_NAME
         organization_name = None
         if current_user.is_authenticated:
             if current_user.organization:
@@ -83,6 +99,7 @@ def create_app():
             "festival_name": festival_name,
             "organization_name": organization_name,
             "platform_name": PLATFORM_NAME,
+            "nav_title": festival_name if current_user.is_authenticated and organization_name else PLATFORM_NAME,
             "developer_name": DEVELOPER_NAME,
             "donor_group_labels": DONOR_GROUP_LABELS,
             "user_can_edit": lambda: current_user.is_authenticated and current_user.can_edit(),

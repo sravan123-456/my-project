@@ -11,6 +11,7 @@ DEVELOPER_NAME = "Sravan Kumar Reddy"
 
 ORG_STATUS_ACTIVE = "active"
 ORG_STATUS_SUSPENDED = "suspended"
+ORG_STATUS_PENDING = "pending"
 
 
 class Organization(db.Model):
@@ -32,6 +33,16 @@ class Organization(db.Model):
 
     def is_active(self):
         return self.status == ORG_STATUS_ACTIVE
+
+    def is_pending(self):
+        return self.status == ORG_STATUS_PENDING
+
+    def status_label(self):
+        if self.is_active():
+            return "Active"
+        if self.is_pending():
+            return "Pending Approval"
+        return "Suspended"
 
     def display_name(self):
         return self.festival_name or self.name

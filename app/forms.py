@@ -29,6 +29,33 @@ class RegisterForm(FlaskForm):
     submit = SubmitField("Create Account")
 
 
+class JoinCommitteeForm(FlaskForm):
+    committee_code = StringField(
+        "Committee Code",
+        validators=[DataRequired(), Length(min=3, max=80)],
+    )
+    submit = SubmitField("Continue to Register")
+
+
+class StartCommitteeForm(FlaskForm):
+    name = StringField("Committee Name", validators=[DataRequired(), Length(max=160)])
+    slug = StringField(
+        "Committee Code",
+        validators=[DataRequired(), Length(min=3, max=80)],
+    )
+    village = StringField("Village / Area", validators=[DataRequired(), Length(max=120)])
+    festival_name = StringField("Festival Display Name", validators=[DataRequired(), Length(max=160)])
+    festival_year = IntegerField("Festival Year", validators=[Optional()])
+    full_name = StringField("Your Full Name", validators=[DataRequired(), Length(max=120)])
+    username = StringField("Choose Username", validators=[DataRequired(), Length(min=3, max=80)])
+    password = PasswordField("Password", validators=[DataRequired(), Length(min=6)])
+    confirm_password = PasswordField(
+        "Confirm Password",
+        validators=[DataRequired(), EqualTo("password", message="Passwords must match.")],
+    )
+    submit = SubmitField("Register Committee")
+
+
 class CreateOrganizationForm(FlaskForm):
     name = StringField("Committee Name", validators=[DataRequired(), Length(max=160)])
     slug = StringField(

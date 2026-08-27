@@ -12,7 +12,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark festival-nav">
         <div class="container">
             <a class="navbar-brand fw-bold" href="{{ url_for('main.index') }}">
-                <i class="bi bi-flower1"></i> {{ festival_name }}
+                <i class="bi bi-flower1"></i> {{ nav_title }}
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -105,7 +105,7 @@
 
     <footer class="festival-footer text-center py-3 mt-auto">
         <div class="container">
-            <small>🙏 {{ festival_name }} &mdash; Transparent &amp; Accountable</small>
+            <small>🙏 {{ nav_title }} &mdash; Transparent &amp; Accountable</small>
             <br>
             <small class="developer-credit">Designed and developed by {{ developer_name }}</small>
         </div>

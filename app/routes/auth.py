@@ -1,13 +1,16 @@
-from datetime import datetime
+import re
+from datetime import date, datetime
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 
 from app import db
-from app.forms import LoginForm, RegisterForm
-from app.models import LoginEvent, Organization, User
+from app.forms import JoinCommitteeForm, LoginForm, RegisterForm, StartCommitteeForm
+from app.models import ORG_STATUS_PENDING, LoginEvent, Organization, User
 
 auth_bp = Blueprint("auth", __name__)
+
+SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
 
 def _client_ip():
@@ -32,9 +35,28 @@ def _record_login(user, username_attempt, success):
         user.last_login_at = datetime.utcnow()
 
 
+def _normalize_slug(slug):
+    return slug.strip().lower().replace(" ", "-")
+
+
 def _registration_org():
-    slug = (request.args.get("org") or request.form.get("organization_slug") or "indukuru").strip().lower()
-    return Organization.query.filter_by(slug=slug, status="active").first()
+    slug = request.args.get("org") or request.form.get("organization_slug")
+    if not slug:
+        return None
+    return Organization.query.filter_by(slug=_normalize_slug(slug), status="active").first()
+
+
+def _org_login_blocked_message(user):
+    if not user.organization:
+        return None
+    if user.organization.is_pending():
+        return (
+            "Your committee is waiting for site admin approval. "
+            "You will be able to log in once it is approved."
+        )
+    if not user.organization.is_active():
+        return "This committee account is suspended. Contact the site administrator."
+    return None
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
@@ -49,16 +71,17 @@ def login():
         username = form.username.data.strip().lower()
         user = User.query.filter_by(username=username).first()
         if user and user.check_password(form.password.data):
-            if user.organization and not user.organization.is_active():
+            blocked = _org_login_blocked_message(user)
+            if blocked:
                 _record_login(user, username, False)
                 db.session.commit()
-                flash("This committee account is suspended. Contact the site administrator.", "danger")
+                flash(blocked, "warning" if user.organization and user.organization.is_pending() else "danger")
                 return render_template("auth/login.html", form=form)
             if not user.is_approved:
                 _record_login(user, username, False)
                 db.session.commit()
                 flash(
-                    "Your account is waiting for admin approval. Please contact your committee admin.",
+                    "Your account is waiting for committee admin approval.",
                     "warning",
                 )
                 return render_template("auth/login.html", form=form)
@@ -76,6 +99,23 @@ def login():
 
 
 @auth_bp.route("/register", methods=["GET", "POST"])
+def register_hub():
+    if current_user.is_authenticated:
+        return redirect(url_for("main.dashboard"))
+
+    join_form = JoinCommitteeForm()
+    if join_form.validate_on_submit():
+        slug = _normalize_slug(join_form.committee_code.data)
+        org = Organization.query.filter_by(slug=slug, status="active").first()
+        if not org:
+            flash("Committee code not found or not active yet. Check the code or register a new committee.", "warning")
+        else:
+            return redirect(url_for("auth.register", org=slug))
+
+    return render_template("auth/register_hub.html", join_form=join_form)
+
+
+@auth_bp.route("/register/join", methods=["GET", "POST"])
 def register():
     if current_user.is_authenticated:
         if current_user.is_approved:
@@ -84,8 +124,8 @@ def register():
 
     organization = _registration_org()
     if not organization:
-        flash("Invalid committee code. Use the registration link shared by your committee admin.", "warning")
-        return redirect(url_for("auth.login"))
+        flash("Choose a valid committee code to join, or register a new committee.", "warning")
+        return redirect(url_for("auth.register_hub"))
 
     form = RegisterForm()
     if form.validate_on_submit():
@@ -129,6 +169,63 @@ def register():
         form=form,
         organization=organization,
     )
+
+
+@auth_bp.route("/start-committee", methods=["GET", "POST"])
+def start_committee():
+    if current_user.is_authenticated:
+        return redirect(url_for("main.dashboard"))
+
+    form = StartCommitteeForm()
+    if form.validate_on_submit():
+        slug = _normalize_slug(form.slug.data)
+        if not SLUG_PATTERN.match(slug):
+            flash("Committee code may only use lowercase letters, numbers, and hyphens.", "warning")
+            return render_template("auth/start_committee.html", form=form)
+
+        if Organization.query.filter_by(slug=slug).first():
+            flash("That committee code is already taken. Choose another.", "warning")
+            return render_template("auth/start_committee.html", form=form)
+
+        username = form.username.data.strip().lower()
+        if User.query.filter_by(username=username).first():
+            flash("Username already taken. Please choose another.", "warning")
+            return render_template("auth/start_committee.html", form=form)
+
+        org = Organization(
+            name=form.name.data.strip(),
+            slug=slug,
+            village=form.village.data.strip(),
+            festival_name=form.festival_name.data.strip(),
+            festival_year=form.festival_year.data or date.today().year,
+            status=ORG_STATUS_PENDING,
+        )
+        db.session.add(org)
+        db.session.flush()
+
+        admin = User(
+            username=username,
+            full_name=form.full_name.data.strip(),
+            organization_id=org.id,
+            is_admin=True,
+            can_write=True,
+            is_approved=False,
+        )
+        admin.set_password(form.password.data)
+        db.session.add(admin)
+        db.session.commit()
+
+        flash(
+            "Your committee registration was submitted. The site admin will review and approve it. "
+            "You can log in after approval.",
+            "success",
+        )
+        return redirect(url_for("auth.login"))
+
+    if not form.festival_year.data:
+        form.festival_year.data = date.today().year
+
+    return render_template("auth/start_committee.html", form=form)
 
 
 @auth_bp.route("/logout")

@@ -45,6 +45,8 @@
                         <td>
                             {% if item.org.is_active() %}
                             <span class="badge bg-success">Active</span>
+                            {% elif item.org.is_pending() %}
+                            <span class="badge bg-warning text-dark">Pending</span>
                             {% else %}
                             <span class="badge bg-secondary">Suspended</span>
                             {% endif %}

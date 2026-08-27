@@ -6,7 +6,7 @@ from sqlalchemy import func
 
 from app import db
 from app.forms import CreateOrganizationForm
-from app.models import Donation, Expense, LoginEvent, Organization, User
+from app.models import ORG_STATUS_ACTIVE, Donation, Expense, LoginEvent, Organization, User
 from app.permissions import site_admin_required
 
 site_admin_bp = Blueprint("site_admin", __name__, url_prefix="/site-admin")
@@ -21,7 +21,8 @@ def dashboard():
 
     stats = {
         "organizations": Organization.query.count(),
-        "active_organizations": Organization.query.filter_by(status="active").count(),
+        "active_organizations": Organization.query.filter_by(status=ORG_STATUS_ACTIVE).count(),
+        "pending_organizations": Organization.query.filter_by(status="pending").count(),
         "users": User.query.count(),
         "approved_users": User.query.filter_by(is_approved=True).count(),
         "logins_today": LoginEvent.query.filter(
@@ -43,12 +44,16 @@ def dashboard():
         .all()
     )
     organizations = Organization.query.order_by(Organization.created_at.desc()).all()
+    pending_organizations = Organization.query.filter_by(status="pending").order_by(
+        Organization.created_at.asc()
+    ).all()
 
     return render_template(
         "site_admin/dashboard.html",
         stats=stats,
         recent_logins=recent_logins,
         organizations=organizations,
+        pending_organizations=pending_organizations,
     )
 
 
@@ -90,7 +95,7 @@ def create_organization():
             village=form.village.data.strip() if form.village.data else None,
             festival_name=form.festival_name.data.strip(),
             festival_year=form.festival_year.data or date.today().year,
-            status="active",
+            status=ORG_STATUS_ACTIVE,
         )
         db.session.add(org)
         db.session.commit()
@@ -148,4 +153,21 @@ def toggle_organization_status(org_id):
     org.status = "suspended" if org.is_active() else "active"
     db.session.commit()
     flash(f"{org.display_name()} is now {org.status}.", "info")
+    return redirect(url_for("site_admin.organization_detail", org_id=org.id))
+
+
+@site_admin_bp.route("/organizations/<int:org_id>/approve", methods=["POST"])
+@site_admin_required
+def approve_organization(org_id):
+    org = db.session.get(Organization, org_id)
+    if not org:
+        flash("Committee not found.", "danger")
+        return redirect(url_for("site_admin.organizations"))
+
+    org.status = ORG_STATUS_ACTIVE
+    User.query.filter_by(organization_id=org.id).update(
+        {"is_approved": True}, synchronize_session=False
+    )
+    db.session.commit()
+    flash(f"{org.display_name()} approved. The committee admin can now log in.", "success")
     return redirect(url_for("site_admin.organization_detail", org_id=org.id))

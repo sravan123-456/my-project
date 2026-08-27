@@ -37,14 +37,25 @@
         <h5 class="mb-2">Registration Link</h5>
         <p class="mb-2">Share this with the new committee so members can register:</p>
         <code class="d-block p-2 bg-light rounded">{{ register_url }}</code>
-        {% if org.slug != 'indukuru' %}
-        <form method="POST" action="{{ url_for('site_admin.toggle_organization_status', org_id=org.id) }}" class="mt-3">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="btn btn-sm {% if org.is_active() %}btn-outline-danger{% else %}btn-outline-success{% endif %}">
-                {% if org.is_active() %}Suspend Committee{% else %}Activate Committee{% endif %}
-            </button>
-        </form>
-        {% endif %}
+        <div class="d-flex gap-2 flex-wrap mt-3">
+            {% if org.is_pending() %}
+            <form method="POST" action="{{ url_for('site_admin.approve_organization', org_id=org.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-success">Approve Committee</button>
+            </form>
+            {% endif %}
+            {% if org.slug != 'indukuru' and org.is_active() %}
+            <form method="POST" action="{{ url_for('site_admin.toggle_organization_status', org_id=org.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-outline-danger">Suspend Committee</button>
+            </form>
+            {% elif org.slug != 'indukuru' and not org.is_pending() %}
+            <form method="POST" action="{{ url_for('site_admin.toggle_organization_status', org_id=org.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-outline-success">Activate Committee</button>
+            </form>
+            {% endif %}
+        </div>
     </div>
 </div>
 

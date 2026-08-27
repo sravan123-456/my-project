@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Register Committee - {{ platform_name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow border-0 auth-card">
+            <div class="card-body p-4 p-md-5">
+                <div class="text-center mb-4">
+                    <h3 class="fw-bold">Register Your Village / Committee</h3>
+                    <p class="text-muted">
+                        Create your festival fund page on {{ platform_name }}.
+                        After site admin approval, you can log in and invite your team.
+                    </p>
+                </div>
+                <form method="POST" novalidate>
+                    {{ form.hidden_tag() }}
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            {{ form.name.label(class="form-label") }}
+                            {{ form.name(class="form-control", placeholder="e.g. Ramapuram Vinayaka Committee") }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.slug.label(class="form-label") }}
+                            {{ form.slug(class="form-control", placeholder="e.g. ramapuram") }}
+                            <div class="form-text">Members will use this code to join your committee.</div>
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.village.label(class="form-label") }}
+                            {{ form.village(class="form-control") }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.festival_name.label(class="form-label") }}
+                            {{ form.festival_name(class="form-control", placeholder="Name shown on dashboard") }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.festival_year.label(class="form-label") }}
+                            {{ form.festival_year(class="form-control") }}
+                        </div>
+                        <div class="col-12"><hr></div>
+                        <div class="col-md-6">
+                            {{ form.full_name.label(class="form-label") }}
+                            {{ form.full_name(class="form-control") }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.username.label(class="form-label") }}
+                            {{ form.username(class="form-control") }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.password.label(class="form-label") }}
+                            {{ form.password(class="form-control") }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.confirm_password.label(class="form-label") }}
+                            {{ form.confirm_password(class="form-control") }}
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap mt-4">
+                        {{ form.submit(class="btn btn-festival btn-lg") }}
+                        <a href="{{ url_for('auth.register_hub') }}" class="btn btn-outline-secondary btn-lg">Back</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

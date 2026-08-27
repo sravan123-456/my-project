@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Join Committee - {{ platform_name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center g-4">
+    <div class="col-md-5">
+        <div class="card shadow border-0 auth-card h-100">
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <h3 class="fw-bold">Join a Committee</h3>
+                    <p class="text-muted">Enter the committee code shared by your festival admin</p>
+                </div>
+                <form method="POST" novalidate>
+                    {{ join_form.hidden_tag() }}
+                    <div class="mb-3">
+                        {{ join_form.committee_code.label(class="form-label") }}
+                        {{ join_form.committee_code(class="form-control form-control-lg", placeholder="e.g. indukuru") }}
+                    </div>
+                    {{ join_form.submit(class="btn btn-festival btn-lg w-100") }}
+                </form>
+                <p class="text-center mt-3 mb-0 small text-muted">
+                    Example: Indukuru uses code <code>indukuru</code>
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-5">
+        <div class="card shadow border-0 h-100">
+            <div class="card-body p-4 d-flex flex-column justify-content-center">
+                <h4 class="fw-bold">Start a New Committee</h4>
+                <p class="text-muted">
+                    Are you setting up funds for a new village or festival team?
+                    Register your committee and become the committee admin after site approval.
+                </p>
+                <a href="{{ url_for('auth.start_committee') }}" class="btn btn-outline-festival btn-lg">
+                    <i class="bi bi-plus-circle"></i> Register New Committee
+                </a>
+                <p class="text-center mt-4 mb-0">
+                    Already have an account? <a href="{{ url_for('auth.login') }}">Login</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
