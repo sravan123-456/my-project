@@ -4,16 +4,27 @@ from flask_login import current_user, login_required
 from app import db
 from app.activity import log_activity
 from app.models import ActivityLog, Donation, Expense, User
-from app.permissions import admin_required
+from app.org_scope import org_get, org_users_query
+from app.permissions import org_admin_required
 
 admin_bp = Blueprint("admin", __name__)
 
 
 @admin_bp.route("/users")
-@admin_required
+@org_admin_required
 def users():
-    pending_users = User.query.filter_by(is_approved=False).order_by(User.created_at.asc()).all()
-    approved_users = User.query.filter_by(is_approved=True).order_by(User.created_at.desc()).all()
+    pending_users = (
+        org_users_query()
+        .filter_by(is_approved=False)
+        .order_by(User.created_at.asc())
+        .all()
+    )
+    approved_users = (
+        org_users_query()
+        .filter_by(is_approved=True)
+        .order_by(User.created_at.desc())
+        .all()
+    )
     return render_template(
         "admin/users.html",
         pending_users=pending_users,
@@ -21,10 +32,14 @@ def users():
     )
 
 
+def _org_user(user_id):
+    return org_users_query().filter_by(id=user_id).first()
+
+
 @admin_bp.route("/users/<int:user_id>/approve", methods=["POST"])
-@admin_required
+@org_admin_required
 def approve_user(user_id):
-    user = db.session.get(User, user_id)
+    user = _org_user(user_id)
     if not user:
         flash("User not found.", "danger")
         return redirect(url_for("admin.users"))
@@ -47,15 +62,19 @@ def approve_user(user_id):
 
 
 @admin_bp.route("/users/<int:user_id>/reject", methods=["POST"])
-@admin_required
+@org_admin_required
 def reject_user(user_id):
-    user = db.session.get(User, user_id)
+    user = _org_user(user_id)
     if not user:
         flash("User not found.", "danger")
         return redirect(url_for("admin.users"))
 
+    if user.is_site_admin:
+        flash("Cannot reject a site administrator.", "warning")
+        return redirect(url_for("admin.users"))
+
     if user.is_admin:
-        flash("Cannot reject an admin account.", "warning")
+        flash("Cannot reject a committee admin. Remove admin role first.", "warning")
         return redirect(url_for("admin.users"))
 
     if user.id == current_user.id:
@@ -78,14 +97,14 @@ def reject_user(user_id):
 
 
 @admin_bp.route("/users/<int:user_id>/toggle-write", methods=["POST"])
-@admin_required
+@org_admin_required
 def toggle_write(user_id):
-    user = db.session.get(User, user_id)
+    user = _org_user(user_id)
     if not user:
         flash("User not found.", "danger")
         return redirect(url_for("admin.users"))
 
-    if user.is_admin:
+    if user.is_admin or user.is_site_admin:
         flash("Admins always have full access.", "info")
         return redirect(url_for("admin.users"))
 
@@ -104,11 +123,15 @@ def toggle_write(user_id):
 
 
 @admin_bp.route("/users/<int:user_id>/toggle-admin", methods=["POST"])
-@admin_required
+@org_admin_required
 def toggle_admin(user_id):
-    user = db.session.get(User, user_id)
+    user = _org_user(user_id)
     if not user:
         flash("User not found.", "danger")
+        return redirect(url_for("admin.users"))
+
+    if user.is_site_admin:
+        flash("Site administrators are managed from the site admin portal.", "warning")
         return redirect(url_for("admin.users"))
 
     if user.id == current_user.id:
@@ -116,19 +139,19 @@ def toggle_admin(user_id):
         return redirect(url_for("admin.users"))
 
     if user.is_admin:
-        admin_count = User.query.filter_by(is_admin=True).count()
+        admin_count = org_users_query().filter_by(is_admin=True).count()
         if admin_count <= 1:
-            flash("At least one admin is required.", "warning")
+            flash("At least one committee admin is required.", "warning")
             return redirect(url_for("admin.users"))
         user.is_admin = False
         log_activity(
             current_user,
             "updated",
             "user",
-            f"Removed admin role from {user.full_name}",
+            f"Removed committee admin role from {user.full_name}",
             user.id,
         )
-        flash(f"{user.full_name} is no longer an admin.", "info")
+        flash(f"{user.full_name} is no longer a committee admin.", "info")
     else:
         user.is_admin = True
         user.can_write = True
@@ -136,29 +159,33 @@ def toggle_admin(user_id):
             current_user,
             "updated",
             "user",
-            f"Granted admin role to {user.full_name}",
+            f"Granted committee admin role to {user.full_name}",
             user.id,
         )
-        flash(f"{user.full_name} is now an admin.", "success")
+        flash(f"{user.full_name} is now a committee admin.", "success")
 
     db.session.commit()
     return redirect(url_for("admin.users"))
 
 
 @admin_bp.route("/users/<int:user_id>/delete", methods=["POST"])
-@admin_required
+@org_admin_required
 def delete_user(user_id):
-    user = db.session.get(User, user_id)
+    user = _org_user(user_id)
     if not user:
         flash("User not found.", "danger")
+        return redirect(url_for("admin.users"))
+
+    if user.is_site_admin:
+        flash("Cannot delete a site administrator.", "warning")
         return redirect(url_for("admin.users"))
 
     if user.id == current_user.id:
         flash("You cannot delete your own account.", "warning")
         return redirect(url_for("admin.users"))
 
-    if user.is_admin and User.query.filter_by(is_admin=True).count() <= 1:
-        flash("Cannot delete the only admin account.", "warning")
+    if user.is_admin and org_users_query().filter_by(is_admin=True).count() <= 1:
+        flash("Cannot delete the only committee admin.", "warning")
         return redirect(url_for("admin.users"))
 
     full_name = user.full_name

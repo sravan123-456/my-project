@@ -57,25 +57,37 @@ def create_app():
     def require_approved_account():
         if not current_user.is_authenticated or current_user.is_approved:
             return None
-        allowed = {"auth.logout", "main.pending", "static", "health"}
+        allowed = {"auth.logout", "auth.login", "auth.register", "main.pending", "main.index", "static", "health", "site_admin.dashboard", "site_admin.organizations", "site_admin.create_organization", "site_admin.organization_detail", "site_admin.toggle_organization_status"}
         if request.endpoint in allowed:
             return None
         flash("Your account is pending admin approval.", "warning")
         return redirect(url_for("main.pending"))
 
-    from app.models import DONOR_GROUP_LABELS, FESTIVAL_NAME, DEVELOPER_NAME, User
+    from app.models import DONOR_GROUP_LABELS, DEVELOPER_NAME, FESTIVAL_NAME, PLATFORM_NAME, User
 
     @app.context_processor
     def inject_globals():
         pending_count = 0
-        if current_user.is_authenticated and current_user.is_admin:
-            pending_count = User.query.filter_by(is_approved=False).count()
+        festival_name = FESTIVAL_NAME
+        organization_name = None
+        if current_user.is_authenticated:
+            if current_user.organization:
+                festival_name = current_user.organization.display_name()
+                organization_name = current_user.organization.name
+            if current_user.is_admin:
+                pending_count = User.query.filter_by(
+                    organization_id=current_user.organization_id,
+                    is_approved=False,
+                ).count()
         return {
-            "festival_name": FESTIVAL_NAME,
+            "festival_name": festival_name,
+            "organization_name": organization_name,
+            "platform_name": PLATFORM_NAME,
             "developer_name": DEVELOPER_NAME,
             "donor_group_labels": DONOR_GROUP_LABELS,
             "user_can_edit": lambda: current_user.is_authenticated and current_user.can_edit(),
             "user_is_admin": lambda: current_user.is_authenticated and current_user.is_admin,
+            "user_is_site_admin": lambda: current_user.is_authenticated and current_user.is_site_admin,
             "pending_user_count": pending_count,
         }
 
@@ -90,6 +102,7 @@ def create_app():
     from app.routes.reports import reports_bp
     from app.routes.activity import activity_bp
     from app.routes.admin import admin_bp
+    from app.routes.site_admin import site_admin_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
@@ -98,6 +111,7 @@ def create_app():
     app.register_blueprint(reports_bp, url_prefix="/reports")
     app.register_blueprint(activity_bp, url_prefix="/activity")
     app.register_blueprint(admin_bp, url_prefix="/admin")
+    app.register_blueprint(site_admin_bp)
 
     @app.get("/health")
     def health():

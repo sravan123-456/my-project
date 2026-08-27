@@ -4,6 +4,7 @@ from app.models import ActivityLog
 
 def log_activity(user, action, entity_type, description, entity_id=None):
     entry = ActivityLog(
+        organization_id=user.organization_id,
         user_id=user.id,
         user_name=user.full_name,
         action=action,

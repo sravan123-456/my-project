@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Site Admin - {{ platform_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="fw-bold mb-0"><i class="bi bi-globe"></i> Site Admin</h2>
+        <small class="text-muted">Platform overview and committee management</small>
+    </div>
+    <a href="{{ url_for('site_admin.create_organization') }}" class="btn btn-festival">
+        <i class="bi bi-plus-circle"></i> New Committee
+    </a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-6">
+        <div class="card border-0 shadow-sm text-center p-3">
+            <p class="text-muted mb-1 small">Committees</p>
+            <h3 class="fw-bold mb-0">{{ stats.active_organizations }}/{{ stats.organizations }}</h3>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card border-0 shadow-sm text-center p-3">
+            <p class="text-muted mb-1 small">Users</p>
+            <h3 class="fw-bold mb-0">{{ stats.approved_users }}/{{ stats.users }}</h3>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card border-0 shadow-sm text-center p-3">
+            <p class="text-muted mb-1 small">Logins Today</p>
+            <h3 class="fw-bold mb-0">{{ stats.logins_today }}</h3>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card border-0 shadow-sm text-center p-3">
+            <p class="text-muted mb-1 small">Logins (7 days)</p>
+            <h3 class="fw-bold mb-0">{{ stats.logins_week }}</h3>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Committees</h5>
+                <a href="{{ url_for('site_admin.organizations') }}">View all</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Festival</th>
+                                <th>Code</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for org in organizations[:8] %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('site_admin.organization_detail', org_id=org.id) }}">
+                                        {{ org.display_name() }}
+                                    </a>
+                                </td>
+                                <td><code>{{ org.slug }}</code></td>
+                                <td>
+                                    {% if org.is_active() %}
+                                    <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Suspended</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="mb-0">Recent Logins</h5>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_logins %}
+                <ul class="list-group list-group-flush">
+                    {% for event in recent_logins %}
+                    <li class="list-group-item small">
+                        <strong>{{ event.user.full_name if event.user else event.username_attempt }}</strong>
+                        {% if event.organization %}
+                        <span class="text-muted">— {{ event.organization.display_name() }}</span>
+                        {% endif %}
+                        <br>
+                        <span class="text-muted">{{ event.created_at.strftime('%d %b %Y, %H:%M') }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted p-3 mb-0">No login activity yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

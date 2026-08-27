@@ -3,24 +3,27 @@ import io
 from datetime import datetime
 
 from flask import Blueprint, Response, render_template
-from flask_login import login_required
+from flask_login import current_user, login_required
 from sqlalchemy import func
 
 from app import db
 from app.models import Donation, Expense
+from app.org_scope import org_query
 
 reports_bp = Blueprint("reports", __name__)
 
 
 def _donation_group_totals():
     youth = (
-        db.session.query(func.coalesce(func.sum(Donation.amount), 0))
+        org_query(Donation)
         .filter(Donation.donor_group == "youth")
+        .with_entities(func.coalesce(func.sum(Donation.amount), 0))
         .scalar()
     )
     village = (
-        db.session.query(func.coalesce(func.sum(Donation.amount), 0))
+        org_query(Donation)
         .filter(Donation.donor_group == "village")
+        .with_entities(func.coalesce(func.sum(Donation.amount), 0))
         .scalar()
     )
     return youth, village
@@ -29,14 +32,24 @@ def _donation_group_totals():
 @reports_bp.route("/")
 @login_required
 def reports():
-    total_donations = db.session.query(func.coalesce(func.sum(Donation.amount), 0)).scalar()
-    total_expenses = db.session.query(func.coalesce(func.sum(Expense.amount), 0)).scalar()
+    org_id = current_user.organization_id
+    total_donations = (
+        db.session.query(func.coalesce(func.sum(Donation.amount), 0))
+        .filter(Donation.organization_id == org_id)
+        .scalar()
+    )
+    total_expenses = (
+        db.session.query(func.coalesce(func.sum(Expense.amount), 0))
+        .filter(Expense.organization_id == org_id)
+        .scalar()
+    )
 
-    donations = Donation.query.order_by(Donation.donation_date.desc()).all()
-    expenses = Expense.query.order_by(Expense.expense_date.desc()).all()
+    donations = org_query(Donation).order_by(Donation.donation_date.desc()).all()
+    expenses = org_query(Expense).order_by(Expense.expense_date.desc()).all()
 
     expense_by_category = (
         db.session.query(Expense.category, func.sum(Expense.amount).label("total"))
+        .filter(Expense.organization_id == org_id)
         .group_by(Expense.category)
         .order_by(func.sum(Expense.amount).desc())
         .all()
@@ -60,16 +73,19 @@ def reports():
 @reports_bp.route("/export/csv")
 @login_required
 def export_csv():
+    org_id = current_user.organization_id
+    org_name = current_user.organization.display_name() if current_user.organization else "Festival"
+
     output = io.StringIO()
     writer = csv.writer(output)
 
-    writer.writerow(["VINAYAKA FESTIVAL - FINANCIAL REPORT"])
+    writer.writerow([f"{org_name.upper()} - FINANCIAL REPORT"])
     writer.writerow(["Generated", datetime.now().strftime("%Y-%m-%d %H:%M")])
     writer.writerow([])
 
     writer.writerow(["DONATIONS"])
     writer.writerow(["Date", "Donor Name", "From", "Payment", "UPI Txn ID", "Phone", "Amount", "Notes"])
-    for d in Donation.query.order_by(Donation.donation_date).all():
+    for d in org_query(Donation).order_by(Donation.donation_date).all():
         group_label = "Youth" if d.donor_group == "youth" else "Village Member"
         writer.writerow([
             d.donation_date.strftime("%Y-%m-%d"),
@@ -82,13 +98,17 @@ def export_csv():
             d.notes or "",
         ])
 
-    total_donations = db.session.query(func.coalesce(func.sum(Donation.amount), 0)).scalar()
+    total_donations = (
+        db.session.query(func.coalesce(func.sum(Donation.amount), 0))
+        .filter(Donation.organization_id == org_id)
+        .scalar()
+    )
     writer.writerow(["", "", "Total Donations", f"{total_donations:.2f}", ""])
     writer.writerow([])
 
     writer.writerow(["EXPENSES"])
     writer.writerow(["Date", "Title", "Category", "Amount", "Description", "Bill"])
-    for e in Expense.query.order_by(Expense.expense_date).all():
+    for e in org_query(Expense).order_by(Expense.expense_date).all():
         writer.writerow([
             e.expense_date.strftime("%Y-%m-%d"),
             e.title,
@@ -98,7 +118,11 @@ def export_csv():
             "Yes" if e.bill_filename else "No",
         ])
 
-    total_expenses = db.session.query(func.coalesce(func.sum(Expense.amount), 0)).scalar()
+    total_expenses = (
+        db.session.query(func.coalesce(func.sum(Expense.amount), 0))
+        .filter(Expense.organization_id == org_id)
+        .scalar()
+    )
     writer.writerow(["", "", "", "Total Expenses", f"{total_expenses:.2f}", ""])
     writer.writerow([])
     writer.writerow(["BALANCE", f"{total_donations - total_expenses:.2f}"])
@@ -108,6 +132,6 @@ def export_csv():
         output.getvalue(),
         mimetype="text/csv",
         headers={
-            "Content-Disposition": f"attachment; filename=vinayaka_festival_report_{datetime.now().strftime('%Y%m%d')}.csv"
+            "Content-Disposition": f"attachment; filename=festival_report_{datetime.now().strftime('%Y%m%d')}.csv"
         },
     )

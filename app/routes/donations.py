@@ -14,6 +14,7 @@ from app.models import (
     PAYMENT_MODE_CHOICES,
     Donation,
 )
+from app.org_scope import org_get, org_query
 from app.permissions import write_required
 from app.whatsapp import build_whatsapp_url, donation_thank_you_message
 
@@ -22,13 +23,15 @@ donations_bp = Blueprint("donations", __name__)
 
 def _donation_totals():
     youth = (
-        db.session.query(func.coalesce(func.sum(Donation.amount), 0))
+        org_query(Donation)
         .filter(Donation.donor_group == "youth")
+        .with_entities(func.coalesce(func.sum(Donation.amount), 0))
         .scalar()
     )
     village = (
-        db.session.query(func.coalesce(func.sum(Donation.amount), 0))
+        org_query(Donation)
         .filter(Donation.donor_group == "village")
+        .with_entities(func.coalesce(func.sum(Donation.amount), 0))
         .scalar()
     )
     return youth, village
@@ -39,8 +42,9 @@ def _prepare_donation_form(form):
     form.payment_mode.choices = PAYMENT_MODE_CHOICES
 
 
-def _save_donation_from_form(form, recorded_by_id):
+def _save_donation_from_form(form, recorded_by_id, organization_id):
     donation = Donation(
+        organization_id=organization_id,
         donor_name=form.donor_name.data.strip(),
         donor_group=form.donor_group.data,
         payment_mode=form.payment_mode.data,
@@ -63,7 +67,7 @@ def _save_donation_from_form(form, recorded_by_id):
 @login_required
 def list_donations():
     group_filter = request.args.get("group", "all")
-    query = Donation.query
+    query = org_query(Donation)
     if group_filter in ("youth", "village"):
         query = query.filter_by(donor_group=group_filter)
 
@@ -93,7 +97,10 @@ def add_donation():
         form.payment_mode.data = PAYMENT_CASH
 
     if form.validate_on_submit():
-        donation = _save_donation_from_form(form, current_user.id)
+        donation = _save_donation_from_form(
+            form, current_user.id, current_user.organization_id
+        )
+        db.session.flush()
         log_activity(
             current_user,
             "added",
@@ -112,7 +119,7 @@ def add_donation():
 @donations_bp.route("/<int:donation_id>/saved")
 @write_required
 def donation_saved(donation_id):
-    donation = db.session.get(Donation, donation_id)
+    donation = org_get(Donation, donation_id)
     if not donation:
         flash("Donation not found.", "danger")
         return redirect(url_for("donations.list_donations"))
@@ -132,7 +139,7 @@ def donation_saved(donation_id):
 @donations_bp.route("/<int:donation_id>/edit", methods=["GET", "POST"])
 @write_required
 def edit_donation(donation_id):
-    donation = db.session.get(Donation, donation_id)
+    donation = org_get(Donation, donation_id)
     if not donation:
         flash("Donation not found.", "danger")
         return redirect(url_for("donations.list_donations"))
@@ -170,7 +177,7 @@ def edit_donation(donation_id):
 @donations_bp.route("/<int:donation_id>/whatsapp")
 @write_required
 def send_whatsapp(donation_id):
-    donation = db.session.get(Donation, donation_id)
+    donation = org_get(Donation, donation_id)
     if not donation:
         flash("Donation not found.", "danger")
         return redirect(url_for("donations.list_donations"))
@@ -191,7 +198,7 @@ def send_whatsapp(donation_id):
 @donations_bp.route("/<int:donation_id>/delete", methods=["POST"])
 @write_required
 def delete_donation(donation_id):
-    donation = db.session.get(Donation, donation_id)
+    donation = org_get(Donation, donation_id)
     if not donation:
         flash("Donation not found.", "danger")
     else:

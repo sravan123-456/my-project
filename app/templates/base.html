@@ -48,10 +48,17 @@
                     {% if user_is_admin() %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('admin.users') }}">
-                            <i class="bi bi-shield-lock"></i> Admin
+                            <i class="bi bi-shield-lock"></i> Committee Admin
                             {% if pending_user_count > 0 %}
                             <span class="badge bg-warning text-dark">{{ pending_user_count }}</span>
                             {% endif %}
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if user_is_site_admin() %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('site_admin.dashboard') }}">
+                            <i class="bi bi-globe"></i> Site Admin
                         </a>
                     </li>
                     {% endif %}

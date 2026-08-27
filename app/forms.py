@@ -2,6 +2,7 @@ from flask_wtf import FlaskForm
 from wtforms import (
     DateField,
     FloatField,
+    IntegerField,
     PasswordField,
     SelectField,
     StringField,
@@ -26,6 +27,18 @@ class RegisterForm(FlaskForm):
         validators=[DataRequired(), EqualTo("password", message="Passwords must match.")],
     )
     submit = SubmitField("Create Account")
+
+
+class CreateOrganizationForm(FlaskForm):
+    name = StringField("Committee Name", validators=[DataRequired(), Length(max=160)])
+    slug = StringField(
+        "Committee Code (URL slug)",
+        validators=[DataRequired(), Length(min=3, max=80)],
+    )
+    village = StringField("Village / Area", validators=[Optional(), Length(max=120)])
+    festival_name = StringField("Festival Display Name", validators=[DataRequired(), Length(max=160)])
+    festival_year = IntegerField("Festival Year", validators=[Optional()])
+    submit = SubmitField("Create Committee")
 
 
 class DonationForm(FlaskForm):

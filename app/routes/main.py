@@ -1,11 +1,12 @@
 from datetime import date
 
-from flask import Blueprint, render_template
-from flask_login import login_required
+from flask import Blueprint, redirect, render_template, url_for
+from flask_login import current_user, login_required
 from sqlalchemy import func
 
 from app import db
 from app.models import ActivityLog, Donation, Expense
+from app.org_scope import org_query
 
 main_bp = Blueprint("main", __name__)
 
@@ -26,40 +27,61 @@ def pending():
 @main_bp.route("/dashboard")
 @login_required
 def dashboard():
-    total_donations = db.session.query(func.coalesce(func.sum(Donation.amount), 0)).scalar()
-    total_expenses = db.session.query(func.coalesce(func.sum(Expense.amount), 0)).scalar()
+    org_id = current_user.organization_id
+    total_donations = (
+        db.session.query(func.coalesce(func.sum(Donation.amount), 0))
+        .filter(Donation.organization_id == org_id)
+        .scalar()
+    )
+    total_expenses = (
+        db.session.query(func.coalesce(func.sum(Expense.amount), 0))
+        .filter(Expense.organization_id == org_id)
+        .scalar()
+    )
     balance = total_donations - total_expenses
 
     recent_donations = (
-        Donation.query.order_by(Donation.donation_date.desc(), Donation.id.desc()).limit(5).all()
+        org_query(Donation)
+        .order_by(Donation.donation_date.desc(), Donation.id.desc())
+        .limit(5)
+        .all()
     )
     recent_expenses = (
-        Expense.query.order_by(Expense.expense_date.desc(), Expense.id.desc()).limit(5).all()
+        org_query(Expense)
+        .order_by(Expense.expense_date.desc(), Expense.id.desc())
+        .limit(5)
+        .all()
     )
 
     expense_by_category = (
         db.session.query(Expense.category, func.sum(Expense.amount).label("total"))
+        .filter(Expense.organization_id == org_id)
         .group_by(Expense.category)
         .order_by(func.sum(Expense.amount).desc())
         .all()
     )
 
-    donation_count = Donation.query.count()
-    expense_count = Expense.query.count()
+    donation_count = org_query(Donation).count()
+    expense_count = org_query(Expense).count()
 
     youth_donations = (
-        db.session.query(func.coalesce(func.sum(Donation.amount), 0))
+        org_query(Donation)
         .filter(Donation.donor_group == "youth")
+        .with_entities(func.coalesce(func.sum(Donation.amount), 0))
         .scalar()
     )
     village_donations = (
-        db.session.query(func.coalesce(func.sum(Donation.amount), 0))
+        org_query(Donation)
         .filter(Donation.donor_group == "village")
+        .with_entities(func.coalesce(func.sum(Donation.amount), 0))
         .scalar()
     )
 
     recent_activities = (
-        ActivityLog.query.order_by(ActivityLog.created_at.desc(), ActivityLog.id.desc()).limit(10).all()
+        org_query(ActivityLog)
+        .order_by(ActivityLog.created_at.desc(), ActivityLog.id.desc())
+        .limit(10)
+        .all()
     )
 
     return render_template(

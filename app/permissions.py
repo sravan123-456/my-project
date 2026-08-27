@@ -16,12 +16,28 @@ def write_required(view):
     return wrapped
 
 
-def admin_required(view):
+def org_admin_required(view):
     @wraps(view)
     @login_required
     def wrapped(*args, **kwargs):
         if not current_user.is_admin:
-            flash("Admin access required.", "danger")
+            flash("Committee admin access required.", "danger")
+            return redirect(url_for("main.dashboard"))
+        return view(*args, **kwargs)
+
+    return wrapped
+
+
+def admin_required(view):
+    return org_admin_required(view)
+
+
+def site_admin_required(view):
+    @wraps(view)
+    @login_required
+    def wrapped(*args, **kwargs):
+        if not current_user.is_site_admin:
+            flash("Site admin access required.", "danger")
             return redirect(url_for("main.dashboard"))
         return view(*args, **kwargs)
 

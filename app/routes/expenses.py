@@ -19,6 +19,7 @@ from app import db
 from app.activity import log_activity
 from app.forms import ExpenseForm
 from app.models import EXPENSE_CATEGORIES, Expense
+from app.org_scope import org_get, org_query
 from app.permissions import write_required
 
 expenses_bp = Blueprint("expenses", __name__)
@@ -48,7 +49,7 @@ def save_bill(file):
 @expenses_bp.route("/")
 @login_required
 def list_expenses():
-    expenses = Expense.query.order_by(
+    expenses = org_query(Expense).order_by(
         Expense.expense_date.desc(), Expense.id.desc()
     ).all()
     return render_template("expenses/list.html", expenses=expenses)
@@ -64,6 +65,7 @@ def add_expense():
     if form.validate_on_submit():
         bill_filename = save_bill(request.files.get("bill"))
         expense = Expense(
+            organization_id=current_user.organization_id,
             title=form.title.data.strip(),
             category=form.category.data,
             amount=form.amount.data,
@@ -91,7 +93,7 @@ def add_expense():
 @expenses_bp.route("/<int:expense_id>/edit", methods=["GET", "POST"])
 @write_required
 def edit_expense(expense_id):
-    expense = db.session.get(Expense, expense_id)
+    expense = org_get(Expense, expense_id)
     if not expense:
         flash("Expense not found.", "danger")
         return redirect(url_for("expenses.list_expenses"))
@@ -131,13 +133,13 @@ def edit_expense(expense_id):
 @expenses_bp.route("/<int:expense_id>/delete", methods=["POST"])
 @write_required
 def delete_expense(expense_id):
-    expense = db.session.get(Expense, expense_id)
+    expense = org_get(Expense, expense_id)
     if not expense:
         flash("Expense not found.", "danger")
     else:
         title = expense.title
         amount = expense.amount
-        expense_id = expense.id
+        deleted_id = expense.id
         if expense.bill_filename:
             filepath = os.path.join(current_app.config["UPLOAD_FOLDER"], expense.bill_filename)
             if os.path.exists(filepath):
@@ -148,7 +150,7 @@ def delete_expense(expense_id):
             "deleted",
             "expense",
             f"Deleted expense '{title}' of ₹{amount:,.2f}",
-            expense_id,
+            deleted_id,
         )
         db.session.commit()
         flash("Expense deleted.", "info")
@@ -158,4 +160,8 @@ def delete_expense(expense_id):
 @expenses_bp.route("/bill/<filename>")
 @login_required
 def view_bill(filename):
+    expense = org_query(Expense).filter_by(bill_filename=filename).first()
+    if not expense:
+        flash("Bill not found.", "danger")
+        return redirect(url_for("expenses.list_expenses"))
     return send_from_directory(current_app.config["UPLOAD_FOLDER"], filename)

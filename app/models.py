@@ -5,20 +5,52 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from app import db
 
+PLATFORM_NAME = "Festival Fund Manager"
 FESTIVAL_NAME = "Indukuru Vinayaka Festival"
 DEVELOPER_NAME = "Sravan Kumar Reddy"
+
+ORG_STATUS_ACTIVE = "active"
+ORG_STATUS_SUSPENDED = "suspended"
+
+
+class Organization(db.Model):
+    __tablename__ = "organizations"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(160), nullable=False)
+    slug = db.Column(db.String(80), unique=True, nullable=False, index=True)
+    village = db.Column(db.String(120))
+    district = db.Column(db.String(120))
+    festival_name = db.Column(db.String(160), nullable=False)
+    festival_year = db.Column(db.Integer)
+    status = db.Column(db.String(20), nullable=False, default=ORG_STATUS_ACTIVE)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    users = db.relationship("User", backref="organization", lazy=True)
+    donations = db.relationship("Donation", backref="organization", lazy=True)
+    expenses = db.relationship("Expense", backref="organization", lazy=True)
+
+    def is_active(self):
+        return self.status == ORG_STATUS_ACTIVE
+
+    def display_name(self):
+        return self.festival_name or self.name
 
 
 class User(UserMixin, db.Model):
     __tablename__ = "users"
 
     id = db.Column(db.Integer, primary_key=True)
+    organization_id = db.Column(db.Integer, db.ForeignKey("organizations.id"), index=True)
     username = db.Column(db.String(80), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(256), nullable=False)
     full_name = db.Column(db.String(120), nullable=False)
+    is_site_admin = db.Column(db.Boolean, default=False, nullable=False)
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
     can_write = db.Column(db.Boolean, default=False, nullable=False)
     is_approved = db.Column(db.Boolean, default=False, nullable=False)
+    login_count = db.Column(db.Integer, default=0, nullable=False)
+    last_login_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     donations = db.relationship("Donation", backref="recorded_by", lazy=True)
@@ -35,11 +67,16 @@ class User(UserMixin, db.Model):
         return self.is_admin or self.can_write
 
     def access_label(self):
+        if self.is_site_admin:
+            return "Site Admin"
         if self.is_admin:
-            return "Admin"
+            return "Committee Admin"
         if self.can_write:
             return "Write Access"
         return "Read Only"
+
+    def is_org_admin(self):
+        return self.is_admin and not self.is_site_admin
 
 
 DONOR_GROUP_YOUTH = "youth"
@@ -67,6 +104,7 @@ class Donation(db.Model):
     __tablename__ = "donations"
 
     id = db.Column(db.Integer, primary_key=True)
+    organization_id = db.Column(db.Integer, db.ForeignKey("organizations.id"), nullable=False, index=True)
     donor_name = db.Column(db.String(120), nullable=False)
     donor_group = db.Column(db.String(20), nullable=False, default=DONOR_GROUP_VILLAGE)
     payment_mode = db.Column(db.String(20), nullable=False, default=PAYMENT_CASH)
@@ -89,6 +127,7 @@ class Expense(db.Model):
     __tablename__ = "expenses"
 
     id = db.Column(db.Integer, primary_key=True)
+    organization_id = db.Column(db.Integer, db.ForeignKey("organizations.id"), nullable=False, index=True)
     title = db.Column(db.String(200), nullable=False)
     category = db.Column(db.String(80), nullable=False, default="General")
     amount = db.Column(db.Float, nullable=False)
@@ -103,6 +142,7 @@ class ActivityLog(db.Model):
     __tablename__ = "activity_logs"
 
     id = db.Column(db.Integer, primary_key=True)
+    organization_id = db.Column(db.Integer, db.ForeignKey("organizations.id"), index=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     user_name = db.Column(db.String(120), nullable=False)
     action = db.Column(db.String(20), nullable=False)
@@ -110,6 +150,22 @@ class ActivityLog(db.Model):
     entity_id = db.Column(db.Integer)
     description = db.Column(db.String(500), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+
+class LoginEvent(db.Model):
+    __tablename__ = "login_events"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), index=True)
+    organization_id = db.Column(db.Integer, db.ForeignKey("organizations.id"), index=True)
+    username_attempt = db.Column(db.String(80))
+    success = db.Column(db.Boolean, nullable=False, default=False)
+    ip_address = db.Column(db.String(45))
+    user_agent = db.Column(db.String(255))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    user = db.relationship("User", backref="login_events", lazy=True)
+    organization = db.relationship("Organization", backref="login_events", lazy=True)
 
 
 EXPENSE_CATEGORIES = [
