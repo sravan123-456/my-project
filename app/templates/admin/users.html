@@ -29,6 +29,42 @@
 </div>
 {% endif %}
 
+{% if pending_resets %}
+<div class="card border-0 shadow-sm mb-4 border-start border-danger border-4">
+    <div class="card-header bg-white border-0 py-3">
+        <h5 class="mb-0 text-danger"><i class="bi bi-key"></i> Password Reset Requests ({{ pending_resets|length }})</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Name</th>
+                        <th>Username</th>
+                        <th>Requested</th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reset in pending_resets %}
+                    <tr>
+                        <td class="fw-semibold">{{ reset.user.full_name }}</td>
+                        <td>{{ reset.user.username }}</td>
+                        <td><small>{{ reset.created_at.strftime('%d %b %Y, %I:%M %p') }}</small></td>
+                        <td class="text-center">
+                            <a href="{{ url_for('admin.reset_user_password', user_id=reset.user.id) }}" class="btn btn-sm btn-danger">
+                                <i class="bi bi-key"></i> Set New Password
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 {% if pending_users %}
 <div class="card border-0 shadow-sm mb-4 border-start border-warning border-4">
     <div class="card-header bg-white border-0 py-3">
@@ -129,6 +165,9 @@
                             {% endif %}
 
                             {% if user.id != current_user.id %}
+                            <a href="{{ url_for('admin.reset_user_password', user_id=user.id) }}" class="btn btn-sm btn-outline-secondary" title="Reset password">
+                                <i class="bi bi-key"></i>
+                            </a>
                             <form method="POST" action="{{ url_for('admin.toggle_admin', user_id=user.id) }}" class="d-inline">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-sm {% if user.is_admin %}btn-outline-danger{% else %}btn-outline-primary{% endif %}"

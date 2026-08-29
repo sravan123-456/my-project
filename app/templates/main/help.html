@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('help.title') }} - {{ platform_name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <div class="text-center mb-4">
+            <h2 class="fw-bold"><i class="bi bi-question-circle"></i> {{ t('help.title') }}</h2>
+            <p class="text-muted">{{ t('help.subtitle') }}</p>
+        </div>
+
+        <div class="accordion" id="helpAccordion">
+            <div class="accordion-item border-0 shadow-sm mb-3">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#helpLogin">
+                        {{ t('help.login_title') }}
+                    </button>
+                </h2>
+                <div id="helpLogin" class="accordion-collapse collapse show" data-bs-parent="#helpAccordion">
+                    <div class="accordion-body">
+                        <ol class="mb-0">
+                            <li>{{ t('help.login_1') }}</li>
+                            <li>{{ t('help.login_2') }}</li>
+                            <li>{{ t('help.login_3') }}</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item border-0 shadow-sm mb-3">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#helpNewCommittee">
+                        {{ t('help.new_committee_title') }}
+                    </button>
+                </h2>
+                <div id="helpNewCommittee" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                    <div class="accordion-body">
+                        <ol class="mb-0">
+                            <li>{{ t('help.new_committee_1') }}</li>
+                            <li>{{ t('help.new_committee_2') }}</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item border-0 shadow-sm mb-3">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#helpDonations">
+                        {{ t('help.donations_title') }}
+                    </button>
+                </h2>
+                <div id="helpDonations" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                    <div class="accordion-body">
+                        <ol class="mb-0">
+                            <li>{{ t('help.donations_1') }}</li>
+                            <li>{{ t('help.donations_2') }}</li>
+                            <li>{{ t('help.donations_3') }}</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item border-0 shadow-sm mb-3">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#helpExpenses">
+                        {{ t('help.expenses_title') }}
+                    </button>
+                </h2>
+                <div id="helpExpenses" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                    <div class="accordion-body">
+                        <ol class="mb-0">
+                            <li>{{ t('help.expenses_1') }}</li>
+                            <li>{{ t('help.expenses_2') }}</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item border-0 shadow-sm mb-3">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#helpReports">
+                        {{ t('help.reports_title') }}
+                    </button>
+                </h2>
+                <div id="helpReports" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                    <div class="accordion-body">
+                        <ol class="mb-0">
+                            <li>{{ t('help.reports_1') }}</li>
+                            <li>{{ t('help.reports_2') }}</li>
+                            <li>{{ t('help.reports_3') }}</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item border-0 shadow-sm mb-3">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#helpAdmin">
+                        {{ t('help.admin_title') }}
+                    </button>
+                </h2>
+                <div id="helpAdmin" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                    <div class="accordion-body">
+                        <ol class="mb-0">
+                            <li>{{ t('help.admin_1') }}</li>
+                            <li>{{ t('help.admin_2') }}</li>
+                            <li>{{ t('help.admin_3') }}</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item border-0 shadow-sm mb-3">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#helpPassword">
+                        {{ t('help.password_title') }}
+                    </button>
+                </h2>
+                <div id="helpPassword" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                    <div class="accordion-body">
+                        <ol class="mb-0">
+                            <li>{{ t('help.password_1') }}</li>
+                            <li>{{ t('help.password_2') }}</li>
+                        </ol>
+                        <a href="{{ url_for('auth.forgot_password') }}" class="btn btn-outline-festival btn-sm mt-3">Forgot Password</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item border-0 shadow-sm mb-3">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#helpLanguage">
+                        {{ t('help.language_title') }}
+                    </button>
+                </h2>
+                <div id="helpLanguage" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                    <div class="accordion-body">
+                        <ol class="mb-0">
+                            <li>{{ t('help.language_1') }}</li>
+                            <li>{{ t('help.language_2') }}</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-4">
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-festival">{{ t('nav.dashboard') }}</a>
+            {% else %}
+            <a href="{{ url_for('auth.login') }}" class="btn btn-festival">{{ t('nav.login') }}</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -13,7 +13,10 @@
     </p>
     <div class="d-flex gap-3 justify-content-center flex-wrap">
         <a href="{{ url_for('auth.login') }}" class="btn btn-festival btn-lg px-4">
-            <i class="bi bi-box-arrow-in-right"></i> Login / Register
+            <i class="bi bi-box-arrow-in-right"></i> {{ t('nav.login') }}
+        </a>
+        <a href="{{ url_for('main.help_page') }}" class="btn btn-outline-festival btn-lg px-4">
+            <i class="bi bi-question-circle"></i> {{ t('nav.help') }}
         </a>
     </div>
 </div>

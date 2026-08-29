@@ -22,6 +22,34 @@ class LoginForm(FlaskForm):
     login_submit = SubmitField("Login")
 
 
+class ForgotPasswordForm(FlaskForm):
+    committee_code = StringField(
+        "Committee Code",
+        validators=[DataRequired(), Length(min=3, max=80)],
+    )
+    username = StringField("Username", validators=[DataRequired(), Length(min=3, max=80)])
+    submit = SubmitField("Request Password Reset")
+
+
+class AdminResetPasswordForm(FlaskForm):
+    password = PasswordField("New Password", validators=[DataRequired(), Length(min=6)])
+    confirm_password = PasswordField(
+        "Confirm New Password",
+        validators=[DataRequired(), EqualTo("password", message="Passwords must match.")],
+    )
+    submit = SubmitField("Set New Password")
+
+
+class ChangePasswordForm(FlaskForm):
+    current_password = PasswordField("Current Password", validators=[DataRequired()])
+    password = PasswordField("New Password", validators=[DataRequired(), Length(min=6)])
+    confirm_password = PasswordField(
+        "Confirm New Password",
+        validators=[DataRequired(), EqualTo("password", message="Passwords must match.")],
+    )
+    submit = SubmitField("Update Password")
+
+
 class JoinRegisterForm(FlaskForm):
     committee_code = StringField(
         "Committee Code",

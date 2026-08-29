@@ -187,6 +187,25 @@ class LoginEvent(db.Model):
     organization = db.relationship("Organization", backref="login_events", lazy=True)
 
 
+class PasswordResetRequest(db.Model):
+    __tablename__ = "password_reset_requests"
+
+    STATUS_PENDING = "pending"
+    STATUS_RESOLVED = "resolved"
+
+    id = db.Column(db.Integer, primary_key=True)
+    organization_id = db.Column(db.Integer, db.ForeignKey("organizations.id"), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    status = db.Column(db.String(20), nullable=False, default=STATUS_PENDING)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    resolved_at = db.Column(db.DateTime)
+    resolved_by_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+
+    user = db.relationship("User", foreign_keys=[user_id], backref="password_reset_requests", lazy=True)
+    resolved_by = db.relationship("User", foreign_keys=[resolved_by_id], lazy=True)
+    organization = db.relationship("Organization", backref="password_reset_requests", lazy=True)
+
+
 EXPENSE_CATEGORIES = [
     "Decoration",
     "Flowers & Garlands",

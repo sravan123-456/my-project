@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ current_lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,37 +18,42 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav ms-auto align-items-lg-center">
                     {% if current_user.is_authenticated %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('main.dashboard') }}">
-                            <i class="bi bi-speedometer2"></i> Dashboard
+                            <i class="bi bi-speedometer2"></i> {{ t('nav.dashboard') }}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('donations.list_donations') }}">
-                            <i class="bi bi-heart-fill"></i> Donations
+                            <i class="bi bi-heart-fill"></i> {{ t('nav.donations') }}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('expenses.list_expenses') }}">
-                            <i class="bi bi-receipt"></i> Expenses
+                            <i class="bi bi-receipt"></i> {{ t('nav.expenses') }}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('reports.reports') }}">
-                            <i class="bi bi-file-earmark-bar-graph"></i> Reports
+                            <i class="bi bi-file-earmark-bar-graph"></i> {{ t('nav.reports') }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.archive') }}">
+                            <i class="bi bi-calendar-range"></i> {{ t('nav.archive') }}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('activity.activity_log') }}">
-                            <i class="bi bi-clock-history"></i> Activity
+                            <i class="bi bi-clock-history"></i> {{ t('nav.activity') }}
                         </a>
                     </li>
                     {% if user_is_admin() %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('admin.users') }}">
-                            <i class="bi bi-shield-lock"></i> Committee Admin
+                            <i class="bi bi-shield-lock"></i> {{ t('nav.admin') }}
                             {% if pending_user_count > 0 %}
                             <span class="badge bg-warning text-dark">{{ pending_user_count }}</span>
                             {% endif %}
@@ -58,28 +63,66 @@
                     {% if user_is_site_admin() %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('site_admin.dashboard') }}">
-                            <i class="bi bi-globe"></i> Site Admin
+                            <i class="bi bi-globe"></i> {{ t('nav.site_admin') }}
                         </a>
                     </li>
                     {% endif %}
+                    {% if available_years %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-calendar3"></i> {{ selected_year }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            {% for year in available_years %}
+                            <li>
+                                <a class="dropdown-item {% if year == selected_year %}active{% endif %}"
+                                   href="{{ url_for('main.set_year_route', year=year) }}">{{ year }}</a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                    {% endif %}
                     <li class="nav-item">
-                        <span class="nav-link text-warning">
+                        <span class="nav-link text-warning py-lg-2">
                             <i class="bi bi-person-circle"></i> {{ current_user.full_name }}
                             {% if not user_can_edit() %}
-                            <span class="badge bg-secondary ms-1" style="font-size:0.65rem;">Read Only</span>
+                            <span class="badge bg-secondary ms-1" style="font-size:0.65rem;">{{ t('nav.read_only') }}</span>
                             {% endif %}
                         </span>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.change_password') }}">
+                            <i class="bi bi-key"></i> {{ t('nav.password') }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('auth.logout') }}">
-                            <i class="bi bi-box-arrow-right"></i> Logout
+                            <i class="bi bi-box-arrow-right"></i> {{ t('nav.logout') }}
                         </a>
                     </li>
                     {% else %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('auth.login') }}">Login / Register</a>
+                        <a class="nav-link" href="{{ url_for('auth.login') }}">{{ t('nav.login') }}</a>
                     </li>
                     {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.help_page') }}">
+                            <i class="bi bi-question-circle"></i> {{ t('nav.help') }}
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-translate"></i> {{ languages[current_lang] }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            {% for code, label in languages.items() %}
+                            <li>
+                                <a class="dropdown-item {% if code == current_lang %}active{% endif %}"
+                                   href="{{ url_for('main.set_language_route', lang=code) }}">{{ label }}</a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -102,7 +145,7 @@
 
     <footer class="festival-footer text-center py-3 mt-auto">
         <div class="container">
-            <small>🙏 {{ nav_title }} &mdash; Transparent &amp; Accountable</small>
+            <small>🙏 {{ nav_title }} &mdash; {{ t('footer.tagline') }}</small>
             <br>
             <small class="developer-credit">Designed and developed by {{ developer_name }}</small>
         </div>

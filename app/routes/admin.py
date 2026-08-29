@@ -1,9 +1,12 @@
+from datetime import datetime
+
 from flask import Blueprint, flash, redirect, render_template, url_for
 from flask_login import current_user, login_required
 
 from app import db
 from app.activity import log_activity
-from app.models import ActivityLog, Donation, Expense, User
+from app.forms import AdminResetPasswordForm
+from app.models import ActivityLog, Donation, Expense, PasswordResetRequest, User
 from app.org_scope import org_get, org_users_query
 from app.permissions import org_admin_required
 
@@ -25,6 +28,14 @@ def users():
         .order_by(User.created_at.desc())
         .all()
     )
+    pending_resets = (
+        PasswordResetRequest.query.filter_by(
+            organization_id=current_user.organization_id,
+            status=PasswordResetRequest.STATUS_PENDING,
+        )
+        .order_by(PasswordResetRequest.created_at.asc())
+        .all()
+    )
     invite_url = None
     committee_code = None
     if current_user.organization:
@@ -38,6 +49,7 @@ def users():
     return render_template(
         "admin/users.html",
         pending_users=pending_users,
+        pending_resets=pending_resets,
         users=approved_users,
         invite_url=invite_url,
         committee_code=committee_code,
@@ -95,6 +107,7 @@ def reject_user(user_id):
 
     full_name = user.full_name
     ActivityLog.query.filter_by(user_id=user.id).delete()
+    PasswordResetRequest.query.filter_by(user_id=user.id).delete()
     db.session.delete(user)
     log_activity(
         current_user,
@@ -208,6 +221,7 @@ def delete_user(user_id):
         {"recorded_by_id": current_user.id}
     )
     ActivityLog.query.filter_by(user_id=user.id).delete()
+    PasswordResetRequest.query.filter_by(user_id=user.id).delete()
     db.session.delete(user)
     log_activity(
         current_user,
@@ -219,3 +233,48 @@ def delete_user(user_id):
     db.session.commit()
     flash(f"User {full_name} has been deleted.", "info")
     return redirect(url_for("admin.users"))
+
+
+def _resolve_password_reset(user, admin):
+    pending = PasswordResetRequest.query.filter_by(
+        user_id=user.id,
+        status=PasswordResetRequest.STATUS_PENDING,
+    ).all()
+    for reset_request in pending:
+        reset_request.status = PasswordResetRequest.STATUS_RESOLVED
+        reset_request.resolved_at = datetime.utcnow()
+        reset_request.resolved_by_id = admin.id
+
+
+@admin_bp.route("/users/<int:user_id>/reset-password", methods=["GET", "POST"])
+@org_admin_required
+def reset_user_password(user_id):
+    user = _org_user(user_id)
+    if not user:
+        flash("User not found.", "danger")
+        return redirect(url_for("admin.users"))
+
+    if not user.is_approved:
+        flash("Approve this user before resetting their password.", "warning")
+        return redirect(url_for("admin.users"))
+
+    form = AdminResetPasswordForm()
+    if form.validate_on_submit():
+        user.set_password(form.password.data)
+        _resolve_password_reset(user, current_user)
+        log_activity(
+            current_user,
+            "updated",
+            "user",
+            f"Reset password for {user.full_name}",
+            user.id,
+        )
+        db.session.commit()
+        flash(f"Password updated for {user.full_name}. Share the new password securely.", "success")
+        return redirect(url_for("admin.users"))
+
+    return render_template(
+        "admin/reset_password.html",
+        form=form,
+        user=user,
+    )

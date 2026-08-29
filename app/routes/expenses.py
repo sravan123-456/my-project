@@ -21,6 +21,7 @@ from app.forms import ExpenseForm
 from app.models import EXPENSE_CATEGORIES, Expense
 from app.org_scope import org_get, org_query
 from app.permissions import write_required
+from app.year_scope import filter_expenses_by_year, get_selected_year
 
 expenses_bp = Blueprint("expenses", __name__)
 
@@ -49,10 +50,13 @@ def save_bill(file):
 @expenses_bp.route("/")
 @login_required
 def list_expenses():
-    expenses = org_query(Expense).order_by(
-        Expense.expense_date.desc(), Expense.id.desc()
-    ).all()
-    return render_template("expenses/list.html", expenses=expenses)
+    year = get_selected_year()
+    expenses = (
+        filter_expenses_by_year(org_query(Expense), year)
+        .order_by(Expense.expense_date.desc(), Expense.id.desc())
+        .all()
+    )
+    return render_template("expenses/list.html", expenses=expenses, selected_year=year)
 
 
 @expenses_bp.route("/add", methods=["GET", "POST"])

@@ -7,8 +7,21 @@ from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 
 from app import db
-from app.forms import JoinRegisterForm, LoginForm, RegisterForm, StartCommitteeForm
-from app.models import ORG_STATUS_PENDING, LoginEvent, Organization, User
+from app.forms import (
+    ChangePasswordForm,
+    ForgotPasswordForm,
+    JoinRegisterForm,
+    LoginForm,
+    RegisterForm,
+    StartCommitteeForm,
+)
+from app.models import (
+    ORG_STATUS_PENDING,
+    LoginEvent,
+    Organization,
+    PasswordResetRequest,
+    User,
+)
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -261,6 +274,79 @@ def register():
 @auth_bp.route("/start-committee", methods=["GET", "POST"])
 def start_committee():
     return redirect(url_for("auth.login", _anchor="new-committee"))
+
+
+@auth_bp.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    if current_user.is_authenticated:
+        return redirect(url_for("main.dashboard"))
+
+    form = ForgotPasswordForm()
+    org_slug = request.args.get("org")
+    if org_slug and request.method == "GET":
+        form.committee_code.data = org_slug
+
+    if form.validate_on_submit():
+        committee_code = _normalize_slug(form.committee_code.data)
+        username = form.username.data.strip().lower()
+        org, org_error = _get_active_org(committee_code)
+
+        if org_error:
+            flash(org_error, "danger")
+        else:
+            user = User.query.filter_by(username=username, organization_id=org.id).first()
+            if not user:
+                flash(
+                    "If this account exists, your committee admin will be notified.",
+                    "info",
+                )
+            elif not user.is_approved:
+                flash(
+                    "Your account is not approved yet. Contact your committee admin.",
+                    "warning",
+                )
+            else:
+                existing = PasswordResetRequest.query.filter_by(
+                    user_id=user.id,
+                    status=PasswordResetRequest.STATUS_PENDING,
+                ).first()
+                if existing:
+                    flash(
+                        "A password reset request is already pending. "
+                        "Please ask your committee admin to set a new password.",
+                        "info",
+                    )
+                else:
+                    db.session.add(
+                        PasswordResetRequest(
+                            organization_id=org.id,
+                            user_id=user.id,
+                        )
+                    )
+                    db.session.commit()
+                    flash(
+                        "Password reset request sent. Your committee admin will set a new password for you.",
+                        "success",
+                    )
+                return redirect(url_for("auth.login", org=committee_code))
+
+    return render_template("auth/forgot_password.html", form=form)
+
+
+@auth_bp.route("/change-password", methods=["GET", "POST"])
+@login_required
+def change_password():
+    form = ChangePasswordForm()
+    if form.validate_on_submit():
+        if not current_user.check_password(form.current_password.data):
+            flash("Current password is incorrect.", "danger")
+        else:
+            current_user.set_password(form.password.data)
+            db.session.commit()
+            flash("Your password has been updated.", "success")
+            return redirect(url_for("main.dashboard"))
+
+    return render_template("auth/change_password.html", form=form)
 
 
 @auth_bp.route("/logout")

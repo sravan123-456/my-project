@@ -1,33 +1,41 @@
 {% extends "base.html" %}
 
-{% block title %}Reports - {{ festival_name }}{% endblock %}
+{% block title %}{{ t('reports.title') }} - {{ festival_name }}{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-    <h2 class="fw-bold mb-0"><i class="bi bi-file-earmark-bar-graph"></i> Reports</h2>
-    <a href="{{ url_for('reports.export_csv') }}" class="btn btn-festival">
-        <i class="bi bi-download"></i> Export CSV
-    </a>
+    <div>
+        <h2 class="fw-bold mb-0"><i class="bi bi-file-earmark-bar-graph"></i> {{ t('reports.title') }}</h2>
+        <small class="text-muted">{{ t('nav.festival_year') }}: {{ year }}</small>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="{{ url_for('reports.export_csv', year=year) }}" class="btn btn-outline-festival">
+            <i class="bi bi-download"></i> {{ t('common.export_csv') }}
+        </a>
+        <a href="{{ url_for('reports.export_pdf', year=year) }}" class="btn btn-festival">
+            <i class="bi bi-file-earmark-pdf"></i> {{ t('common.export_pdf') }}
+        </a>
+    </div>
 </div>
 
 <div class="row g-3 mb-4">
     <div class="col-md-4">
         <div class="card border-0 shadow-sm text-center p-3">
-            <p class="text-muted mb-1">Total Donations</p>
+            <p class="text-muted mb-1">{{ t('reports.total_donations') }}</p>
             <h3 class="text-success fw-bold">₹{{ "{:,.2f}".format(total_donations) }}</h3>
-            <small class="text-muted">{{ donations|length }} entries</small>
+            <small class="text-muted">{{ donations|length }} {{ t('reports.entries') }}</small>
         </div>
     </div>
     <div class="col-md-4">
         <div class="card border-0 shadow-sm text-center p-3">
-            <p class="text-muted mb-1">Total Expenses</p>
+            <p class="text-muted mb-1">{{ t('reports.total_expenses') }}</p>
             <h3 class="text-danger fw-bold">₹{{ "{:,.2f}".format(total_expenses) }}</h3>
-            <small class="text-muted">{{ expenses|length }} entries</small>
+            <small class="text-muted">{{ expenses|length }} {{ t('reports.entries') }}</small>
         </div>
     </div>
     <div class="col-md-4">
         <div class="card border-0 shadow-sm text-center p-3">
-            <p class="text-muted mb-1">Balance</p>
+            <p class="text-muted mb-1">{{ t('reports.balance') }}</p>
             <h3 class="fw-bold {% if balance >= 0 %}text-success{% else %}text-danger{% endif %}">₹{{ "{:,.2f}".format(balance) }}</h3>
         </div>
     </div>
@@ -36,13 +44,13 @@
 <div class="row g-3 mb-4">
     <div class="col-md-6">
         <div class="card border-0 shadow-sm text-center p-3 border-start border-primary border-4">
-            <p class="text-muted mb-1">Committee Member Donations</p>
+            <p class="text-muted mb-1">{{ t('reports.committee_member') }}</p>
             <h4 class="text-primary fw-bold mb-0">₹{{ "{:,.2f}".format(committee_donations) }}</h4>
         </div>
     </div>
     <div class="col-md-6">
         <div class="card border-0 shadow-sm text-center p-3 border-start border-secondary border-4">
-            <p class="text-muted mb-1">Other Donations</p>
+            <p class="text-muted mb-1">{{ t('reports.other') }}</p>
             <h4 class="text-secondary fw-bold mb-0">₹{{ "{:,.2f}".format(other_donations) }}</h4>
         </div>
     </div>

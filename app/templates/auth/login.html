@@ -44,9 +44,12 @@
                                     {{ login_form.username.label(class="form-label") }}
                                     {{ login_form.username(class="form-control form-control-lg" + (" is-invalid" if login_form.username.errors else "")) }}
                                 </div>
-                                <div class="mb-4">
+                                <div class="mb-3">
                                     {{ login_form.password.label(class="form-label") }}
                                     {{ login_form.password(class="form-control form-control-lg" + (" is-invalid" if login_form.password.errors else "")) }}
+                                    <div class="text-end mt-1">
+                                        <a href="{{ url_for('auth.forgot_password') }}" class="small">Forgot password?</a>
+                                    </div>
                                 </div>
                                 {{ login_form.login_submit(class="btn btn-festival btn-lg w-100") }}
                             </form>
