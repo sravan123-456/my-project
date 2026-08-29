@@ -17,22 +17,20 @@ from app.models import (
 )
 from app.org_scope import org_get, org_query
 from app.permissions import write_required
-from app.year_scope import filter_donations_by_year, get_selected_year
 from app.whatsapp import build_whatsapp_url, donation_thank_you_message
 
 donations_bp = Blueprint("donations", __name__)
 
 
 def _donation_totals():
-    year = get_selected_year()
     committee = (
-        filter_donations_by_year(org_query(Donation), year)
+        org_query(Donation)
         .filter(Donation.donor_group == DONOR_GROUP_COMMITTEE)
         .with_entities(func.coalesce(func.sum(Donation.amount), 0))
         .scalar()
     )
     other = (
-        filter_donations_by_year(org_query(Donation), year)
+        org_query(Donation)
         .filter(Donation.donor_group == DONOR_GROUP_OTHER)
         .with_entities(func.coalesce(func.sum(Donation.amount), 0))
         .scalar()
@@ -70,8 +68,7 @@ def _save_donation_from_form(form, recorded_by_id, organization_id):
 @login_required
 def list_donations():
     group_filter = request.args.get("group", "all")
-    year = get_selected_year()
-    query = filter_donations_by_year(org_query(Donation), year)
+    query = org_query(Donation)
     if group_filter in (DONOR_GROUP_COMMITTEE, DONOR_GROUP_OTHER):
         query = query.filter_by(donor_group=group_filter)
 
@@ -86,7 +83,6 @@ def list_donations():
         group_filter=group_filter,
         committee_total=committee_total,
         other_total=other_total,
-        selected_year=year,
     )
 
 

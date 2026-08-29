@@ -85,21 +85,16 @@ def create_app():
 
     from app.i18n import SUPPORTED_LANGUAGES, get_language, translate
     from app.models import DONOR_GROUP_LABELS, DEVELOPER_NAME, FESTIVAL_NAME, PLATFORM_NAME, User
-    from app.year_scope import get_available_years, get_selected_year
 
     @app.context_processor
     def inject_globals():
         pending_count = 0
         festival_name = PLATFORM_NAME
         organization_name = None
-        available_years = []
-        selected_year = None
         if current_user.is_authenticated:
             if current_user.organization:
                 festival_name = current_user.organization.display_name()
                 organization_name = current_user.organization.name
-                available_years = get_available_years(current_user.organization_id)
-                selected_year = get_selected_year()
             if current_user.is_admin:
                 pending_count = User.query.filter_by(
                     organization_id=current_user.organization_id,
@@ -125,8 +120,6 @@ def create_app():
             "t": translate,
             "current_lang": get_language(),
             "languages": SUPPORTED_LANGUAGES,
-            "available_years": available_years,
-            "selected_year": selected_year,
         }
 
     @login_manager.user_loader

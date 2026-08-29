@@ -1,24 +1,10 @@
 from datetime import date
 
-from flask import session
 from flask_login import current_user
 from sqlalchemy import extract, func
 
 from app import db
 from app.models import Donation, Expense
-
-
-def get_selected_year():
-    if "festival_year" in session and session["festival_year"]:
-        return int(session["festival_year"])
-    if current_user.is_authenticated and current_user.organization:
-        if current_user.organization.festival_year:
-            return current_user.organization.festival_year
-    return date.today().year
-
-
-def set_selected_year(year):
-    session["festival_year"] = int(year)
 
 
 def get_available_years(org_id):
@@ -38,12 +24,24 @@ def get_available_years(org_id):
     for (year_value,) in donation_years + expense_years:
         if year_value:
             years.add(int(year_value))
-    org = current_user.organization if current_user.is_authenticated else None
-    if org and org.festival_year:
-        years.add(int(org.festival_year))
+    if current_user.is_authenticated and current_user.organization and current_user.organization.festival_year:
+        years.add(int(current_user.organization.festival_year))
     if not years:
         years.add(date.today().year)
     return sorted(years, reverse=True)
+
+
+def resolve_report_year(org_id, year_arg=None):
+    available_years = get_available_years(org_id)
+    if year_arg and year_arg in available_years:
+        return year_arg
+    if (
+        current_user.is_authenticated
+        and current_user.organization
+        and current_user.organization.festival_year in available_years
+    ):
+        return int(current_user.organization.festival_year)
+    return available_years[0]
 
 
 def filter_donations_by_year(query, year):

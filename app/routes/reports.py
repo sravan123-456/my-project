@@ -4,14 +4,10 @@ from datetime import datetime
 
 from flask import Blueprint, Response, render_template, request
 from flask_login import current_user, login_required
-from sqlalchemy import extract, func
 
-from app import db
-from app.models import Donation, Expense
-from app.org_scope import org_query
 from app.pdf_report import generate_report_pdf
 from app.report_service import build_report_data
-from app.year_scope import get_selected_year
+from app.year_scope import get_available_years, resolve_report_year, year_archive_summary
 
 reports_bp = Blueprint("reports", __name__)
 
@@ -19,8 +15,11 @@ reports_bp = Blueprint("reports", __name__)
 @reports_bp.route("/")
 @login_required
 def reports():
-    year = request.args.get("year", type=int) or get_selected_year()
-    data = build_report_data(current_user.organization_id, year)
+    org_id = current_user.organization_id
+    year = resolve_report_year(org_id, request.args.get("year", type=int))
+    data = build_report_data(org_id, year)
+    data["available_years"] = get_available_years(org_id)
+    data["year_summaries"] = year_archive_summary(org_id)
     return render_template("reports/index.html", **data)
 
 
@@ -29,7 +28,7 @@ def reports():
 def export_csv():
     org_id = current_user.organization_id
     org_name = current_user.organization.display_name() if current_user.organization else "Festival"
-    year = request.args.get("year", type=int) or get_selected_year()
+    year = resolve_report_year(org_id, request.args.get("year", type=int))
     data = build_report_data(org_id, year)
 
     output = io.StringIO()
@@ -85,9 +84,10 @@ def export_csv():
 @reports_bp.route("/export/pdf")
 @login_required
 def export_pdf():
+    org_id = current_user.organization_id
     org_name = current_user.organization.display_name() if current_user.organization else "Festival"
-    year = request.args.get("year", type=int) or get_selected_year()
-    data = build_report_data(current_user.organization_id, year)
+    year = resolve_report_year(org_id, request.args.get("year", type=int))
+    data = build_report_data(org_id, year)
     pdf_buffer = generate_report_pdf(org_name, data)
 
     return Response(

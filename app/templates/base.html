@@ -41,11 +41,6 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.archive') }}">
-                            <i class="bi bi-calendar-range"></i> {{ t('nav.archive') }}
-                        </a>
-                    </li>
-                    <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('activity.activity_log') }}">
                             <i class="bi bi-clock-history"></i> {{ t('nav.activity') }}
                         </a>
@@ -65,21 +60,6 @@
                         <a class="nav-link" href="{{ url_for('site_admin.dashboard') }}">
                             <i class="bi bi-globe"></i> {{ t('nav.site_admin') }}
                         </a>
-                    </li>
-                    {% endif %}
-                    {% if available_years %}
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-calendar3"></i> {{ selected_year }}
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            {% for year in available_years %}
-                            <li>
-                                <a class="dropdown-item {% if year == selected_year %}active{% endif %}"
-                                   href="{{ url_for('main.set_year_route', year=year) }}">{{ year }}</a>
-                            </li>
-                            {% endfor %}
-                        </ul>
                     </li>
                     {% endif %}
                     <li class="nav-item">
