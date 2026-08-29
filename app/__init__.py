@@ -85,6 +85,7 @@ def create_app():
 
     from app.i18n import SUPPORTED_LANGUAGES, get_language, translate
     from app.models import DONOR_GROUP_LABELS, DEVELOPER_NAME, FESTIVAL_NAME, PLATFORM_NAME, User
+    from app.whatsapp import donation_whatsapp_url
 
     @app.context_processor
     def inject_globals():
@@ -120,6 +121,7 @@ def create_app():
             "t": translate,
             "current_lang": get_language(),
             "languages": SUPPORTED_LANGUAGES,
+            "donation_whatsapp_url": donation_whatsapp_url,
         }
 
     @login_manager.user_loader

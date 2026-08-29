@@ -17,7 +17,7 @@ from app.models import (
 )
 from app.org_scope import org_get, org_query
 from app.permissions import write_required
-from app.whatsapp import build_whatsapp_url, donation_thank_you_message
+from app.whatsapp import donation_whatsapp_url
 
 donations_bp = Blueprint("donations", __name__)
 
@@ -125,10 +125,7 @@ def donation_saved(donation_id):
         flash("Donation not found.", "danger")
         return redirect(url_for("donations.list_donations"))
 
-    whatsapp_url = None
-    if donation.phone:
-        message = donation_thank_you_message(donation)
-        whatsapp_url = build_whatsapp_url(donation.phone, message)
+    whatsapp_url = donation_whatsapp_url(donation)
 
     return render_template(
         "donations/saved.html",
@@ -187,8 +184,7 @@ def send_whatsapp(donation_id):
         flash("No phone number on file for this donor.", "warning")
         return redirect(url_for("donations.edit_donation", donation_id=donation.id))
 
-    message = donation_thank_you_message(donation)
-    whatsapp_url = build_whatsapp_url(donation.phone, message)
+    whatsapp_url = donation_whatsapp_url(donation)
     if not whatsapp_url:
         flash("Invalid phone number for WhatsApp.", "warning")
         return redirect(url_for("donations.edit_donation", donation_id=donation.id))

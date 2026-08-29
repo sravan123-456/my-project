@@ -89,7 +89,7 @@
                         <td class="text-center text-nowrap">
                             {% if user_can_edit() %}
                             {% if d.phone %}
-                            <a href="{{ url_for('donations.send_whatsapp', donation_id=d.id) }}"
+                            <a href="{{ donation_whatsapp_url(d) }}"
                                class="btn btn-sm btn-whatsapp" title="Send Telugu thank-you on WhatsApp"
                                target="_blank" rel="noopener">
                                 <i class="bi bi-whatsapp"></i>

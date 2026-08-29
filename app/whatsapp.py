@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
+import unicodedata
 from urllib.parse import quote
 
-# Unicode escapes avoid emoji corruption when source files are not saved as UTF-8.
-EMOJI_PARTY = "\U0001F389"  # 🎉
-EMOJI_PRAY = "\U0001F64F"  # 🙏
-EMOJI_ROSE = "\U0001F339"  # 🌹
+# BMP symbols encode reliably in WhatsApp deep links on all Android devices.
+DECOR = "\u2728"  # sparkles
+HEART = "\u2764\ufe0f"  # red heart
 
 
 def format_phone_for_whatsapp(phone):
@@ -41,17 +41,18 @@ def donation_thank_you_message(donation):
     date_str = donation.donation_date.strftime("%d-%m-%Y")
     amount_str = f"{donation.amount:,.2f}"
     festival_title = _festival_title(donation.organization)
+    rupee = "\u20b9"
 
     return (
-        f"{EMOJI_PARTY} {festival_title} {EMOJI_PARTY}\n"
-        f"ప్రియమైన {donation.donor_name} గారికి,\n\n"
-        f"మీ విరాళం ₹{amount_str} సాదరంగా నమోదు చేయబడింది.\n"
-        f"తేదీ: {date_str}\n\n"
-        f"{EMOJI_PRAY} హృదయపూర్వక ధన్యవాదాలు {EMOJI_PRAY}\n\n"
-        f"మన {festival_title} కార్యక్రమానికి మీరు అందించిన చందా సహాయానికి ధన్యవాదాలు. "
-        f"మీ సహకారం మనకు ఎంతో విలువైనది. మీకు, మీ కుటుంబ సభ్యులకు "
-        f"ఆయురారోగ్యాలు, సుఖసంతోషాలు కలగాలని మనస్ఫూర్తిగా కోరుకుంటున్నాము. {EMOJI_PRAY}\n\n"
-        f"మీ అమూల్యమైన సహకారానికి మరోసారి ధన్యవాదాలు. {EMOJI_ROSE}"
+        f"{DECOR} {festival_title} {DECOR}\n"
+        f"\u0c2a\u0c4d\u0c30\u0c3f\u0c2f\u0c2e\u0c48\u0c28 {donation.donor_name} \u0c17\u0c3e\u0c30\u0c3f\u0c15\u0c3f,\n\n"
+        f"\u0c2e\u0c40 \u0c35\u0c3f\u0c30\u0c3e\u0c33\u0c02 {rupee}{amount_str} \u0c38\u0c3e\u0c26\u0c30\u0c02\u0c17\u0c3e \u0c28\u0c2e\u0c4b\u0c26\u0c41 \u0c1a\u0c47\u0c2f\u0c2c\u0c21\u0c3f\u0c02\u0c26\u0c3f.\n"
+        f"\u0c24\u0c47\u0c26\u0c40: {date_str}\n\n"
+        f"{DECOR} \u0c39\u0c43\u0c26\u0c2f\u0c2a\u0c42\u0c30\u0c4d\u0c35\u0c15 \u0c27\u0c28\u0c4d\u0c2f\u0c35\u0c3e\u0c26\u0c3e\u0c32\u0c41 {DECOR}\n\n"
+        f"\u0c2e\u0c28 {festival_title} \u0c15\u0c3e\u0c30\u0c4d\u0c2f\u0c15\u0c4d\u0c30\u0c2e\u0c3e\u0c28\u0c3f\u0c15\u0c3f \u0c2e\u0c40\u0c30\u0c41 \u0c05\u0c02\u0c26\u0c3f\u0c02\u0c1a\u0c3f\u0c28 \u0c1a\u0c02\u0c26\u0c3e \u0c38\u0c39\u0c3e\u0c2f\u0c3e\u0c28\u0c3f\u0c15\u0c3f \u0c27\u0c28\u0c4d\u0c2f\u0c35\u0c3e\u0c26\u0c3e\u0c32\u0c41. "
+        f"\u0c2e\u0c40 \u0c38\u0c39\u0c15\u0c3e\u0c30\u0c02 \u0c2e\u0c28\u0c15\u0c41 \u0c0e\u0c02\u0c24\u0c4b \u0c35\u0c3f\u0c32\u0c41\u0c35\u0c48\u0c28\u0c26\u0c3f. \u0c2e\u0c40\u0c15\u0c41, \u0c2e\u0c40 \u0c15\u0c41\u0c1f\u0c41\u0c02\u0c2c \u0c38\u0c2d\u0c4d\u0c2f\u0c41\u0c32\u0c15\u0c41 "
+        f"\u0c06\u0c2f\u0c41\u0c30\u0c3e\u0c30\u0c4b\u0c17\u0c4d\u0c2f\u0c3e\u0c32\u0c41, \u0c38\u0c41\u0c16\u0c38\u0c02\u0c24\u0c4b\u0c37\u0c3e\u0c32\u0c41 \u0c15\u0c32\u0c17\u0c3e\u0c32\u0c28\u0c3f \u0c2e\u0c28\u0c38\u0c4d\u0c2b\u0c42\u0c30\u0c4d\u0c24\u0c3f\u0c17\u0c3e \u0c15\u0c4b\u0c30\u0c41\u0c15\u0c41\u0c02\u0c1f\u0c41\u0c28\u0c4d\u0c28\u0c3e\u0c2e\u0c41. {DECOR}\n\n"
+        f"\u0c2e\u0c40 \u0c05\u0c2e\u0c42\u0c32\u0c4d\u0c2f\u0c2e\u0c48\u0c28 \u0c38\u0c39\u0c15\u0c3e\u0c30\u0c3e\u0c28\u0c3f\u0c15\u0c3f \u0c2e\u0c30\u0c4b\u0c38\u0c3e\u0c30\u0c3f \u0c27\u0c28\u0c4d\u0c2f\u0c35\u0c3e\u0c26\u0c3e\u0c32\u0c41. {HEART}"
     )
 
 
@@ -59,5 +60,13 @@ def build_whatsapp_url(phone, message):
     formatted_phone = format_phone_for_whatsapp(phone)
     if not formatted_phone:
         return None
-    encoded_message = quote(message, safe="", encoding="utf-8")
-    return f"https://wa.me/{formatted_phone}?text={encoded_message}"
+
+    normalized = unicodedata.normalize("NFC", message)
+    encoded_message = quote(normalized, safe="")
+    return f"https://api.whatsapp.com/send?phone={formatted_phone}&text={encoded_message}"
+
+
+def donation_whatsapp_url(donation):
+    if not donation.phone:
+        return None
+    return build_whatsapp_url(donation.phone, donation_thank_you_message(donation))
