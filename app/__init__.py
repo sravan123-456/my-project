@@ -42,6 +42,9 @@ def create_app():
         os.getenv("MAX_CONTENT_LENGTH", 16 * 1024 * 1024)
     )
     app.config["GCS_BUCKET_NAME"] = os.getenv("GCS_BUCKET_NAME", "").strip()
+    app.config["GCS_PUBLIC_READ"] = os.getenv("GCS_PUBLIC_READ", "false").lower() in ("1", "true", "yes")
+    app.config["GCS_SIGNED_URL_HOURS"] = os.getenv("GCS_SIGNED_URL_HOURS", "24")
+    app.config["GCS_CACHE_CONTROL"] = os.getenv("GCS_CACHE_CONTROL", "public, max-age=86400")
 
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
     db_dir = os.path.dirname(app.config["SQLALCHEMY_DATABASE_URI"].replace("sqlite:///", ""))
@@ -90,13 +93,26 @@ def create_app():
     from app.i18n import SUPPORTED_LANGUAGES, get_language, translate
     from app.models import DONOR_GROUP_LABELS, DEVELOPER_NAME, FESTIVAL_NAME, PLATFORM_NAME, User
     from app.whatsapp import donation_whatsapp_url
+    from app.storage import get_image_url
 
     def profile_photo_url(user):
         if not user or not user.profile_photo_key:
             return None
+        direct = get_image_url(user.profile_photo_key)
+        if direct:
+            return direct
         return url_for("profile.user_photo", user_id=user.id)
 
+    def storage_image_url(storage_key):
+        if not storage_key:
+            return None
+        direct = get_image_url(storage_key)
+        if direct:
+            return direct
+        return None
+
     app.jinja_env.globals["profile_photo_url"] = profile_photo_url
+    app.jinja_env.globals["storage_image_url"] = storage_image_url
 
     @app.context_processor
     def inject_globals():
@@ -134,6 +150,7 @@ def create_app():
             "languages": SUPPORTED_LANGUAGES,
             "donation_whatsapp_url": donation_whatsapp_url,
             "profile_photo_url": profile_photo_url,
+            "storage_image_url": storage_image_url,
         }
 
     @login_manager.user_loader

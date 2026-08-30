@@ -9,7 +9,7 @@ from app.forms import GalleryUploadForm
 from app.models import GalleryImage
 from app.org_scope import org_get, org_query
 from app.permissions import write_required
-from app.storage import delete_image, make_image_response, save_image
+from app.storage import delete_image, get_image_url, save_image, serve_image
 
 gallery_bp = Blueprint("gallery", __name__)
 
@@ -71,7 +71,7 @@ def photo(image_id):
     image = org_get(GalleryImage, image_id)
     if not image:
         abort(404)
-    response = make_image_response(image.storage_key)
+    response = serve_image(image.storage_key, "gallery.photo", image_id=image.id)
     if not response:
         abort(404)
     return response

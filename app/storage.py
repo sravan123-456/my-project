@@ -1,8 +1,9 @@
 import os
 import uuid
+from datetime import timedelta
 from io import BytesIO
 
-from flask import current_app, send_file
+from flask import current_app, redirect, send_file
 from werkzeug.utils import secure_filename
 
 IMAGE_EXTENSIONS = frozenset({"png", "jpg", "jpeg", "gif", "webp"})
@@ -46,6 +47,37 @@ def _local_path(storage_key):
     return os.path.join(current_app.config["UPLOAD_FOLDER"], storage_key)
 
 
+def _gcs_cache_control():
+    return current_app.config.get("GCS_CACHE_CONTROL", "public, max-age=86400")
+
+
+def get_image_url(storage_key):
+    """Direct browser URL for an image. Uses GCS signed/public URL when configured."""
+    if not storage_key:
+        return None
+
+    if not uses_gcs():
+        return None
+
+    bucket = _get_gcs_bucket()
+    blob = bucket.blob(storage_key)
+    if not blob.exists():
+        return None
+
+    if current_app.config.get("GCS_PUBLIC_READ"):
+        return f"https://storage.googleapis.com/{bucket.name}/{storage_key}"
+
+    expiration_hours = int(current_app.config.get("GCS_SIGNED_URL_HOURS", 24))
+    try:
+        return blob.generate_signed_url(
+            version="v4",
+            expiration=timedelta(hours=expiration_hours),
+            method="GET",
+        )
+    except Exception:
+        return f"https://storage.googleapis.com/{bucket.name}/{storage_key}"
+
+
 def save_image(file, prefix):
     if not file or file.filename == "":
         return None
@@ -60,7 +92,13 @@ def save_image(file, prefix):
         bucket = _get_gcs_bucket()
         blob = bucket.blob(storage_key)
         file.seek(0)
-        blob.upload_from_file(file, content_type=content_type)
+        blob.upload_from_file(
+            file,
+            content_type=content_type,
+            cache_control=_gcs_cache_control(),
+        )
+        if current_app.config.get("GCS_PUBLIC_READ"):
+            blob.make_public()
     else:
         full_path = _local_path(storage_key)
         os.makedirs(os.path.dirname(full_path), exist_ok=True)
@@ -85,15 +123,40 @@ def delete_image(storage_key):
             os.remove(path)
 
 
-def make_image_response(storage_key):
+def upload_local_file(local_path, storage_key):
+    """Upload an existing file from disk to the current storage backend."""
+    if not os.path.isfile(local_path):
+        return False
+
+    ext = storage_key.rsplit(".", 1)[-1].lower()
+    content_type = _content_type(ext)
+
     if uses_gcs():
         bucket = _get_gcs_bucket()
         blob = bucket.blob(storage_key)
-        if not blob.exists():
-            return None
-        data = blob.download_as_bytes()
-        ext = storage_key.rsplit(".", 1)[-1].lower()
-        return send_file(BytesIO(data), mimetype=_content_type(ext))
+        blob.upload_from_filename(local_path, content_type=content_type, cache_control=_gcs_cache_control())
+        if current_app.config.get("GCS_PUBLIC_READ"):
+            blob.make_public()
+        return True
+
+    destination = _local_path(storage_key)
+    os.makedirs(os.path.dirname(destination), exist_ok=True)
+    with open(local_path, "rb") as src, open(destination, "wb") as dst:
+        dst.write(src.read())
+    return True
+
+
+def serve_image(storage_key, fallback_endpoint, **fallback_values):
+    """Redirect to GCS for low latency, or proxy/serve locally."""
+    direct_url = get_image_url(storage_key)
+    if direct_url:
+        return redirect(direct_url)
+
+    if not storage_key:
+        return None
+
+    if uses_gcs():
+        return None
 
     path = _local_path(storage_key)
     if not os.path.isfile(path):

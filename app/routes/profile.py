@@ -5,7 +5,7 @@ from app import db
 from app.activity import log_activity
 from app.forms import ProfilePhotoForm
 from app.models import User
-from app.storage import delete_image, make_image_response, save_image
+from app.storage import delete_image, get_image_url, save_image, serve_image
 
 profile_bp = Blueprint("profile", __name__)
 
@@ -40,7 +40,7 @@ def user_photo(user_id):
     user = _same_org_user(user_id)
     if not user or not user.profile_photo_key:
         abort(404)
-    response = make_image_response(user.profile_photo_key)
+    response = serve_image(user.profile_photo_key, "profile.user_photo", user_id=user.id)
     if not response:
         abort(404)
     return response

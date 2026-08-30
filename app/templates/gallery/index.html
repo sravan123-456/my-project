@@ -51,8 +51,8 @@
 <div class="gallery-grid">
     {% for image in images %}
     <div class="gallery-card card border-0 shadow-sm">
-        <a href="{{ url_for('gallery.photo', image_id=image.id) }}" target="_blank" rel="noopener" class="gallery-image-link">
-            <img src="{{ url_for('gallery.photo', image_id=image.id) }}" alt="{{ image.title or t('gallery.title') }}" class="gallery-image">
+        <a href="{{ storage_image_url(image.storage_key) or url_for('gallery.photo', image_id=image.id) }}" target="_blank" rel="noopener" class="gallery-image-link">
+            <img src="{{ storage_image_url(image.storage_key) or url_for('gallery.photo', image_id=image.id) }}" alt="{{ image.title or t('gallery.title') }}" class="gallery-image" loading="lazy">
         </a>
         <div class="card-body p-3">
             {% if image.title %}
