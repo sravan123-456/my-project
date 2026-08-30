@@ -95,8 +95,6 @@ def save_image(file, prefix):
         blob.upload_from_file(file, content_type=content_type)
         blob.cache_control = _gcs_cache_control()
         blob.patch()
-        if current_app.config.get("GCS_PUBLIC_READ"):
-            blob.make_public()
     else:
         full_path = _local_path(storage_key)
         os.makedirs(os.path.dirname(full_path), exist_ok=True)
@@ -135,8 +133,6 @@ def upload_local_file(local_path, storage_key):
         blob.upload_from_filename(local_path, content_type=content_type)
         blob.cache_control = _gcs_cache_control()
         blob.patch()
-        if current_app.config.get("GCS_PUBLIC_READ"):
-            blob.make_public()
         return True
 
     destination = _local_path(storage_key)
