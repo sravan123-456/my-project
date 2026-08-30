@@ -123,7 +123,7 @@
                             <li>{{ t('help.password_1') }}</li>
                             <li>{{ t('help.password_2') }}</li>
                         </ol>
-                        <a href="{{ url_for('auth.forgot_password') }}" class="btn btn-outline-festival btn-sm mt-3">Forgot Password</a>
+                        <a href="{{ url_for('auth.forgot_password') }}" class="btn btn-outline-festival btn-sm mt-3">{{ t('login.forgot_password') }}</a>
                     </div>
                 </div>
             </div>
@@ -151,6 +151,20 @@
             {% else %}
             <a href="{{ url_for('auth.login') }}" class="btn btn-festival">{{ t('nav.login') }}</a>
             {% endif %}
+        </div>
+
+        <div class="card border-0 shadow-sm mt-4" id="privacy">
+            <div class="card-body">
+                <h5 class="fw-semibold"><i class="bi bi-shield-check"></i> {{ t('footer.privacy') }}</h5>
+                <p class="text-muted mb-0">{{ t('footer.privacy_note') }}</p>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mt-3" id="contact">
+            <div class="card-body">
+                <h5 class="fw-semibold"><i class="bi bi-envelope"></i> {{ t('footer.contact') }}</h5>
+                <p class="text-muted mb-0">{{ t('help.password_2') }}</p>
+            </div>
         </div>
     </div>
 </div>

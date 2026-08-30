@@ -1,7 +1,7 @@
 import os
 from datetime import datetime, timezone
 
-from flask import Flask, flash, jsonify, redirect, request, url_for
+from flask import Flask, flash, jsonify, redirect, render_template, request, url_for
 from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager, current_user
 from flask_sqlalchemy import SQLAlchemy
@@ -134,12 +134,25 @@ def create_app():
                     organization_id=current_user.organization_id,
                     status=PasswordResetRequest.STATUS_PENDING,
                 ).count()
+
+        def nav_active(*patterns):
+            endpoint = request.endpoint or ""
+            for pattern in patterns:
+                if pattern.endswith("."):
+                    if endpoint.startswith(pattern):
+                        return True
+                elif endpoint == pattern:
+                    return True
+            return False
+
         return {
             "festival_name": festival_name,
             "organization_name": organization_name,
             "platform_name": PLATFORM_NAME,
             "nav_title": festival_name if current_user.is_authenticated and organization_name else PLATFORM_NAME,
             "developer_name": DEVELOPER_NAME,
+            "app_version": "1.1.0",
+            "current_year": datetime.now().year,
             "donor_group_labels": DONOR_GROUP_LABELS,
             "user_can_edit": lambda: current_user.is_authenticated and current_user.can_edit(),
             "user_is_admin": lambda: current_user.is_authenticated and current_user.is_admin,
@@ -151,6 +164,7 @@ def create_app():
             "donation_whatsapp_url": donation_whatsapp_url,
             "profile_photo_url": profile_photo_url,
             "storage_image_url": storage_image_url,
+            "nav_active": nav_active,
         }
 
     @login_manager.user_loader
@@ -182,6 +196,15 @@ def create_app():
     @app.get("/health")
     def health():
         return jsonify({"status": "ok"}), 200
+
+    @app.errorhandler(404)
+    def not_found(error):
+        return render_template("errors/404.html"), 404
+
+    @app.errorhandler(500)
+    def server_error(error):
+        db.session.rollback()
+        return render_template("errors/500.html"), 500
 
     @app.after_request
     def add_cache_headers(response):

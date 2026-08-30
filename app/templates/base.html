@@ -3,45 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{{ t('meta.description') }}">
+    <meta name="theme-color" content="#880E4F">
+    <meta name="robots" content="index, follow">
     <title>{% block title %}{{ festival_name }}{% endblock %}</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.svg') }}" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/favicon.svg') }}">
     <link href="{{ url_for('static', filename='vendor/bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='vendor/bootstrap-icons.min.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark festival-nav">
+    <a href="#main-content" class="skip-link">{{ t('a11y.skip_to_content') }}</a>
+    <nav class="navbar navbar-expand-lg navbar-dark festival-nav no-print">
         <div class="container">
             <a class="navbar-brand fw-bold" href="{{ url_for('main.index') }}">
                 <i class="bi bi-flower1"></i> {{ nav_title }}
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 {% if current_user.is_authenticated %}
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.dashboard') }}">
+                        <a class="nav-link{% if nav_active('main.dashboard') %} active{% endif %}"
+                           href="{{ url_for('main.dashboard') }}"{% if nav_active('main.dashboard') %} aria-current="page"{% endif %}>
                             <i class="bi bi-speedometer2"></i> {{ t('nav.dashboard') }}
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('donations.list_donations') }}">
+                        <a class="nav-link{% if nav_active('donations.') %} active{% endif %}"
+                           href="{{ url_for('donations.list_donations') }}"{% if nav_active('donations.') %} aria-current="page"{% endif %}>
                             <i class="bi bi-heart-fill"></i> {{ t('nav.donations') }}
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('expenses.list_expenses') }}">
+                        <a class="nav-link{% if nav_active('expenses.') %} active{% endif %}"
+                           href="{{ url_for('expenses.list_expenses') }}"{% if nav_active('expenses.') %} aria-current="page"{% endif %}>
                             <i class="bi bi-receipt"></i> {{ t('nav.expenses') }}
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('reports.reports') }}">
+                        <a class="nav-link{% if nav_active('reports.') %} active{% endif %}"
+                           href="{{ url_for('reports.reports') }}"{% if nav_active('reports.') %} aria-current="page"{% endif %}>
                             <i class="bi bi-file-earmark-bar-graph"></i> {{ t('nav.reports') }}
                         </a>
                     </li>
                 </ul>
                 <ul class="navbar-nav ms-lg-auto align-items-lg-center">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                           aria-expanded="false" aria-label="{{ t('nav.language') }}">
+                            <i class="bi bi-translate"></i> {{ languages[current_lang] }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            {% for code, label in languages.items() %}
+                            <li>
+                                <a class="dropdown-item {% if code == current_lang %}active{% endif %}"
+                                   href="{{ url_for('main.set_language_route', lang=code) }}">
+                                    {% if code == current_lang %}<i class="bi bi-check2 me-1"></i>{% endif %}
+                                    {{ label }}
+                                </a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </li>
                     <li class="nav-item dropdown profile-menu">
                         {% from "partials/user_avatar.html" import user_avatar %}
                         {{ user_avatar(current_user, size='sm', dropdown_toggle=True) }}
@@ -109,19 +137,6 @@
                                     <i class="bi bi-question-circle"></i> {{ t('nav.help') }}
                                 </a>
                             </li>
-                            <li class="dropend">
-                                <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                                    <i class="bi bi-translate"></i> {{ t('nav.language') }}: {{ languages[current_lang] }}
-                                </a>
-                                <ul class="dropdown-menu">
-                                    {% for code, label in languages.items() %}
-                                    <li>
-                                        <a class="dropdown-item {% if code == current_lang %}active{% endif %}"
-                                           href="{{ url_for('main.set_language_route', lang=code) }}">{{ label }}</a>
-                                    </li>
-                                    {% endfor %}
-                                </ul>
-                            </li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}">
@@ -134,15 +149,18 @@
                 {% else %}
                 <ul class="navbar-nav ms-auto align-items-lg-center">
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('auth.login') }}">{{ t('nav.login') }}</a>
+                        <a class="nav-link{% if nav_active('auth.login', 'auth.register', 'auth.register_hub', 'auth.start_committee', 'auth.forgot_password') %} active{% endif %}"
+                           href="{{ url_for('auth.login') }}">{{ t('nav.login') }}</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.help_page') }}">
+                        <a class="nav-link{% if nav_active('main.help_page') %} active{% endif %}"
+                           href="{{ url_for('main.help_page') }}"{% if nav_active('main.help_page') %} aria-current="page"{% endif %}>
                             <i class="bi bi-question-circle"></i> {{ t('nav.help') }}
                         </a>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                           aria-expanded="false" aria-label="{{ t('nav.language') }}">
                             <i class="bi bi-translate"></i> {{ languages[current_lang] }}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
@@ -160,30 +178,38 @@
         </div>
     </nav>
 
-    <main class="container py-4">
+    <main id="main-content" class="container py-4" tabindex="-1">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-                {% endfor %}
+            <script type="application/json" id="flash-messages">{{ messages|tojson }}</script>
             {% endif %}
         {% endwith %}
 
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="festival-footer text-center py-3 mt-auto">
+    <div id="toastContainer" class="toast-container position-fixed bottom-0 end-0 p-3 no-print" aria-live="polite" aria-atomic="true"></div>
+
+    <footer class="festival-footer text-center py-3 mt-auto no-print">
         <div class="container">
             <small>{{ nav_title }} &mdash; {{ t('footer.tagline') }}</small>
             <br>
-            <small class="developer-credit">Designed and developed by {{ developer_name }}</small>
+            <small>{{ t('footer.copyright', year=current_year, name=nav_title) }}</small>
+            <br>
+            <small class="footer-links">
+                <a href="{{ url_for('main.help_page') }}" class="footer-link">{{ t('footer.help') }}</a>
+                &middot;
+                <a href="{{ url_for('main.help_page') }}#privacy" class="footer-link">{{ t('footer.privacy') }}</a>
+                &middot;
+                <a href="{{ url_for('main.help_page') }}#contact" class="footer-link">{{ t('footer.contact') }}</a>
+            </small>
+            <br>
+            <small class="developer-credit">{{ t('footer.version', version=app_version) }} &middot; {{ developer_name }}</small>
         </div>
     </footer>
 
     <script src="{{ url_for('static', filename='vendor/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

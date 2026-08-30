@@ -35,7 +35,7 @@
         <h5 class="mb-0"><i class="bi bi-cloud-upload"></i> {{ t('gallery.upload_title') }} ({{ selected_year }})</h5>
     </div>
     <div class="card-body">
-        <form method="POST" action="{{ url_for('gallery.upload', year=selected_year) }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ url_for('gallery.upload', year=selected_year) }}" enctype="multipart/form-data" id="galleryUploadForm">
             {{ form.hidden_tag() }}
             <div class="row g-3">
                 <div class="col-md-4">
@@ -55,7 +55,10 @@
                     {{ form.caption(class="form-control", rows=2, placeholder=t('gallery.caption_placeholder')) }}
                 </div>
                 <div class="col-12">
-                    {{ form.submit(class="btn btn-primary") }}
+                    {{ form.submit(class="btn btn-festival", **{"data-loading-text": t('gallery.uploading')}) }}
+                    <div class="progress mt-3 d-none" id="galleryUploadProgress" aria-hidden="true">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" id="galleryUploadProgressBar" style="width: 0%"></div>
+                    </div>
                 </div>
             </div>
         </form>
@@ -75,9 +78,13 @@
 {% if images %}
 <div class="gallery-grid">
     {% for image in images %}
+    {% set image_url = storage_image_url(image.storage_key) or url_for('gallery.photo', image_id=image.id) %}
     <div class="gallery-card card border-0 shadow-sm">
-        <a href="{{ storage_image_url(image.storage_key) or url_for('gallery.photo', image_id=image.id) }}" target="_blank" rel="noopener" class="gallery-image-link">
-            <img src="{{ storage_image_url(image.storage_key) or url_for('gallery.photo', image_id=image.id) }}" alt="{{ image.title or t('gallery.title') }}" class="gallery-image" loading="lazy">
+        <a href="#" class="gallery-image-link" data-lightbox
+           data-src="{{ image_url }}"
+           data-alt="{{ image.title or t('gallery.title') }}"
+           data-caption="{{ image.title or '' }}{% if image.caption %} — {{ image.caption }}{% endif %}">
+            <img src="{{ image_url }}" alt="{{ image.title or t('gallery.title') }}" class="gallery-image" loading="lazy">
         </a>
         <div class="card-body p-3">
             {% if image.title %}
@@ -110,4 +117,12 @@
     </div>
 </div>
 {% endif %}
+
+<div id="galleryLightbox" class="gallery-lightbox" hidden role="dialog" aria-modal="true" aria-label="{{ t('gallery.title') }}">
+    <button type="button" class="gallery-lightbox-close" aria-label="{{ t('lightbox.close') }}">&times;</button>
+    <button type="button" class="gallery-lightbox-nav gallery-lightbox-prev" aria-label="{{ t('lightbox.prev') }}">&#8249;</button>
+    <img src="" alt="" id="galleryLightboxImage" class="gallery-lightbox-image">
+    <button type="button" class="gallery-lightbox-nav gallery-lightbox-next" aria-label="{{ t('lightbox.next') }}">&#8250;</button>
+    <p class="gallery-lightbox-caption" id="galleryLightboxCaption"></p>
+</div>
 {% endblock %}

@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% from "partials/user_avatar.html" import user_avatar %}
 
-{% block title %}Dashboard - {{ festival_name }}{% endblock %}
+{% block title %}{{ t('nav.dashboard') }} - {{ festival_name }}{% endblock %}
 
 {% block content %}
 {% if current_user.is_authenticated and not user_can_edit() %}
 <div class="alert alert-info">
     <i class="bi bi-eye"></i>
-    You have <strong>read-only access</strong>. Contact an admin to grant write permission for adding or editing records.
+    {{ t('dashboard.read_only_notice') }}
 </div>
 {% endif %}
 
@@ -27,11 +27,11 @@
         </div>
         <div class="d-flex gap-2 flex-wrap">
             {% if user_can_edit() %}
-            <a href="{{ url_for('donations.add_donation') }}" class="btn btn-success">
-                <i class="bi bi-plus-circle"></i> Add Donation
+            <a href="{{ url_for('donations.add_donation') }}" class="btn btn-success-festival">
+                <i class="bi bi-plus-circle"></i> {{ t('dashboard.add_donation') }}
             </a>
-            <a href="{{ url_for('expenses.add_expense') }}" class="btn btn-danger">
-                <i class="bi bi-plus-circle"></i> Add Expense
+            <a href="{{ url_for('expenses.add_expense') }}" class="btn btn-danger-festival">
+                <i class="bi bi-plus-circle"></i> {{ t('dashboard.add_expense') }}
             </a>
             {% endif %}
         </div>
@@ -72,33 +72,27 @@
     <h5 class="fw-semibold mb-0"><i class="bi bi-cash-stack"></i> {{ t('dashboard.finance_overview') }}</h5>
 </div>
 
-<!-- Big Balance Display -->
 <div class="balance-card card border-0 shadow-lg mb-4">
     <div class="balance-card-pattern"></div>
     <div class="balance-card-glow"></div>
-
     <div class="balance-decor balance-decor-left">
         <img src="{{ url_for('static', filename='images/ganesha-decor.svg') }}" alt="" class="balance-ganesha-img" aria-hidden="true">
     </div>
     <div class="balance-decor balance-decor-right">
         <div class="balance-toran"></div>
     </div>
-
     <div class="card-body balance-card-body text-center">
         <div class="balance-ornament top-ornament">✦ 🪷 ✦</div>
-        <p class="balance-label mb-2">Current Fund Balance</p>
-        <h1 class="balance-amount display-1 fw-bold">
-            ₹{{ "{:,.2f}".format(balance) }}
-        </h1>
+        <p class="balance-label mb-2">{{ t('dashboard.current_balance') }}</p>
+        <h1 class="balance-amount display-1 fw-bold">₹{{ "{:,.2f}".format(balance) }}</h1>
         <p class="balance-subtitle mt-2 mb-0">
             <i class="bi bi-info-circle"></i>
-            Donations (₹{{ "{:,.2f}".format(total_donations) }}) minus Expenses (₹{{ "{:,.2f}".format(total_expenses) }})
+            {{ t('dashboard.balance_subtitle', donations="{:,.2f}".format(total_donations), expenses="{:,.2f}".format(total_expenses)) }}
         </p>
         <div class="balance-ornament bottom-ornament">🪔 శుభం 🪔</div>
     </div>
 </div>
 
-<!-- Summary Cards -->
 <div class="row g-3 mb-4">
     <div class="col-md-4">
         <div class="stat-card card border-0 shadow-sm h-100">
@@ -108,9 +102,9 @@
                         <i class="bi bi-heart-fill"></i>
                     </div>
                     <div>
-                        <p class="text-muted mb-0 small">Total Donations</p>
+                        <p class="text-muted mb-0 small">{{ t('dashboard.total_donations') }}</p>
                         <h4 class="fw-bold mb-0 text-success">₹{{ "{:,.2f}".format(total_donations) }}</h4>
-                        <small class="text-muted">{{ donation_count }} entries</small>
+                        <small class="text-muted">{{ donation_count }} {{ t('dashboard.entries') }}</small>
                     </div>
                 </div>
             </div>
@@ -124,9 +118,9 @@
                         <i class="bi bi-receipt-cutoff"></i>
                     </div>
                     <div>
-                        <p class="text-muted mb-0 small">Total Expenses</p>
+                        <p class="text-muted mb-0 small">{{ t('dashboard.total_expenses') }}</p>
                         <h4 class="fw-bold mb-0 text-danger">₹{{ "{:,.2f}".format(total_expenses) }}</h4>
-                        <small class="text-muted">{{ expense_count }} entries</small>
+                        <small class="text-muted">{{ expense_count }} {{ t('dashboard.entries') }}</small>
                     </div>
                 </div>
             </div>
@@ -140,9 +134,9 @@
                         <i class="bi bi-pie-chart-fill"></i>
                     </div>
                     <div>
-                        <p class="text-muted mb-0 small">Expense Categories</p>
+                        <p class="text-muted mb-0 small">{{ t('dashboard.expense_categories') }}</p>
                         <h4 class="fw-bold mb-0">{{ expense_by_category|length }}</h4>
-                        <small class="text-muted">active categories</small>
+                        <small class="text-muted">{{ t('dashboard.active_categories') }}</small>
                     </div>
                 </div>
             </div>
@@ -150,13 +144,12 @@
     </div>
 </div>
 
-<!-- Donation breakdown -->
 <div class="row g-3 mb-4">
     <div class="col-md-6">
         <div class="card border-0 shadow-sm border-start border-primary border-4">
             <div class="card-body py-3">
                 <div class="d-flex justify-content-between align-items-center">
-                    <span class="text-muted"><i class="bi bi-people-fill"></i> Committee Member</span>
+                    <span class="text-muted"><i class="bi bi-people-fill"></i> {{ t('dashboard.committee_member') }}</span>
                     <span class="fw-bold text-primary">₹{{ "{:,.2f}".format(committee_donations) }}</span>
                 </div>
             </div>
@@ -166,7 +159,7 @@
         <div class="card border-0 shadow-sm border-start border-secondary border-4">
             <div class="card-body py-3">
                 <div class="d-flex justify-content-between align-items-center">
-                    <span class="text-muted"><i class="bi bi-person-plus"></i> Other</span>
+                    <span class="text-muted"><i class="bi bi-person-plus"></i> {{ t('dashboard.other') }}</span>
                     <span class="fw-bold text-secondary">₹{{ "{:,.2f}".format(other_donations) }}</span>
                 </div>
             </div>
@@ -175,12 +168,11 @@
 </div>
 
 <div class="row g-4">
-    <!-- Recent Donations -->
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-3">
-                <h5 class="mb-0"><i class="bi bi-heart-fill text-success"></i> Recent Donations</h5>
-                <a href="{{ url_for('donations.list_donations') }}" class="btn btn-sm btn-outline-success">View All</a>
+                <h5 class="mb-0"><i class="bi bi-heart-fill text-success"></i> {{ t('dashboard.recent_donations') }}</h5>
+                <a href="{{ url_for('donations.list_donations') }}" class="btn btn-sm btn-outline-success-festival">{{ t('common.view_all') }}</a>
             </div>
             <div class="card-body p-0">
                 {% if recent_donations %}
@@ -188,10 +180,10 @@
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Donor</th>
-                                <th>From</th>
-                                <th>Date</th>
-                                <th class="text-end">Amount</th>
+                                <th>{{ t('dashboard.donor') }}</th>
+                                <th>{{ t('dashboard.from') }}</th>
+                                <th>{{ t('dashboard.date') }}</th>
+                                <th class="text-end">{{ t('dashboard.amount') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -211,18 +203,16 @@
                     </table>
                 </div>
                 {% else %}
-                <p class="text-muted text-center py-4 mb-0">No donations recorded yet.</p>
+                <p class="text-muted text-center py-4 mb-0">{{ t('dashboard.no_donations') }}</p>
                 {% endif %}
             </div>
         </div>
     </div>
-
-    <!-- Recent Expenses -->
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-3">
-                <h5 class="mb-0"><i class="bi bi-receipt text-danger"></i> Recent Expenses</h5>
-                <a href="{{ url_for('expenses.list_expenses') }}" class="btn btn-sm btn-outline-danger">View All</a>
+                <h5 class="mb-0"><i class="bi bi-receipt text-danger"></i> {{ t('dashboard.recent_expenses') }}</h5>
+                <a href="{{ url_for('expenses.list_expenses') }}" class="btn btn-sm btn-outline-danger-festival">{{ t('common.view_all') }}</a>
             </div>
             <div class="card-body p-0">
                 {% if recent_expenses %}
@@ -230,9 +220,9 @@
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Title</th>
-                                <th>Date</th>
-                                <th class="text-end">Amount</th>
+                                <th>{{ t('dashboard.title_col') }}</th>
+                                <th>{{ t('dashboard.date') }}</th>
+                                <th class="text-end">{{ t('dashboard.amount') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -247,7 +237,7 @@
                     </table>
                 </div>
                 {% else %}
-                <p class="text-muted text-center py-4 mb-0">No expenses recorded yet.</p>
+                <p class="text-muted text-center py-4 mb-0">{{ t('dashboard.no_expenses') }}</p>
                 {% endif %}
             </div>
         </div>
@@ -257,7 +247,7 @@
 {% if expense_by_category %}
 <div class="card border-0 shadow-sm mt-4">
     <div class="card-header bg-white border-0 py-3">
-        <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Expenses by Category</h5>
+        <h5 class="mb-0"><i class="bi bi-bar-chart"></i> {{ t('dashboard.expenses_by_category') }}</h5>
     </div>
     <div class="card-body">
         {% for cat, total in expense_by_category %}
@@ -275,11 +265,10 @@
 </div>
 {% endif %}
 
-<!-- Recent Activity -->
 <div class="card border-0 shadow-sm mt-4">
     <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-3">
-        <h5 class="mb-0"><i class="bi bi-clock-history"></i> Recent Activity</h5>
-        <a href="{{ url_for('activity.activity_log') }}" class="btn btn-sm btn-outline-secondary">View All</a>
+        <h5 class="mb-0"><i class="bi bi-clock-history"></i> {{ t('dashboard.recent_activity') }}</h5>
+        <a href="{{ url_for('activity.activity_log') }}" class="btn btn-sm btn-outline-festival">{{ t('common.view_all') }}</a>
     </div>
     <div class="card-body p-0">
         {% if recent_activities %}
@@ -301,7 +290,7 @@
             {% endfor %}
         </div>
         {% else %}
-        <p class="text-muted text-center py-4 mb-0">No activity recorded yet.</p>
+        <p class="text-muted text-center py-4 mb-0">{{ t('dashboard.no_activity') }}</p>
         {% endif %}
     </div>
 </div>

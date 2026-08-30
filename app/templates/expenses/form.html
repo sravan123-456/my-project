@@ -59,8 +59,8 @@
                         </div>
                     </div>
                     <div class="d-flex gap-2 mt-4">
-                        {{ form.submit(class="btn btn-danger") }}
-                        <a href="{{ url_for('expenses.list_expenses') }}" class="btn btn-outline-secondary">Cancel</a>
+                        {{ form.submit(class="btn btn-danger-festival", **{"data-loading-text": t('common.loading')}) }}
+                        <a href="{{ url_for('expenses.list_expenses') }}" class="btn btn-outline-secondary">{{ t('common.cancel') }}</a>
                     </div>
                 </form>
             </div>

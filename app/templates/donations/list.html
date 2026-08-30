@@ -1,23 +1,22 @@
 {% extends "base.html" %}
 
-{% block title %}Donations - {{ festival_name }}{% endblock %}
+{% block title %}{{ t('donations.title') }} - {{ festival_name }}{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-    <h2 class="fw-bold mb-0"><i class="bi bi-heart-fill text-success"></i> Donations</h2>
+    <h2 class="fw-bold mb-0"><i class="bi bi-heart-fill text-success"></i> {{ t('donations.title') }}</h2>
     {% if user_can_edit() %}
-    <a href="{{ url_for('donations.add_donation') }}" class="btn btn-success">
-        <i class="bi bi-plus-circle"></i> Add Donation
+    <a href="{{ url_for('donations.add_donation') }}" class="btn btn-success-festival">
+        <i class="bi bi-plus-circle"></i> {{ t('donations.add') }}
     </a>
     {% endif %}
 </div>
 
-<!-- Donation group summary -->
 <div class="row g-3 mb-4">
     <div class="col-md-6">
         <div class="card border-0 shadow-sm h-100 border-start border-primary border-4">
             <div class="card-body">
-                <p class="text-muted mb-1 small"><i class="bi bi-people-fill"></i> Committee Member</p>
+                <p class="text-muted mb-1 small"><i class="bi bi-people-fill"></i> {{ t('dashboard.committee_member') }}</p>
                 <h4 class="fw-bold text-primary mb-0">₹{{ "{:,.2f}".format(committee_total) }}</h4>
             </div>
         </div>
@@ -25,43 +24,42 @@
     <div class="col-md-6">
         <div class="card border-0 shadow-sm h-100 border-start border-secondary border-4">
             <div class="card-body">
-                <p class="text-muted mb-1 small"><i class="bi bi-person-plus"></i> Other</p>
+                <p class="text-muted mb-1 small"><i class="bi bi-person-plus"></i> {{ t('dashboard.other') }}</p>
                 <h4 class="fw-bold text-secondary mb-0">₹{{ "{:,.2f}".format(other_total) }}</h4>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Filter tabs -->
 <ul class="nav nav-pills mb-3">
     <li class="nav-item">
-        <a class="nav-link {% if group_filter == 'all' %}active{% endif %}" href="{{ url_for('donations.list_donations') }}">All</a>
+        <a class="nav-link {% if group_filter == 'all' %}active{% endif %}" href="{{ url_for('donations.list_donations') }}">{{ t('donations.filter_all') }}</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link {% if group_filter == 'committee_member' %}active{% endif %}" href="{{ url_for('donations.list_donations', group='committee_member') }}">Committee Member</a>
+        <a class="nav-link {% if group_filter == 'committee_member' %}active{% endif %}" href="{{ url_for('donations.list_donations', group='committee_member') }}">{{ t('dashboard.committee_member') }}</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link {% if group_filter == 'other' %}active{% endif %}" href="{{ url_for('donations.list_donations', group='other') }}">Other</a>
+        <a class="nav-link {% if group_filter == 'other' %}active{% endif %}" href="{{ url_for('donations.list_donations', group='other') }}">{{ t('dashboard.other') }}</a>
     </li>
 </ul>
 
 <div class="card border-0 shadow-sm">
     <div class="card-body p-0">
         {% if donations %}
-        <div class="table-responsive">
+        <div class="table-responsive d-none d-md-block">
             <table class="table table-hover mb-0">
                 <thead class="table-light">
                     <tr>
                         <th>#</th>
-                        <th>Donor Name</th>
-                        <th>From</th>
-                        <th>Payment</th>
-                        <th>Phone</th>
-                        <th>Date</th>
-                        <th>Notes</th>
-                        <th class="text-end">Amount</th>
-                        <th>Recorded By</th>
-                        <th class="text-center">Actions</th>
+                        <th>{{ t('donations.donor_name') }}</th>
+                        <th>{{ t('dashboard.from') }}</th>
+                        <th>{{ t('donations.payment') }}</th>
+                        <th>{{ t('donations.phone') }}</th>
+                        <th>{{ t('dashboard.date') }}</th>
+                        <th>{{ t('donations.notes') }}</th>
+                        <th class="text-end">{{ t('dashboard.amount') }}</th>
+                        <th>{{ t('donations.recorded_by') }}</th>
+                        <th class="text-center">{{ t('common.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -76,9 +74,9 @@
                         </td>
                         <td>
                             {% if d.payment_mode == 'upi' %}
-                            <span class="badge bg-info">UPI</span>
+                            <span class="badge bg-info">{{ t('donations.upi') }}</span>
                             {% else %}
-                            <span class="badge bg-secondary">Cash</span>
+                            <span class="badge bg-secondary">{{ t('donations.cash') }}</span>
                             {% endif %}
                         </td>
                         <td>{{ d.phone or '-' }}</td>
@@ -90,22 +88,22 @@
                             {% if user_can_edit() %}
                             {% if d.phone %}
                             <a href="{{ donation_whatsapp_url(d) }}"
-                               class="btn btn-sm btn-whatsapp" title="Send Telugu thank-you on WhatsApp"
+                               class="btn btn-sm btn-whatsapp" title="{{ t('donations.whatsapp_title') }}"
                                target="_blank" rel="noopener">
                                 <i class="bi bi-whatsapp"></i>
                             </a>
                             {% endif %}
-                            <a href="{{ url_for('donations.edit_donation', donation_id=d.id) }}" class="btn btn-sm btn-outline-primary" title="Edit">
+                            <a href="{{ url_for('donations.edit_donation', donation_id=d.id) }}" class="btn btn-sm btn-outline-festival" title="{{ t('common.edit') }}">
                                 <i class="bi bi-pencil"></i>
                             </a>
-                            <form method="POST" action="{{ url_for('donations.delete_donation', donation_id=d.id) }}" class="d-inline" onsubmit="return confirm('Delete this donation?');">
+                            <form method="POST" action="{{ url_for('donations.delete_donation', donation_id=d.id) }}" class="d-inline" onsubmit="return confirm('{{ t('donations.delete_confirm') }}');">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ t('common.delete') }}">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </form>
                             {% else %}
-                            <span class="text-muted small">View only</span>
+                            <span class="text-muted small">{{ t('common.view_only') }}</span>
                             {% endif %}
                         </td>
                     </tr>
@@ -113,19 +111,69 @@
                 </tbody>
                 <tfoot class="table-light">
                     <tr>
-                        <td colspan="7" class="text-end fw-bold">Total</td>
+                        <td colspan="7" class="text-end fw-bold">{{ t('common.total') }}</td>
                         <td class="text-end fw-bold text-success">₹{{ "{:,.2f}".format(donations|sum(attribute='amount')) }}</td>
                         <td colspan="2"></td>
                     </tr>
                 </tfoot>
             </table>
         </div>
+
+        <div class="d-md-none p-3">
+            {% for d in donations %}
+            <div class="donation-mobile-card card border-0 shadow-sm mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                        <div>
+                            <div class="fw-bold">{{ d.donor_name }}</div>
+                            <small class="text-muted">#{{ loop.index }} &middot; {{ d.donation_date.strftime('%d %b %Y') }}</small>
+                        </div>
+                        <div class="donation-mobile-amount">₹{{ "{:,.2f}".format(d.amount) }}</div>
+                    </div>
+                    <div class="d-flex flex-wrap gap-1 mb-2">
+                        <span class="badge {% if d.donor_group == 'committee_member' %}bg-primary{% else %}bg-secondary{% endif %}">
+                            {{ d.donor_group_label() }}
+                        </span>
+                        {% if d.payment_mode == 'upi' %}
+                        <span class="badge bg-info">{{ t('donations.upi') }}</span>
+                        {% else %}
+                        <span class="badge bg-secondary">{{ t('donations.cash') }}</span>
+                        {% endif %}
+                    </div>
+                    {% if d.phone %}<div class="small mb-1"><i class="bi bi-telephone"></i> {{ d.phone }}</div>{% endif %}
+                    {% if d.notes %}<div class="small text-muted mb-2">{{ d.notes }}</div>{% endif %}
+                    <div class="small text-muted mb-2">{{ t('donations.recorded_by') }}: {{ d.recorded_by.full_name }}</div>
+                    {% if user_can_edit() %}
+                    <div class="d-flex gap-2 flex-wrap">
+                        {% if d.phone %}
+                        <a href="{{ donation_whatsapp_url(d) }}" class="btn btn-sm btn-whatsapp" target="_blank" rel="noopener">
+                            <i class="bi bi-whatsapp"></i>
+                        </a>
+                        {% endif %}
+                        <a href="{{ url_for('donations.edit_donation', donation_id=d.id) }}" class="btn btn-sm btn-outline-festival">
+                            <i class="bi bi-pencil"></i> {{ t('common.edit') }}
+                        </a>
+                        <form method="POST" action="{{ url_for('donations.delete_donation', donation_id=d.id) }}" class="d-inline" onsubmit="return confirm('{{ t('donations.delete_confirm') }}');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+            <div class="text-end fw-bold text-success pe-2">
+                {{ t('common.total') }}: ₹{{ "{:,.2f}".format(donations|sum(attribute='amount')) }}
+            </div>
+        </div>
         {% else %}
         <div class="text-center py-5">
             <i class="bi bi-heart display-4 text-muted"></i>
-            <p class="text-muted mt-3">No donations in this category yet.</p>
+            <p class="text-muted mt-3">{{ t('donations.empty') }}</p>
             {% if user_can_edit() %}
-            <a href="{{ url_for('donations.add_donation') }}" class="btn btn-success">Record Donation</a>
+            <a href="{{ url_for('donations.add_donation') }}" class="btn btn-success-festival">{{ t('donations.record_first') }}</a>
             {% endif %}
         </div>
         {% endif %}

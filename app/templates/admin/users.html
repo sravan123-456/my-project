@@ -1,30 +1,29 @@
 {% extends "base.html" %}
 
-{% block title %}Admin Portal - {{ festival_name }}{% endblock %}
+{% block title %}{{ t('admin.title') }} - {{ festival_name }}{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <div>
-        <h2 class="fw-bold mb-0"><i class="bi bi-shield-lock"></i> Admin Portal</h2>
-        <p class="text-muted mb-0">Approve join requests and manage user access</p>
+        <h2 class="fw-bold mb-0"><i class="bi bi-shield-lock"></i> {{ t('admin.title') }}</h2>
+        <p class="text-muted mb-0">{{ t('admin.subtitle') }}</p>
     </div>
 </div>
 
 {% if invite_url %}
 <div class="card border-0 shadow-sm mb-4 border-start border-primary border-4">
     <div class="card-body">
-        <h5 class="fw-semibold mb-2"><i class="bi bi-link-45deg"></i> Member Invite Link</h5>
+        <h5 class="fw-semibold mb-2"><i class="bi bi-link-45deg"></i> {{ t('admin.invite_title') }}</h5>
         <p class="text-muted small mb-3">
-            Copy and share this link with new members. It opens the login page with your committee code
-            (<code>{{ committee_code }}</code>) already filled in.
+            {{ t('admin.invite_desc', code=committee_code) }}
         </p>
         <div class="input-group">
             <input type="text" class="form-control" id="inviteLink" value="{{ invite_url }}" readonly>
             <button type="button" class="btn btn-festival" id="copyInviteBtn">
-                <i class="bi bi-clipboard"></i> Copy Link
+                <i class="bi bi-clipboard"></i> {{ t('admin.copy_link') }}
             </button>
         </div>
-        <div id="copyInviteMsg" class="small text-success mt-2 d-none">Link copied to clipboard.</div>
+        <div id="copyInviteMsg" class="small text-success mt-2 d-none">{{ t('admin.link_copied') }}</div>
     </div>
 </div>
 {% endif %}
@@ -32,17 +31,17 @@
 {% if pending_resets %}
 <div class="card border-0 shadow-sm mb-4 border-start border-danger border-4">
     <div class="card-header bg-white border-0 py-3">
-        <h5 class="mb-0 text-danger"><i class="bi bi-key"></i> Password Reset Requests ({{ pending_resets|length }})</h5>
+        <h5 class="mb-0 text-danger"><i class="bi bi-key"></i> {{ t('admin.password_resets') }} ({{ pending_resets|length }})</h5>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Name</th>
-                        <th>Username</th>
-                        <th>Requested</th>
-                        <th class="text-center">Action</th>
+                        <th>{{ t('activity.person') }}</th>
+                        <th>{{ t('login.existing_title') }}</th>
+                        <th>{{ t('admin.requested') }}</th>
+                        <th class="text-center">{{ t('common.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -52,8 +51,8 @@
                         <td>{{ reset.user.username }}</td>
                         <td><small>{{ reset.created_at.strftime('%d %b %Y, %I:%M %p') }}</small></td>
                         <td class="text-center">
-                            <a href="{{ url_for('admin.reset_user_password', user_id=reset.user.id) }}" class="btn btn-sm btn-danger">
-                                <i class="bi bi-key"></i> Set New Password
+                            <a href="{{ url_for('admin.reset_user_password', user_id=reset.user.id) }}" class="btn btn-sm btn-danger-festival">
+                                <i class="bi bi-key"></i> {{ t('admin.set_password') }}
                             </a>
                         </td>
                     </tr>
@@ -68,17 +67,17 @@
 {% if pending_users %}
 <div class="card border-0 shadow-sm mb-4 border-start border-warning border-4">
     <div class="card-header bg-white border-0 py-3">
-        <h5 class="mb-0 text-warning"><i class="bi bi-person-plus"></i> Pending Join Requests ({{ pending_users|length }})</h5>
+        <h5 class="mb-0 text-warning"><i class="bi bi-person-plus"></i> {{ t('admin.pending_joins') }} ({{ pending_users|length }})</h5>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Name</th>
+                        <th>{{ t('activity.person') }}</th>
                         <th>Username</th>
-                        <th>Requested</th>
-                        <th class="text-center">Actions</th>
+                        <th>{{ t('admin.requested') }}</th>
+                        <th class="text-center">{{ t('common.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -90,15 +89,15 @@
                         <td class="text-center">
                             <form method="POST" action="{{ url_for('admin.approve_user', user_id=user.id) }}" class="d-inline">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="btn btn-sm btn-success">
-                                    <i class="bi bi-check-lg"></i> Approve
+                                <button type="submit" class="btn btn-sm btn-success-festival" data-loading-text="{{ t('common.loading') }}">
+                                    <i class="bi bi-check-lg"></i> {{ t('admin.approve') }}
                                 </button>
                             </form>
                             <form method="POST" action="{{ url_for('admin.reject_user', user_id=user.id) }}" class="d-inline"
-                                  onsubmit="return confirm('Reject and delete account for {{ user.full_name }}?');">
+                                  onsubmit="return confirm('{{ t('admin.reject_confirm', name=user.full_name) }}');">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-sm btn-outline-danger">
-                                    <i class="bi bi-x-lg"></i> Reject
+                                    <i class="bi bi-x-lg"></i> {{ t('admin.reject') }}
                                 </button>
                             </form>
                         </td>
@@ -113,7 +112,7 @@
 
 <div class="card border-0 shadow-sm">
     <div class="card-header bg-white border-0 py-3">
-        <h5 class="mb-0"><i class="bi bi-people"></i> Approved Users</h5>
+        <h5 class="mb-0"><i class="bi bi-people"></i> {{ t('admin.approved_users') }}</h5>
     </div>
     <div class="card-body p-0">
         {% if users %}
@@ -122,11 +121,11 @@
                 <thead class="table-light">
                     <tr>
                         <th>#</th>
-                        <th>Name</th>
+                        <th>{{ t('activity.person') }}</th>
                         <th>Username</th>
-                        <th>Registered</th>
-                        <th>Access</th>
-                        <th class="text-center">Actions</th>
+                        <th>{{ t('admin.registered') }}</th>
+                        <th>{{ t('admin.access') }}</th>
+                        <th class="text-center">{{ t('common.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -136,56 +135,104 @@
                         <td class="fw-semibold">
                             {{ user.full_name }}
                             {% if user.id == current_user.id %}
-                            <span class="badge bg-info">You</span>
+                            <span class="badge bg-info">{{ t('admin.you') }}</span>
                             {% endif %}
                         </td>
                         <td>{{ user.username }}</td>
                         <td><small>{{ user.created_at.strftime('%d %b %Y') }}</small></td>
                         <td>
                             {% if user.is_admin %}
-                            <span class="badge bg-danger">Admin</span>
+                            <span class="badge bg-danger">{{ t('admin.badge_admin') }}</span>
                             {% elif user.can_write %}
-                            <span class="badge bg-success">Write Access</span>
+                            <span class="badge bg-success">{{ t('admin.badge_write') }}</span>
                             {% else %}
-                            <span class="badge bg-secondary">Read Only</span>
+                            <span class="badge bg-secondary">{{ t('admin.badge_read') }}</span>
                             {% endif %}
                         </td>
                         <td class="text-center">
-                            {% if not user.is_admin %}
-                            <form method="POST" action="{{ url_for('admin.toggle_write', user_id=user.id) }}" class="d-inline">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="btn btn-sm {% if user.can_write %}btn-outline-warning{% else %}btn-outline-success{% endif %}">
-                                    {% if user.can_write %}
-                                    <i class="bi bi-eye"></i> Revoke Write
-                                    {% else %}
-                                    <i class="bi bi-pencil"></i> Grant Write
-                                    {% endif %}
-                                </button>
-                            </form>
-                            {% endif %}
+                            <div class="admin-actions-desktop">
+                                {% if not user.is_admin %}
+                                <form method="POST" action="{{ url_for('admin.toggle_write', user_id=user.id) }}" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm {% if user.can_write %}btn-outline-warning{% else %}btn-outline-success-festival{% endif %}" data-loading-text="{{ t('common.loading') }}">
+                                        {% if user.can_write %}
+                                        <i class="bi bi-eye"></i> {{ t('admin.revoke_write') }}
+                                        {% else %}
+                                        <i class="bi bi-pencil"></i> {{ t('admin.grant_write') }}
+                                        {% endif %}
+                                    </button>
+                                </form>
+                                {% endif %}
+                                {% if user.id != current_user.id %}
+                                <a href="{{ url_for('admin.reset_user_password', user_id=user.id) }}" class="btn btn-sm btn-outline-secondary" title="{{ t('admin.reset_password') }}">
+                                    <i class="bi bi-key"></i>
+                                </a>
+                                <form method="POST" action="{{ url_for('admin.toggle_admin', user_id=user.id) }}" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm {% if user.is_admin %}btn-outline-danger{% else %}btn-outline-festival{% endif %}"
+                                        onclick="return confirm('{% if user.is_admin %}{{ t('admin.remove_admin_confirm', name=user.full_name) }}{% else %}{{ t('admin.make_admin_confirm', name=user.full_name) }}{% endif %}');"
+                                        data-loading-text="{{ t('common.loading') }}">
+                                        {% if user.is_admin %}
+                                        <i class="bi bi-person-dash"></i> {{ t('admin.remove_admin') }}
+                                        {% else %}
+                                        <i class="bi bi-person-check"></i> {{ t('admin.make_admin') }}
+                                        {% endif %}
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" class="d-inline"
+                                      onsubmit="return confirm('{{ t('admin.delete_confirm', name=user.full_name) }}');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ t('admin.delete_user') }}">
+                                        <i class="bi bi-trash"></i> {{ t('admin.delete_user') }}
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
 
                             {% if user.id != current_user.id %}
-                            <a href="{{ url_for('admin.reset_user_password', user_id=user.id) }}" class="btn btn-sm btn-outline-secondary" title="Reset password">
-                                <i class="bi bi-key"></i>
-                            </a>
-                            <form method="POST" action="{{ url_for('admin.toggle_admin', user_id=user.id) }}" class="d-inline">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="btn btn-sm {% if user.is_admin %}btn-outline-danger{% else %}btn-outline-primary{% endif %}"
-                                    onclick="return confirm('{% if user.is_admin %}Remove admin role from{% else %}Make admin{% endif %} {{ user.full_name }}?');">
-                                    {% if user.is_admin %}
-                                    <i class="bi bi-person-dash"></i> Remove Admin
-                                    {% else %}
-                                    <i class="bi bi-person-check"></i> Make Admin
+                            <div class="dropdown admin-actions-mobile">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    {{ t('common.actions') }}
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    {% if not user.is_admin %}
+                                    <li>
+                                        <form method="POST" action="{{ url_for('admin.toggle_write', user_id=user.id) }}">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="dropdown-item">
+                                                {% if user.can_write %}{{ t('admin.revoke_write') }}{% else %}{{ t('admin.grant_write') }}{% endif %}
+                                            </button>
+                                        </form>
+                                    </li>
                                     {% endif %}
-                                </button>
-                            </form>
-                            <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" class="d-inline"
-                                  onsubmit="return confirm('Delete user {{ user.full_name }}? This cannot be undone.');">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete user">
-                                    <i class="bi bi-trash"></i> Delete
-                                </button>
-                            </form>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ url_for('admin.reset_user_password', user_id=user.id) }}">
+                                            <i class="bi bi-key"></i> {{ t('admin.reset_password') }}
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <form method="POST" action="{{ url_for('admin.toggle_admin', user_id=user.id) }}"
+                                              onsubmit="return confirm('{% if user.is_admin %}{{ t('admin.remove_admin_confirm', name=user.full_name) }}{% else %}{{ t('admin.make_admin_confirm', name=user.full_name) }}{% endif %}');">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="dropdown-item">
+                                                {% if user.is_admin %}{{ t('admin.remove_admin') }}{% else %}{{ t('admin.make_admin') }}{% endif %}
+                                            </button>
+                                        </form>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}"
+                                              onsubmit="return confirm('{{ t('admin.delete_confirm', name=user.full_name) }}');">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="dropdown-item text-danger">
+                                                <i class="bi bi-trash"></i> {{ t('admin.delete_user') }}
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                            {% else %}
+                            <span class="text-muted small d-md-none">{{ t('admin.you') }}</span>
                             {% endif %}
                         </td>
                     </tr>
@@ -194,7 +241,7 @@
             </table>
         </div>
         {% else %}
-        <p class="text-muted text-center py-5 mb-0">No approved users yet.</p>
+        <p class="text-muted text-center py-5 mb-0">{{ t('admin.no_users') }}</p>
         {% endif %}
     </div>
 </div>

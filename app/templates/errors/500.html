@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('error.500_title') }} - {{ festival_name }}{% endblock %}
+
+{% block content %}
+<div class="error-page text-center py-5">
+    <div class="error-page-icon mb-3">
+        <i class="bi bi-exclamation-triangle"></i>
+    </div>
+    <h1 class="display-4 fw-bold festival-title mb-2">500</h1>
+    <h2 class="h4 text-muted mb-3">{{ t('error.500_title') }}</h2>
+    <p class="text-muted mb-4 col-lg-6 mx-auto">{{ t('error.500_message') }}</p>
+    <div class="d-flex gap-2 justify-content-center flex-wrap">
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-festival">
+            <i class="bi bi-speedometer2"></i> {{ t('error.back_dashboard') }}
+        </a>
+        {% else %}
+        <a href="{{ url_for('main.index') }}" class="btn btn-festival">
+            <i class="bi bi-house"></i> {{ t('error.back_home') }}
+        </a>
+        {% endif %}
+        <button type="button" class="btn btn-outline-festival" onclick="window.location.reload()">
+            <i class="bi bi-arrow-clockwise"></i> {{ t('error.try_again') }}
+        </button>
+    </div>
+</div>
+{% endblock %}

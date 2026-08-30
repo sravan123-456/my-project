@@ -3,7 +3,8 @@
 {% block title %}{{ t('reports.title') }} - {{ festival_name }}{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+<div class="reports-print-area" id="reports-content">
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2 no-print">
     <div>
         <h2 class="fw-bold mb-0"><i class="bi bi-file-earmark-bar-graph"></i> {{ t('reports.title') }}</h2>
     </div>
@@ -21,13 +22,21 @@
         {% else %}
         <span class="badge bg-light text-dark border">{{ t('nav.festival_year') }}: {{ year }}</span>
         {% endif %}
+        <button type="button" class="btn btn-outline-secondary" onclick="window.print()">
+            <i class="bi bi-printer"></i> {{ t('common.print') }}
+        </button>
         <a href="{{ url_for('reports.export_csv', year=year) }}" class="btn btn-outline-festival">
             <i class="bi bi-download"></i> {{ t('common.export_csv') }}
         </a>
-        <a href="{{ url_for('reports.export_pdf', year=year) }}" class="btn btn-festival">
+        <a href="{{ url_for('reports.export_pdf', year=year) }}" class="btn btn-festival"
+           data-async-download data-loading-text="{{ t('common.generating_pdf') }}">
             <i class="bi bi-file-earmark-pdf"></i> {{ t('common.export_pdf') }}
         </a>
     </div>
+</div>
+
+<div class="print-only report-print-header d-none">
+    <h1>{{ festival_name }} — {{ t('reports.title') }} ({{ year }})</h1>
 </div>
 
 {% if year_summaries|length > 1 %}
@@ -110,16 +119,16 @@
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-header bg-white border-0 py-3">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <h5 class="mb-0"><i class="bi bi-bar-chart-fill"></i> Visual Reports</h5>
-            <div class="d-flex flex-wrap gap-2 align-items-center">
-                <label for="expenseChartType" class="small text-muted mb-0">Expense chart:</label>
+            <h5 class="mb-0"><i class="bi bi-bar-chart-fill"></i> {{ t('reports.visual') }}</h5>
+            <div class="d-flex flex-wrap gap-2 align-items-center no-print">
+                <label for="expenseChartType" class="small text-muted mb-0">{{ t('reports.expense_chart') }}:</label>
                 <select id="expenseChartType" class="form-select form-select-sm" style="width: auto;">
                     <option value="pie">Pie Chart</option>
                     <option value="doughnut">Doughnut Chart</option>
                     <option value="bar" selected>Bar Chart</option>
                     <option value="horizontalBar">Horizontal Bar</option>
                 </select>
-                <label for="donationChartType" class="small text-muted mb-0 ms-2">Donation chart:</label>
+                <label for="donationChartType" class="small text-muted mb-0 ms-2">{{ t('reports.donation_chart') }}:</label>
                 <select id="donationChartType" class="form-select form-select-sm" style="width: auto;">
                     <option value="pie" selected>Pie Chart</option>
                     <option value="doughnut">Doughnut Chart</option>
@@ -131,9 +140,9 @@
     <div class="card-body">
         <div class="row g-4">
             <div class="col-lg-7">
-                <h6 class="text-muted mb-3">Where We Spent More (by Category)</h6>
+                <h6 class="text-muted mb-3">{{ t('reports.spending_by_category') }}</h6>
                 {% if expense_chart_labels %}
-                <div class="chart-wrap" style="min-height: 320px;">
+                <div class="chart-wrap" style="min-height: 320px;" role="img" aria-label="{{ t('reports.expense_chart') }}">
                     <canvas id="expenseChart"></canvas>
                 </div>
                 {% else %}
@@ -141,9 +150,9 @@
                 {% endif %}
             </div>
             <div class="col-lg-5">
-                <h6 class="text-muted mb-3">Donations by Source</h6>
+                <h6 class="text-muted mb-3">{{ t('reports.donations_by_source') }}</h6>
                 {% if donation_chart_values[0] > 0 or donation_chart_values[1] > 0 %}
-                <div class="chart-wrap" style="min-height: 280px;">
+                <div class="chart-wrap" style="min-height: 280px;" role="img" aria-label="{{ t('reports.donation_chart') }}">
                     <canvas id="donationChart"></canvas>
                 </div>
                 {% else %}
@@ -254,10 +263,11 @@
         {% endif %}
     </div>
 </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='vendor/chart.umd.min.js') }}"></script>
 <script>
 (function () {
   var palette = [

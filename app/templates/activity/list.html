@@ -1,22 +1,22 @@
 {% extends "base.html" %}
 
-{% block title %}Activity Log - {{ festival_name }}{% endblock %}
+{% block title %}{{ t('activity.title') }} - {{ festival_name }}{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-    <h2 class="fw-bold mb-0"><i class="bi bi-clock-history"></i> Activity Log</h2>
+    <h2 class="fw-bold mb-0"><i class="bi bi-clock-history"></i> {{ t('activity.title') }}</h2>
     <div class="d-flex gap-2">
         {% if user_is_admin() and activities %}
         <form method="POST" action="{{ url_for('activity.clear_activity_log') }}" class="d-inline"
-              onsubmit="return confirm('Clear the entire activity log? This cannot be undone.');">
+              onsubmit="return confirm('{{ t('activity.clear_confirm') }}');">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="btn btn-outline-danger btn-sm">
-                <i class="bi bi-trash"></i> Clear Log
+            <button type="submit" class="btn btn-outline-danger btn-sm" data-loading-text="{{ t('common.loading') }}">
+                <i class="bi bi-trash"></i> {{ t('activity.clear_log') }}
             </button>
         </form>
         {% endif %}
-        <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-festival btn-sm">
+            <i class="bi bi-arrow-left"></i> {{ t('activity.back_dashboard') }}
         </a>
     </div>
 </div>
@@ -28,11 +28,11 @@
             <table class="table table-hover mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Date &amp; Time</th>
-                        <th>Person</th>
-                        <th>Action</th>
-                        <th>Type</th>
-                        <th>Details</th>
+                        <th>{{ t('activity.datetime') }}</th>
+                        <th>{{ t('activity.person') }}</th>
+                        <th>{{ t('activity.action') }}</th>
+                        <th>{{ t('activity.type') }}</th>
+                        <th>{{ t('activity.details') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -53,7 +53,7 @@
         {% else %}
         <div class="text-center py-5">
             <i class="bi bi-clock-history display-4 text-muted"></i>
-            <p class="text-muted mt-3">No activity recorded yet.</p>
+            <p class="text-muted mt-3">{{ t('activity.empty') }}</p>
         </div>
         {% endif %}
     </div>

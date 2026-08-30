@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}Expenses - {{ festival_name }}{% endblock %}
+{% block title %}{{ t('expenses.title') }} - {{ festival_name }}{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-    <h2 class="fw-bold mb-0"><i class="bi bi-receipt text-danger"></i> Expenses</h2>
+    <h2 class="fw-bold mb-0"><i class="bi bi-receipt text-danger"></i> {{ t('expenses.title') }}</h2>
     {% if user_can_edit() %}
-    <a href="{{ url_for('expenses.add_expense') }}" class="btn btn-danger">
-        <i class="bi bi-plus-circle"></i> Add Expense
+    <a href="{{ url_for('expenses.add_expense') }}" class="btn btn-danger-festival">
+        <i class="bi bi-plus-circle"></i> {{ t('expenses.add') }}
     </a>
     {% endif %}
 </div>
@@ -20,13 +20,13 @@
                 <thead class="table-light">
                     <tr>
                         <th>#</th>
-                        <th>Title</th>
-                        <th>Category</th>
-                        <th>Date</th>
-                        <th>Bill</th>
-                        <th class="text-end">Amount</th>
-                        <th>Recorded By</th>
-                        <th class="text-center">Actions</th>
+                        <th>{{ t('dashboard.title_col') }}</th>
+                        <th>{{ t('reports.category') }}</th>
+                        <th>{{ t('dashboard.date') }}</th>
+                        <th>{{ t('expenses.bill') }}</th>
+                        <th class="text-end">{{ t('dashboard.amount') }}</th>
+                        <th>{{ t('donations.recorded_by') }}</th>
+                        <th class="text-center">{{ t('common.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -43,8 +43,8 @@
                         <td>{{ e.expense_date.strftime('%d %b %Y') }}</td>
                         <td>
                             {% if e.bill_filename %}
-                            <a href="{{ url_for('expenses.view_bill', filename=e.bill_filename) }}" target="_blank" class="btn btn-sm btn-outline-info">
-                                <i class="bi bi-file-earmark-image"></i> View
+                            <a href="{{ url_for('expenses.view_bill', filename=e.bill_filename) }}" target="_blank" class="btn btn-sm btn-outline-festival">
+                                <i class="bi bi-file-earmark-image"></i> {{ t('expenses.view_bill') }}
                             </a>
                             {% else %}
                             <span class="text-muted">-</span>
@@ -54,17 +54,17 @@
                         <td><small>{{ e.recorded_by.full_name }}</small></td>
                         <td class="text-center">
                             {% if user_can_edit() %}
-                            <a href="{{ url_for('expenses.edit_expense', expense_id=e.id) }}" class="btn btn-sm btn-outline-primary" title="Edit">
+                            <a href="{{ url_for('expenses.edit_expense', expense_id=e.id) }}" class="btn btn-sm btn-outline-festival" title="{{ t('common.edit') }}">
                                 <i class="bi bi-pencil"></i>
                             </a>
-                            <form method="POST" action="{{ url_for('expenses.delete_expense', expense_id=e.id) }}" class="d-inline" onsubmit="return confirm('Delete this expense?');">
+                            <form method="POST" action="{{ url_for('expenses.delete_expense', expense_id=e.id) }}" class="d-inline" onsubmit="return confirm('{{ t('expenses.delete_confirm') }}');">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ t('common.delete') }}">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </form>
                             {% else %}
-                            <span class="text-muted small">View only</span>
+                            <span class="text-muted small">{{ t('common.view_only') }}</span>
                             {% endif %}
                         </td>
                     </tr>
@@ -72,7 +72,7 @@
                 </tbody>
                 <tfoot class="table-light">
                     <tr>
-                        <td colspan="5" class="text-end fw-bold">Total</td>
+                        <td colspan="5" class="text-end fw-bold">{{ t('common.total') }}</td>
                         <td class="text-end fw-bold text-danger">₹{{ "{:,.2f}".format(expenses|sum(attribute='amount')) }}</td>
                         <td colspan="2"></td>
                     </tr>
@@ -82,8 +82,10 @@
         {% else %}
         <div class="text-center py-5">
             <i class="bi bi-receipt display-4 text-muted"></i>
-            <p class="text-muted mt-3">No expenses recorded yet.</p>
-            <a href="{{ url_for('expenses.add_expense') }}" class="btn btn-danger">Record First Expense</a>
+            <p class="text-muted mt-3">{{ t('expenses.empty') }}</p>
+            {% if user_can_edit() %}
+            <a href="{{ url_for('expenses.add_expense') }}" class="btn btn-danger-festival">{{ t('expenses.record_first') }}</a>
+            {% endif %}
         </div>
         {% endif %}
     </div>

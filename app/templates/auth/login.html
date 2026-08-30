@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Login - {{ platform_name }}{% endblock %}
+{% block title %}{{ t('nav.login') }} - {{ platform_name }}{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
@@ -10,20 +10,20 @@
                 <div class="text-center mb-4">
                     <div class="hero-icon-sm">🙏</div>
                     <h3 class="fw-bold">{{ platform_name }}</h3>
-                    <p class="text-muted mb-0">Choose how you want to continue</p>
+                    <p class="text-muted mb-0">{{ t('login.subtitle') }}</p>
                 </div>
 
                 <ul class="nav nav-pills nav-fill mb-4" id="loginTabs" role="tablist">
                     <li class="nav-item" role="presentation">
                         <button class="nav-link {% if active_tab == 'existing' %}active{% endif %}" id="existing-tab"
                                 data-bs-toggle="pill" data-bs-target="#existing-committee" type="button" role="tab">
-                            Existing Committee
+                            {{ t('login.tab_existing') }}
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link {% if active_tab == 'new' %}active{% endif %}" id="new-tab"
                                 data-bs-toggle="pill" data-bs-target="#new-committee" type="button" role="tab">
-                            New Committee
+                            {{ t('login.tab_new') }}
                         </button>
                     </li>
                 </ul>
@@ -31,41 +31,51 @@
                 <div class="tab-content">
                     <div class="tab-pane fade {% if active_tab == 'existing' %}show active{% endif %}" id="existing-committee" role="tabpanel">
                         <div class="mb-4">
-                            <h5 class="fw-semibold mb-3">Login to your committee</h5>
+                            <h5 class="fw-semibold mb-3">{{ t('login.existing_title') }}</h5>
                             <form method="POST" novalidate>
                                 {{ login_form.hidden_tag() }}
                                 <input type="hidden" name="active_tab" value="existing">
                                 <div class="mb-3">
                                     {{ login_form.committee_code.label(class="form-label") }}
                                     {{ login_form.committee_code(class="form-control form-control-lg" + (" is-invalid" if login_form.committee_code.errors else ""), placeholder="e.g. indukuru") }}
-                                    <div class="form-text">Enter the committee code shared by your festival admin.</div>
+                                    <div class="form-text">{{ t('login.committee_code_hint') }}</div>
+                                    {% for error in login_form.committee_code.errors %}
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
+                                    {% endfor %}
                                 </div>
                                 <div class="mb-3">
                                     {{ login_form.username.label(class="form-label") }}
                                     {{ login_form.username(class="form-control form-control-lg" + (" is-invalid" if login_form.username.errors else "")) }}
+                                    {% for error in login_form.username.errors %}
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
+                                    {% endfor %}
                                 </div>
                                 <div class="mb-3">
                                     {{ login_form.password.label(class="form-label") }}
-                                    {{ login_form.password(class="form-control form-control-lg" + (" is-invalid" if login_form.password.errors else "")) }}
+                                    <div class="password-toggle-wrap">
+                                        {{ login_form.password(class="form-control form-control-lg" + (" is-invalid" if login_form.password.errors else ""), id="loginPassword") }}
+                                        <button type="button" class="password-toggle-btn" data-password-toggle="loginPassword" aria-label="Show password">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
+                                    {% for error in login_form.password.errors %}
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
+                                    {% endfor %}
                                     <div class="text-end mt-1">
-                                        <a href="{{ url_for('auth.forgot_password') }}" class="small">Forgot password?</a>
+                                        <a href="{{ url_for('auth.forgot_password') }}" class="small">{{ t('login.forgot_password') }}</a>
                                     </div>
                                 </div>
-                                {{ login_form.login_submit(class="btn btn-festival btn-lg w-100") }}
+                                {{ login_form.login_submit(class="btn btn-festival btn-lg w-100", **{"data-loading-text": t('common.loading')}) }}
                             </form>
                         </div>
 
                         <hr>
 
                         <div id="join-request">
-                            <h5 class="fw-semibold mb-2">New member joining an existing committee?</h5>
-                            <p class="text-muted small mb-3">
-                                Submit a join request below. Your committee admin must approve it before you can log in.
-                            </p>
+                            <h5 class="fw-semibold mb-2">{{ t('login.join_title') }}</h5>
+                            <p class="text-muted small mb-3">{{ t('login.join_desc') }}</p>
                             {% if join_form.errors %}
-                            <div class="alert alert-danger py-2">
-                                Please fix the highlighted fields below.
-                            </div>
+                            <div class="alert alert-danger py-2">{{ t('common.fix_errors') }}</div>
                             {% endif %}
                             <form method="POST" novalidate>
                                 {{ join_form.hidden_tag() }}
@@ -107,7 +117,7 @@
                                         {% endfor %}
                                     </div>
                                     <div class="col-12">
-                                        {{ join_form.join_submit(class="btn btn-outline-festival") }}
+                                        {{ join_form.join_submit(class="btn btn-outline-festival", **{"data-loading-text": t('common.loading')}) }}
                                     </div>
                                 </div>
                             </form>
@@ -115,54 +125,63 @@
                     </div>
 
                     <div class="tab-pane fade {% if active_tab == 'new' %}show active{% endif %}" id="new-committee" role="tabpanel">
-                        <h5 class="fw-semibold mb-2">Register a new village / committee</h5>
-                        <p class="text-muted small mb-3">
-                            Create a new festival fund page. The site admin will approve your committee first.
-                            You will become the committee admin after approval.
-                        </p>
+                        <h5 class="fw-semibold mb-2">{{ t('login.new_title') }}</h5>
+                        <p class="text-muted small mb-3">{{ t('login.new_desc') }}</p>
+                        {% if start_form.errors %}
+                        <div class="alert alert-danger py-2">{{ t('common.fix_errors') }}</div>
+                        {% endif %}
                         <form method="POST" novalidate>
                             {{ start_form.hidden_tag() }}
                             <input type="hidden" name="active_tab" value="new">
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     {{ start_form.name.label(class="form-label") }}
-                                    {{ start_form.name(class="form-control", placeholder="Committee name") }}
+                                    {{ start_form.name(class="form-control" + (" is-invalid" if start_form.name.errors else ""), placeholder="Committee name") }}
+                                    {% for error in start_form.name.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
                                 </div>
                                 <div class="col-md-6">
                                     {{ start_form.slug.label(class="form-label") }}
-                                    {{ start_form.slug(class="form-control", placeholder="Committee code") }}
+                                    {{ start_form.slug(class="form-control" + (" is-invalid" if start_form.slug.errors else ""), placeholder="Committee code") }}
+                                    {% for error in start_form.slug.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
                                 </div>
                                 <div class="col-md-6">
                                     {{ start_form.village.label(class="form-label") }}
-                                    {{ start_form.village(class="form-control") }}
+                                    {{ start_form.village(class="form-control" + (" is-invalid" if start_form.village.errors else "")) }}
+                                    {% for error in start_form.village.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
                                 </div>
                                 <div class="col-md-6">
                                     {{ start_form.festival_name.label(class="form-label") }}
-                                    {{ start_form.festival_name(class="form-control") }}
+                                    {{ start_form.festival_name(class="form-control" + (" is-invalid" if start_form.festival_name.errors else "")) }}
+                                    {% for error in start_form.festival_name.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
                                 </div>
                                 <div class="col-md-4">
                                     {{ start_form.festival_year.label(class="form-label") }}
-                                    {{ start_form.festival_year(class="form-control") }}
+                                    {{ start_form.festival_year(class="form-control" + (" is-invalid" if start_form.festival_year.errors else "")) }}
+                                    {% for error in start_form.festival_year.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
                                 </div>
                                 <div class="col-12"><hr></div>
                                 <div class="col-md-6">
                                     {{ start_form.full_name.label(class="form-label") }}
-                                    {{ start_form.full_name(class="form-control") }}
+                                    {{ start_form.full_name(class="form-control" + (" is-invalid" if start_form.full_name.errors else "")) }}
+                                    {% for error in start_form.full_name.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
                                 </div>
                                 <div class="col-md-6">
                                     {{ start_form.username.label(class="form-label") }}
-                                    {{ start_form.username(class="form-control") }}
+                                    {{ start_form.username(class="form-control" + (" is-invalid" if start_form.username.errors else "")) }}
+                                    {% for error in start_form.username.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
                                 </div>
                                 <div class="col-md-6">
                                     {{ start_form.password.label(class="form-label") }}
-                                    {{ start_form.password(class="form-control") }}
+                                    {{ start_form.password(class="form-control" + (" is-invalid" if start_form.password.errors else "")) }}
+                                    {% for error in start_form.password.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
                                 </div>
                                 <div class="col-md-6">
                                     {{ start_form.confirm_password.label(class="form-label") }}
-                                    {{ start_form.confirm_password(class="form-control") }}
+                                    {{ start_form.confirm_password(class="form-control" + (" is-invalid" if start_form.confirm_password.errors else "")) }}
+                                    {% for error in start_form.confirm_password.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
                                 </div>
                                 <div class="col-12">
-                                    {{ start_form.start_submit(class="btn btn-festival btn-lg") }}
+                                    {{ start_form.start_submit(class="btn btn-festival btn-lg", **{"data-loading-text": t('common.loading')}) }}
                                 </div>
                             </div>
                         </form>
