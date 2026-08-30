@@ -185,9 +185,9 @@ def migrate_gallery_and_profiles():
 
 
 def run_migrations():
+    migrate_gallery_and_profiles()
     migrate_user_roles()
     migrate_donation_groups()
     migrate_donor_group_labels()
     migrate_donation_payments()
     migrate_organizations()
-    migrate_gallery_and_profiles()
