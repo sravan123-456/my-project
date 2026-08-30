@@ -43,6 +43,13 @@ def _prepare_donation_form(form):
     form.payment_mode.choices = PAYMENT_MODE_CHOICES
 
 
+def _normalize_phone(phone_value):
+    if not phone_value:
+        return None
+    stripped = phone_value.strip()
+    return stripped if stripped else None
+
+
 def _save_donation_from_form(form, recorded_by_id, organization_id):
     donation = Donation(
         organization_id=organization_id,
@@ -55,7 +62,7 @@ def _save_donation_from_form(form, recorded_by_id, organization_id):
             else None
         ),
         amount=form.amount.data,
-        phone=form.phone.data.strip(),
+        phone=_normalize_phone(form.phone.data),
         notes=form.notes.data.strip() if form.notes.data else None,
         donation_date=form.donation_date.data,
         recorded_by_id=recorded_by_id,
@@ -68,9 +75,12 @@ def _save_donation_from_form(form, recorded_by_id, organization_id):
 @login_required
 def list_donations():
     group_filter = request.args.get("group", "all")
+    search_q = (request.args.get("q") or "").strip()
     query = org_query(Donation)
     if group_filter in (DONOR_GROUP_COMMITTEE, DONOR_GROUP_OTHER):
         query = query.filter_by(donor_group=group_filter)
+    if search_q:
+        query = query.filter(Donation.donor_name.ilike(f"%{search_q}%"))
 
     donations = query.order_by(
         Donation.donation_date.desc(), Donation.id.desc()
@@ -81,6 +91,7 @@ def list_donations():
         "donations/list.html",
         donations=donations,
         group_filter=group_filter,
+        search_q=search_q,
         committee_total=committee_total,
         other_total=other_total,
     )
@@ -155,7 +166,7 @@ def edit_donation(donation_id):
             else None
         )
         donation.amount = form.amount.data
-        donation.phone = form.phone.data.strip()
+        donation.phone = _normalize_phone(form.phone.data)
         donation.notes = form.notes.data.strip() if form.notes.data else None
         donation.donation_date = form.donation_date.data
         log_activity(

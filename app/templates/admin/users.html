@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "partials/user_avatar.html" import user_avatar %}
 
 {% block title %}{{ t('admin.title') }} - {{ festival_name }}{% endblock %}
 
@@ -47,7 +48,12 @@
                 <tbody>
                     {% for reset in pending_resets %}
                     <tr>
-                        <td class="fw-semibold">{{ reset.user.full_name }}</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                {{ user_avatar(reset.user, size='sm') }}
+                                <span class="fw-semibold">{{ reset.user.full_name }}</span>
+                            </div>
+                        </td>
                         <td>{{ reset.user.username }}</td>
                         <td><small>{{ reset.created_at.strftime('%d %b %Y, %I:%M %p') }}</small></td>
                         <td class="text-center">
@@ -83,7 +89,12 @@
                 <tbody>
                     {% for user in pending_users %}
                     <tr>
-                        <td class="fw-semibold">{{ user.full_name }}</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                {{ user_avatar(user, size='sm') }}
+                                <span class="fw-semibold">{{ user.full_name }}</span>
+                            </div>
+                        </td>
                         <td>{{ user.username }}</td>
                         <td><small>{{ user.created_at.strftime('%d %b %Y, %I:%M %p') }}</small></td>
                         <td class="text-center">
@@ -132,11 +143,16 @@
                     {% for user in users %}
                     <tr>
                         <td>{{ loop.index }}</td>
-                        <td class="fw-semibold">
-                            {{ user.full_name }}
-                            {% if user.id == current_user.id %}
-                            <span class="badge bg-info">{{ t('admin.you') }}</span>
-                            {% endif %}
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                {{ user_avatar(user, size='sm') }}
+                                <span class="fw-semibold">
+                                    {{ user.full_name }}
+                                    {% if user.id == current_user.id %}
+                                    <span class="badge bg-info">{{ t('admin.you') }}</span>
+                                    {% endif %}
+                                </span>
+                            </div>
                         </td>
                         <td>{{ user.username }}</td>
                         <td><small>{{ user.created_at.strftime('%d %b %Y') }}</small></td>

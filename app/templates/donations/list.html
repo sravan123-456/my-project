@@ -31,15 +31,40 @@
     </div>
 </div>
 
+<form method="GET" action="{{ url_for('donations.list_donations') }}" class="row g-2 align-items-center mb-3">
+    {% if group_filter != 'all' %}
+    <input type="hidden" name="group" value="{{ group_filter }}">
+    {% endif %}
+    <div class="col-md-8 col-lg-6">
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="search" name="q" class="form-control" value="{{ search_q }}"
+                   placeholder="{{ t('donations.search_placeholder') }}" aria-label="{{ t('donations.search') }}">
+            {% if search_q %}
+            <a href="{{ url_for('donations.list_donations', group=group_filter if group_filter != 'all' else none) }}"
+               class="btn btn-outline-secondary" title="{{ t('common.clear') }}">
+                <i class="bi bi-x-lg"></i>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-festival">{{ t('donations.search') }}</button>
+    </div>
+</form>
+
 <ul class="nav nav-pills mb-3">
     <li class="nav-item">
-        <a class="nav-link {% if group_filter == 'all' %}active{% endif %}" href="{{ url_for('donations.list_donations') }}">{{ t('donations.filter_all') }}</a>
+        <a class="nav-link {% if group_filter == 'all' %}active{% endif %}"
+           href="{{ url_for('donations.list_donations', q=search_q or none) }}">{{ t('donations.filter_all') }}</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link {% if group_filter == 'committee_member' %}active{% endif %}" href="{{ url_for('donations.list_donations', group='committee_member') }}">{{ t('dashboard.committee_member') }}</a>
+        <a class="nav-link {% if group_filter == 'committee_member' %}active{% endif %}"
+           href="{{ url_for('donations.list_donations', group='committee_member', q=search_q or none) }}">{{ t('dashboard.committee_member') }}</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link {% if group_filter == 'other' %}active{% endif %}" href="{{ url_for('donations.list_donations', group='other') }}">{{ t('dashboard.other') }}</a>
+        <a class="nav-link {% if group_filter == 'other' %}active{% endif %}"
+           href="{{ url_for('donations.list_donations', group='other', q=search_q or none) }}">{{ t('dashboard.other') }}</a>
     </li>
 </ul>
 
@@ -170,8 +195,14 @@
         </div>
         {% else %}
         <div class="text-center py-5">
-            <i class="bi bi-heart display-4 text-muted"></i>
-            <p class="text-muted mt-3">{{ t('donations.empty') }}</p>
+            <i class="bi bi-{% if search_q %}search{% else %}heart{% endif %} display-4 text-muted"></i>
+            <p class="text-muted mt-3">
+                {% if search_q %}
+                {{ t('donations.search_empty', query=search_q) }}
+                {% else %}
+                {{ t('donations.empty') }}
+                {% endif %}
+            </p>
             {% if user_can_edit() %}
             <a href="{{ url_for('donations.add_donation') }}" class="btn btn-success-festival">{{ t('donations.record_first') }}</a>
             {% endif %}

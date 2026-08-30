@@ -47,8 +47,8 @@
                             <small class="text-muted">Optional — leave blank if not available</small>
                         </div>
                         <div class="col-md-6">
-                            {{ form.phone.label(class="form-label") }}
-                            {{ form.phone(class="form-control" + (" is-invalid" if form.phone.errors else ""), placeholder="10-digit mobile for WhatsApp thank you") }}
+                            <label class="form-label" for="{{ form.phone.id }}">{{ t('donations.phone_optional') }}</label>
+                            {{ form.phone(class="form-control" + (" is-invalid" if form.phone.errors else ""), placeholder=t('donations.phone_placeholder')) }}
                             {% for error in form.phone.errors %}
                                 <div class="invalid-feedback">{{ error }}</div>
                             {% endfor %}

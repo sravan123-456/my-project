@@ -127,7 +127,8 @@ class DonationForm(FlaskForm):
         "UPI Transaction ID (optional)", validators=[Optional(), Length(max=100)]
     )
     phone = StringField(
-        "Phone", validators=[DataRequired(), Length(min=10, max=20, message="Enter a valid mobile number.")]
+        "Phone (optional)",
+        validators=[Optional(), Length(min=10, max=20, message="Enter a valid mobile number.")],
     )
     notes = TextAreaField("Notes (optional)", validators=[Optional(), Length(max=500)])
     donation_date = DateField("Date", validators=[DataRequired()], format="%Y-%m-%d")
