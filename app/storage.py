@@ -92,11 +92,9 @@ def save_image(file, prefix):
         bucket = _get_gcs_bucket()
         blob = bucket.blob(storage_key)
         file.seek(0)
-        blob.upload_from_file(
-            file,
-            content_type=content_type,
-            cache_control=_gcs_cache_control(),
-        )
+        blob.upload_from_file(file, content_type=content_type)
+        blob.cache_control = _gcs_cache_control()
+        blob.patch()
         if current_app.config.get("GCS_PUBLIC_READ"):
             blob.make_public()
     else:
@@ -134,7 +132,9 @@ def upload_local_file(local_path, storage_key):
     if uses_gcs():
         bucket = _get_gcs_bucket()
         blob = bucket.blob(storage_key)
-        blob.upload_from_filename(local_path, content_type=content_type, cache_control=_gcs_cache_control())
+        blob.upload_from_filename(local_path, content_type=content_type)
+        blob.cache_control = _gcs_cache_control()
+        blob.patch()
         if current_app.config.get("GCS_PUBLIC_READ"):
             blob.make_public()
         return True
