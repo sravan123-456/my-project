@@ -1,4 +1,5 @@
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileAllowed, FileField
 from wtforms import (
     DateField,
     FloatField,
@@ -142,3 +143,27 @@ class ExpenseForm(FlaskForm):
     description = TextAreaField("Description (optional)", validators=[Optional(), Length(max=500)])
     expense_date = DateField("Date", validators=[DataRequired()], format="%Y-%m-%d")
     submit = SubmitField("Save Expense")
+
+
+class ProfilePhotoForm(FlaskForm):
+    profile_photo = FileField(
+        "Profile Photo",
+        validators=[
+            FileAllowed(["jpg", "jpeg", "png", "gif", "webp"], "Images only (JPG, PNG, GIF, WEBP)."),
+        ],
+    )
+    submit = SubmitField("Save Photo")
+    remove_photo = SubmitField("Remove Photo")
+
+
+class GalleryUploadForm(FlaskForm):
+    title = StringField("Title (optional)", validators=[Optional(), Length(max=200)])
+    caption = TextAreaField("Caption (optional)", validators=[Optional(), Length(max=500)])
+    photo = FileField(
+        "Photo",
+        validators=[
+            DataRequired(message="Please choose a photo to upload."),
+            FileAllowed(["jpg", "jpeg", "png", "gif", "webp"], "Images only (JPG, PNG, GIF, WEBP)."),
+        ],
+    )
+    submit = SubmitField("Upload to Gallery")

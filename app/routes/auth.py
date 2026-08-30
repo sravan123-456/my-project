@@ -111,6 +111,15 @@ def _mark_join_form_error(join_form, field_name, message):
     flash(message, "danger")
 
 
+def _post_login_redirect(user, next_page):
+    if next_page:
+        return redirect(next_page)
+    if not user.profile_photo_key:
+        flash("Add a profile photo so your committee can recognize you.", "info")
+        return redirect(url_for("profile.view_profile", welcome=1))
+    return redirect(url_for("main.dashboard"))
+
+
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if current_user.is_authenticated:
@@ -154,7 +163,7 @@ def login():
                     login_user(user)
                     next_page = request.args.get("next")
                     flash(f"Welcome back, {user.full_name}!", "success")
-                    return redirect(next_page or url_for("main.dashboard"))
+                    return _post_login_redirect(user, next_page)
             else:
                 _record_login(user, username, False, org.id if org else None)
                 db.session.commit()

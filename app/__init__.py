@@ -41,6 +41,7 @@ def create_app():
     app.config["MAX_CONTENT_LENGTH"] = int(
         os.getenv("MAX_CONTENT_LENGTH", 16 * 1024 * 1024)
     )
+    app.config["GCS_BUCKET_NAME"] = os.getenv("GCS_BUCKET_NAME", "").strip()
 
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
     db_dir = os.path.dirname(app.config["SQLALCHEMY_DATABASE_URI"].replace("sqlite:///", ""))
@@ -68,6 +69,9 @@ def create_app():
             "main.index",
             "main.help_page",
             "main.set_language_route",
+            "profile.view_profile",
+            "profile.user_photo",
+            "profile.update_profile",
             "static",
             "health",
             "site_admin.dashboard",
@@ -86,6 +90,11 @@ def create_app():
     from app.i18n import SUPPORTED_LANGUAGES, get_language, translate
     from app.models import DONOR_GROUP_LABELS, DEVELOPER_NAME, FESTIVAL_NAME, PLATFORM_NAME, User
     from app.whatsapp import donation_whatsapp_url
+
+    def profile_photo_url(user):
+        if not user or not user.profile_photo_key:
+            return None
+        return url_for("profile.user_photo", user_id=user.id)
 
     @app.context_processor
     def inject_globals():
@@ -122,6 +131,7 @@ def create_app():
             "current_lang": get_language(),
             "languages": SUPPORTED_LANGUAGES,
             "donation_whatsapp_url": donation_whatsapp_url,
+            "profile_photo_url": profile_photo_url,
         }
 
     @login_manager.user_loader
@@ -136,6 +146,8 @@ def create_app():
     from app.routes.activity import activity_bp
     from app.routes.admin import admin_bp
     from app.routes.site_admin import site_admin_bp
+    from app.routes.gallery import gallery_bp
+    from app.routes.profile import profile_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
@@ -145,6 +157,8 @@ def create_app():
     app.register_blueprint(activity_bp, url_prefix="/activity")
     app.register_blueprint(admin_bp, url_prefix="/admin")
     app.register_blueprint(site_admin_bp)
+    app.register_blueprint(gallery_bp, url_prefix="/gallery")
+    app.register_blueprint(profile_bp, url_prefix="/profile")
 
     @app.get("/health")
     def health():

@@ -1,0 +1,22 @@
+{% macro user_avatar(user, size='md', link=None, dropdown_toggle=False) %}
+{% set avatar_url = profile_photo_url(user) if user else None %}
+{% set size_class = 'user-avatar-' ~ size %}
+{% set tag = 'button' if dropdown_toggle else 'div' %}
+{% if link and not dropdown_toggle %}
+<a href="{{ link }}" class="user-avatar {{ size_class }} text-decoration-none" title="{{ user.full_name }}">
+{% else %}
+<{{ tag }} {% if dropdown_toggle %}type="button" data-bs-toggle="dropdown" aria-expanded="false"{% endif %}
+    class="user-avatar {{ size_class }}{% if dropdown_toggle %} user-avatar-btn border-0{% endif %}"
+    title="{{ user.full_name }}">
+{% endif %}
+    {% if avatar_url %}
+    <img src="{{ avatar_url }}" alt="{{ user.full_name }}">
+    {% else %}
+    <span class="user-avatar-initials">{{ user.avatar_initials() }}</span>
+    {% endif %}
+{% if link and not dropdown_toggle %}
+</a>
+{% else %}
+</{{ tag }}>
+{% endif %}
+{% endmacro %}

@@ -62,6 +62,7 @@ class User(UserMixin, db.Model):
     is_approved = db.Column(db.Boolean, default=False, nullable=False)
     login_count = db.Column(db.Integer, default=0, nullable=False)
     last_login_at = db.Column(db.DateTime)
+    profile_photo_key = db.Column(db.String(512))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     donations = db.relationship("Donation", backref="recorded_by", lazy=True)
@@ -88,6 +89,17 @@ class User(UserMixin, db.Model):
 
     def is_org_admin(self):
         return self.is_admin and not self.is_site_admin
+
+    def avatar_initials(self):
+        parts = [part for part in (self.full_name or "").split() if part]
+        if not parts:
+            return "?"
+        if len(parts) == 1:
+            return parts[0][:2].upper()
+        return f"{parts[0][0]}{parts[-1][0]}".upper()
+
+    def has_profile_photo(self):
+        return bool(self.profile_photo_key)
 
 
 DONOR_GROUP_COMMITTEE = "committee_member"
@@ -204,6 +216,22 @@ class PasswordResetRequest(db.Model):
     user = db.relationship("User", foreign_keys=[user_id], backref="password_reset_requests", lazy=True)
     resolved_by = db.relationship("User", foreign_keys=[resolved_by_id], lazy=True)
     organization = db.relationship("Organization", backref="password_reset_requests", lazy=True)
+
+
+class GalleryImage(db.Model):
+    __tablename__ = "gallery_images"
+
+    id = db.Column(db.Integer, primary_key=True)
+    organization_id = db.Column(db.Integer, db.ForeignKey("organizations.id"), nullable=False, index=True)
+    storage_key = db.Column(db.String(512), nullable=False)
+    title = db.Column(db.String(200))
+    caption = db.Column(db.Text)
+    festival_year = db.Column(db.Integer)
+    uploaded_by_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    uploaded_by = db.relationship("User", backref="gallery_uploads", lazy=True)
+    organization = db.relationship("Organization", backref="gallery_images", lazy=True)
 
 
 EXPENSE_CATEGORIES = [

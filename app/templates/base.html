@@ -18,8 +18,8 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto align-items-lg-center">
-                    {% if current_user.is_authenticated %}
+                {% if current_user.is_authenticated %}
+                <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('main.dashboard') }}">
                             <i class="bi bi-speedometer2"></i> {{ t('nav.dashboard') }}
@@ -40,51 +40,102 @@
                             <i class="bi bi-file-earmark-bar-graph"></i> {{ t('nav.reports') }}
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('activity.activity_log') }}">
-                            <i class="bi bi-clock-history"></i> {{ t('nav.activity') }}
-                        </a>
-                    </li>
-                    {% if user_is_admin() %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.users') }}">
-                            <i class="bi bi-shield-lock"></i> {{ t('nav.admin') }}
-                            {% if pending_user_count > 0 %}
-                            <span class="badge bg-warning text-dark">{{ pending_user_count }}</span>
+                </ul>
+                <ul class="navbar-nav ms-lg-auto align-items-lg-center">
+                    <li class="nav-item dropdown profile-menu">
+                        {% from "partials/user_avatar.html" import user_avatar %}
+                        {{ user_avatar(current_user, size='sm', dropdown_toggle=True) }}
+                        <ul class="dropdown-menu dropdown-menu-end profile-dropdown shadow">
+                            <li class="dropdown-header profile-dropdown-header">
+                                <div class="d-flex align-items-center gap-2">
+                                    {{ user_avatar(current_user, size='md') }}
+                                    <div>
+                                        <div class="fw-semibold">{{ current_user.full_name }}</div>
+                                        <small class="text-muted">@{{ current_user.username }}</small>
+                                        <div class="mt-1">
+                                            <span class="badge bg-primary-subtle text-primary">{{ current_user.access_label() }}</span>
+                                            {% if not user_can_edit() %}
+                                            <span class="badge bg-secondary">{{ t('nav.read_only') }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li class="dropdown-header text-uppercase small text-muted">{{ t('nav.account') }}</li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('profile.view_profile') }}">
+                                    <i class="bi bi-person"></i> {{ t('nav.my_profile') }}
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('auth.change_password') }}">
+                                    <i class="bi bi-key"></i> {{ t('nav.password') }}
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li class="dropdown-header text-uppercase small text-muted">{{ t('nav.committee') }}</li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('gallery.index') }}">
+                                    <i class="bi bi-images"></i> {{ t('nav.gallery') }}
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('activity.activity_log') }}">
+                                    <i class="bi bi-clock-history"></i> {{ t('nav.activity') }}
+                                </a>
+                            </li>
+                            {% if user_is_admin() %}
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('admin.users') }}">
+                                    <i class="bi bi-shield-lock"></i> {{ t('nav.admin') }}
+                                    {% if pending_user_count > 0 %}
+                                    <span class="badge bg-warning text-dark">{{ pending_user_count }}</span>
+                                    {% endif %}
+                                </a>
+                            </li>
                             {% endif %}
-                        </a>
-                    </li>
-                    {% endif %}
-                    {% if user_is_site_admin() %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('site_admin.dashboard') }}">
-                            <i class="bi bi-globe"></i> {{ t('nav.site_admin') }}
-                        </a>
-                    </li>
-                    {% endif %}
-                    <li class="nav-item">
-                        <span class="nav-link text-warning py-lg-2">
-                            <i class="bi bi-person-circle"></i> {{ current_user.full_name }}
-                            {% if not user_can_edit() %}
-                            <span class="badge bg-secondary ms-1" style="font-size:0.65rem;">{{ t('nav.read_only') }}</span>
+                            {% if user_is_site_admin() %}
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('site_admin.dashboard') }}">
+                                    <i class="bi bi-globe"></i> {{ t('nav.site_admin') }}
+                                </a>
+                            </li>
                             {% endif %}
-                        </span>
+                            <li><hr class="dropdown-divider"></li>
+                            <li class="dropdown-header text-uppercase small text-muted">{{ t('nav.support') }}</li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('main.help_page') }}">
+                                    <i class="bi bi-question-circle"></i> {{ t('nav.help') }}
+                                </a>
+                            </li>
+                            <li class="dropend">
+                                <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                                    <i class="bi bi-translate"></i> {{ t('nav.language') }}: {{ languages[current_lang] }}
+                                </a>
+                                <ul class="dropdown-menu">
+                                    {% for code, label in languages.items() %}
+                                    <li>
+                                        <a class="dropdown-item {% if code == current_lang %}active{% endif %}"
+                                           href="{{ url_for('main.set_language_route', lang=code) }}">{{ label }}</a>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}">
+                                    <i class="bi bi-box-arrow-right"></i> {{ t('nav.logout') }}
+                                </a>
+                            </li>
+                        </ul>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('auth.change_password') }}">
-                            <i class="bi bi-key"></i> {{ t('nav.password') }}
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('auth.logout') }}">
-                            <i class="bi bi-box-arrow-right"></i> {{ t('nav.logout') }}
-                        </a>
-                    </li>
-                    {% else %}
+                </ul>
+                {% else %}
+                <ul class="navbar-nav ms-auto align-items-lg-center">
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('auth.login') }}">{{ t('nav.login') }}</a>
                     </li>
-                    {% endif %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('main.help_page') }}">
                             <i class="bi bi-question-circle"></i> {{ t('nav.help') }}
@@ -104,6 +155,7 @@
                         </ul>
                     </li>
                 </ul>
+                {% endif %}
             </div>
         </div>
     </nav>
@@ -125,7 +177,7 @@
 
     <footer class="festival-footer text-center py-3 mt-auto">
         <div class="container">
-            <small>🙏 {{ nav_title }} &mdash; {{ t('footer.tagline') }}</small>
+            <small>{{ nav_title }} &mdash; {{ t('footer.tagline') }}</small>
             <br>
             <small class="developer-credit">Designed and developed by {{ developer_name }}</small>
         </div>

@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('gallery.title') }} - {{ festival_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="fw-bold mb-0 festival-title"><i class="bi bi-images"></i> {{ t('gallery.title') }}</h2>
+        <small class="text-muted">{{ t('gallery.subtitle') }}</small>
+    </div>
+    <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> {{ t('common.back') }}
+    </a>
+</div>
+
+{% if user_can_edit() %}
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white border-0 py-3">
+        <h5 class="mb-0"><i class="bi bi-cloud-upload"></i> {{ t('gallery.upload_title') }}</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('gallery.upload') }}" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+            <div class="row g-3">
+                <div class="col-md-6">
+                    {{ form.title.label(class="form-label") }}
+                    {{ form.title(class="form-control", placeholder=t('gallery.title_placeholder')) }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.photo.label(class="form-label") }}
+                    {{ form.photo(class="form-control") }}
+                </div>
+                <div class="col-12">
+                    {{ form.caption.label(class="form-label") }}
+                    {{ form.caption(class="form-control", rows=2, placeholder=t('gallery.caption_placeholder')) }}
+                </div>
+                <div class="col-12">
+                    {{ form.submit(class="btn btn-primary") }}
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-eye"></i> {{ t('gallery.read_only_hint') }}
+</div>
+{% endif %}
+
+{% if images %}
+<div class="gallery-grid">
+    {% for image in images %}
+    <div class="gallery-card card border-0 shadow-sm">
+        <a href="{{ url_for('gallery.photo', image_id=image.id) }}" target="_blank" rel="noopener" class="gallery-image-link">
+            <img src="{{ url_for('gallery.photo', image_id=image.id) }}" alt="{{ image.title or t('gallery.title') }}" class="gallery-image">
+        </a>
+        <div class="card-body p-3">
+            {% if image.title %}
+            <h6 class="fw-semibold mb-1">{{ image.title }}</h6>
+            {% endif %}
+            {% if image.caption %}
+            <p class="small text-muted mb-2">{{ image.caption }}</p>
+            {% endif %}
+            <small class="text-muted d-block">
+                <i class="bi bi-person"></i> {{ image.uploaded_by.full_name }}
+                &middot; {{ image.created_at.strftime('%d %b %Y') }}
+            </small>
+            {% if user_can_edit() %}
+            <form method="POST" action="{{ url_for('gallery.delete', image_id=image.id) }}" class="mt-2" onsubmit="return confirm('{{ t('gallery.delete_confirm') }}');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-trash"></i> {{ t('gallery.delete') }}
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card border-0 shadow-sm">
+    <div class="card-body text-center py-5 text-muted">
+        <i class="bi bi-images display-4 d-block mb-3"></i>
+        {{ t('gallery.empty') }}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

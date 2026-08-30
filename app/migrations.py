@@ -170,9 +170,24 @@ def migrate_organizations():
     db.session.commit()
 
 
+def migrate_gallery_and_profiles():
+    inspector = inspect(db.engine)
+    tables = inspector.get_table_names()
+
+    if "users" in tables:
+        columns = {column["name"] for column in inspector.get_columns("users")}
+        if "profile_photo_key" not in columns:
+            with db.engine.begin() as conn:
+                conn.execute(text("ALTER TABLE users ADD COLUMN profile_photo_key VARCHAR(512)"))
+
+    if "gallery_images" not in tables:
+        db.create_all()
+
+
 def run_migrations():
     migrate_user_roles()
     migrate_donation_groups()
     migrate_donor_group_labels()
     migrate_donation_payments()
     migrate_organizations()
+    migrate_gallery_and_profiles()
