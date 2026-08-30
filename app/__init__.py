@@ -96,6 +96,8 @@ def create_app():
             return None
         return url_for("profile.user_photo", user_id=user.id)
 
+    app.jinja_env.globals["profile_photo_url"] = profile_photo_url
+
     @app.context_processor
     def inject_globals():
         pending_count = 0
