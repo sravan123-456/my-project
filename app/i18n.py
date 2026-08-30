@@ -117,6 +117,10 @@ MESSAGES = {
         "gallery.empty": "No photos yet. Upload the first festival memory!",
         "gallery.delete": "Delete",
         "gallery.delete_confirm": "Delete this photo from the gallery?",
+        "gallery.year": "Year",
+        "gallery.year_summary": "{year}: {count} of {max} photos uploaded",
+        "gallery.limit_reached": "{year} already has the maximum of {max} photos. Delete an old photo to upload a new one.",
+        "gallery.empty_year": "No photos for {year} yet.",
     },
     "te": {
         "nav.dashboard": "డాష్‌బోర్డ్",

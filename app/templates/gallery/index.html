@@ -8,25 +8,45 @@
         <h2 class="fw-bold mb-0 festival-title"><i class="bi bi-images"></i> {{ t('gallery.title') }}</h2>
         <small class="text-muted">{{ t('gallery.subtitle') }}</small>
     </div>
-    <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-arrow-left"></i> {{ t('common.back') }}
-    </a>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <form method="GET" action="{{ url_for('gallery.index') }}" class="d-flex align-items-center gap-2">
+            <label for="galleryYear" class="form-label mb-0 text-nowrap">{{ t('gallery.year') }}</label>
+            <select id="galleryYear" name="year" class="form-select form-select-sm" onchange="this.form.submit()">
+                {% for year in available_years %}
+                <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
+                {% endfor %}
+            </select>
+        </form>
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> {{ t('common.back') }}
+        </a>
+    </div>
+</div>
+
+<div class="alert alert-light border mb-4">
+  <i class="bi bi-calendar-event"></i>
+  {{ t('gallery.year_summary', year=selected_year, count=photo_count, max=max_photos) }}
 </div>
 
 {% if user_can_edit() %}
+{% if can_upload %}
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-header bg-white border-0 py-3">
-        <h5 class="mb-0"><i class="bi bi-cloud-upload"></i> {{ t('gallery.upload_title') }}</h5>
+        <h5 class="mb-0"><i class="bi bi-cloud-upload"></i> {{ t('gallery.upload_title') }} ({{ selected_year }})</h5>
     </div>
     <div class="card-body">
-        <form method="POST" action="{{ url_for('gallery.upload') }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ url_for('gallery.upload', year=selected_year) }}" enctype="multipart/form-data">
             {{ form.hidden_tag() }}
             <div class="row g-3">
-                <div class="col-md-6">
+                <div class="col-md-4">
+                    {{ form.festival_year.label(class="form-label") }}
+                    {{ form.festival_year(class="form-select") }}
+                </div>
+                <div class="col-md-4">
                     {{ form.title.label(class="form-label") }}
                     {{ form.title(class="form-control", placeholder=t('gallery.title_placeholder')) }}
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                     {{ form.photo.label(class="form-label") }}
                     {{ form.photo(class="form-control") }}
                 </div>
@@ -41,6 +61,11 @@
         </form>
     </div>
 </div>
+{% else %}
+<div class="alert alert-warning">
+    <i class="bi bi-exclamation-triangle"></i> {{ t('gallery.limit_reached', year=selected_year, max=max_photos) }}
+</div>
+{% endif %}
 {% else %}
 <div class="alert alert-info">
     <i class="bi bi-eye"></i> {{ t('gallery.read_only_hint') }}
@@ -81,7 +106,7 @@
 <div class="card border-0 shadow-sm">
     <div class="card-body text-center py-5 text-muted">
         <i class="bi bi-images display-4 d-block mb-3"></i>
-        {{ t('gallery.empty') }}
+        {{ t('gallery.empty_year', year=selected_year) }}
     </div>
 </div>
 {% endif %}

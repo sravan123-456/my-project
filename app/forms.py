@@ -157,6 +157,7 @@ class ProfilePhotoForm(FlaskForm):
 
 
 class GalleryUploadForm(FlaskForm):
+    festival_year = SelectField("Festival Year", coerce=int, validators=[DataRequired()])
     title = StringField("Title (optional)", validators=[Optional(), Length(max=200)])
     caption = TextAreaField("Caption (optional)", validators=[Optional(), Length(max=500)])
     photo = FileField(
