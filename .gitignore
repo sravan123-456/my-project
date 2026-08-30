@@ -7,6 +7,7 @@ venv/
 instance/
 data/
 uploads/
+secrets/
 *.db
 .DS_Store
 .deploy-keys/

@@ -9,6 +9,7 @@ services:
     volumes:
       - festival_data:/app/data
       - festival_uploads:/app/uploads
+      - ./secrets/gcs-key.json:/app/secrets/gcs-key.json:ro
     restart: unless-stopped
     healthcheck:
       test:
