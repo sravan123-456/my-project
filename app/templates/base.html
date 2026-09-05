@@ -34,8 +34,8 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link{% if nav_active('donations.') %} active{% endif %}"
-                           href="{{ url_for('donations.list_donations') }}"{% if nav_active('donations.') %} aria-current="page"{% endif %}>
+                        <a class="nav-link{% if nav_active('donations.', 'pledges.') %} active{% endif %}"
+                           href="{{ url_for('donations.list_donations') }}"{% if nav_active('donations.', 'pledges.') %} aria-current="page"{% endif %}>
                             <i class="bi bi-heart-fill"></i> {{ t('nav.donations') }}
                         </a>
                     </li>

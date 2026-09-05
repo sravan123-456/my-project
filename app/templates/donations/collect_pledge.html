@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('pledges.collect') }} - {{ festival_name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm border-start border-success border-4">
+            <div class="card-header bg-white border-0 py-3">
+                <h4 class="mb-0"><i class="bi bi-cash-coin text-success"></i> {{ t('pledges.collect') }}</h4>
+                <p class="text-muted small mb-0 mt-1">
+                    {{ t('pledges.collect_for', name=pledge.donor_name, amount="{:,.2f}".format(pledge.promised_amount)) }}
+                </p>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" novalidate id="collectPledgeForm">
+                    {{ form.hidden_tag() }}
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            {{ form.amount.label(class="form-label") }}
+                            {{ form.amount(class="form-control" + (" is-invalid" if form.amount.errors else ""), step="0.01") }}
+                            {% for error in form.amount.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.donation_date.label(class="form-label") }}
+                            {{ form.donation_date(class="form-control" + (" is-invalid" if form.donation_date.errors else ""), type="date") }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.payment_mode.label(class="form-label") }}
+                            {{ form.payment_mode(class="form-select", id="paymentMode") }}
+                        </div>
+                        <div class="col-md-6" id="upiField" style="display:none;">
+                            {{ form.upi_transaction_id.label(class="form-label") }}
+                            {{ form.upi_transaction_id(class="form-control", placeholder="Optional UPI reference") }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="{{ form.phone.id }}">{{ t('donations.phone_optional') }}</label>
+                            {{ form.phone(class="form-control", placeholder=t('donations.phone_placeholder')) }}
+                        </div>
+                        <div class="col-12">
+                            {{ form.notes.label(class="form-label") }}
+                            {{ form.notes(class="form-control", rows="2") }}
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2 mt-4">
+                        {{ form.submit(class="btn btn-success-festival", **{"data-loading-text": t('common.loading')}) }}
+                        <a href="{{ url_for('pledges.list_pledges') }}" class="btn btn-outline-secondary">{{ t('common.cancel') }}</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const paymentMode = document.getElementById("paymentMode");
+  const upiField = document.getElementById("upiField");
+  function toggleUpiField() {
+    upiField.style.display = paymentMode.value === "upi" ? "block" : "none";
+  }
+  paymentMode.addEventListener("change", toggleUpiField);
+  toggleUpiField();
+</script>
+{% endblock %}

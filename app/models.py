@@ -29,6 +29,7 @@ class Organization(db.Model):
 
     users = db.relationship("User", backref="organization", lazy=True)
     donations = db.relationship("Donation", backref="organization", lazy=True)
+    pledges = db.relationship("Pledge", backref="organization", lazy=True)
     expenses = db.relationship("Expense", backref="organization", lazy=True)
 
     def is_active(self):
@@ -66,6 +67,7 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     donations = db.relationship("Donation", backref="recorded_by", lazy=True)
+    pledges = db.relationship("Pledge", backref="recorded_by", foreign_keys="Pledge.recorded_by_id", lazy=True)
     expenses = db.relationship("Expense", backref="recorded_by", lazy=True)
     activities = db.relationship("ActivityLog", backref="user", lazy=True)
 
@@ -152,6 +154,59 @@ class Donation(db.Model):
 
     def payment_mode_label(self):
         return PAYMENT_MODE_LABELS.get(self.payment_mode, self.payment_mode)
+
+
+PLEDGE_STATUS_PENDING = "pending"
+PLEDGE_STATUS_COLLECTED = "collected"
+PLEDGE_STATUS_CANCELLED = "cancelled"
+
+PLEDGE_STATUS_CHOICES = [
+    (PLEDGE_STATUS_PENDING, "Pending"),
+    (PLEDGE_STATUS_COLLECTED, "Collected"),
+    (PLEDGE_STATUS_CANCELLED, "Cancelled"),
+]
+
+PLEDGE_STATUS_LABELS = dict(PLEDGE_STATUS_CHOICES)
+
+
+class Pledge(db.Model):
+    __tablename__ = "pledges"
+
+    id = db.Column(db.Integer, primary_key=True)
+    organization_id = db.Column(db.Integer, db.ForeignKey("organizations.id"), nullable=False, index=True)
+    donor_name = db.Column(db.String(120), nullable=False)
+    donor_group = db.Column(db.String(20), nullable=False, default=DONOR_GROUP_COMMITTEE)
+    promised_amount = db.Column(db.Float, nullable=False)
+    phone = db.Column(db.String(20))
+    notes = db.Column(db.Text)
+    promised_date = db.Column(db.Date, nullable=False)
+    follow_up_date = db.Column(db.Date)
+    status = db.Column(db.String(20), nullable=False, default=PLEDGE_STATUS_PENDING, index=True)
+    donation_id = db.Column(db.Integer, db.ForeignKey("donations.id"))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    collected_at = db.Column(db.DateTime)
+    recorded_by_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+
+    donation = db.relationship("Donation", backref="source_pledge", lazy=True)
+
+    def donor_group_label(self):
+        return LEGACY_DONOR_GROUP_LABELS.get(
+            self.donor_group,
+            DONOR_GROUP_LABELS.get(self.donor_group, self.donor_group),
+        )
+
+    def status_label(self):
+        return PLEDGE_STATUS_LABELS.get(self.status, self.status)
+
+    def reminder_date(self):
+        return self.follow_up_date or self.promised_date
+
+    def is_overdue(self):
+        if self.status != PLEDGE_STATUS_PENDING:
+            return False
+        from datetime import date
+
+        return self.reminder_date() < date.today()
 
 
 class Expense(db.Model):

@@ -14,6 +14,8 @@ from app.models import (
     PAYMENT_CASH,
     PAYMENT_MODE_CHOICES,
     Donation,
+    Pledge,
+    PLEDGE_STATUS_PENDING,
 )
 from app.org_scope import org_get, org_query
 from app.permissions import write_required
@@ -86,6 +88,9 @@ def list_donations():
         Donation.donation_date.desc(), Donation.id.desc()
     ).all()
     committee_total, other_total = _donation_totals()
+    pending_pledge_count = (
+        org_query(Pledge).filter_by(status=PLEDGE_STATUS_PENDING).count()
+    )
 
     return render_template(
         "donations/list.html",
@@ -94,6 +99,8 @@ def list_donations():
         search_q=search_q,
         committee_total=committee_total,
         other_total=other_total,
+        active_tab="received",
+        pending_pledge_count=pending_pledge_count,
     )
 
 

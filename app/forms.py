@@ -135,6 +135,41 @@ class DonationForm(FlaskForm):
     submit = SubmitField("Save Donation")
 
 
+class PledgeForm(FlaskForm):
+    donor_name = StringField("Donor Name", validators=[DataRequired(), Length(max=120)])
+    donor_group = SelectField("Donation From", validators=[DataRequired()])
+    promised_amount = FloatField(
+        "Promised Amount (₹)",
+        validators=[DataRequired(), NumberRange(min=0.01, message="Amount must be greater than 0.")],
+    )
+    phone = StringField(
+        "Phone (optional)",
+        validators=[Optional(), Length(min=10, max=20, message="Enter a valid mobile number.")],
+    )
+    promised_date = DateField("Promised By Date", validators=[DataRequired()], format="%Y-%m-%d")
+    follow_up_date = DateField("Follow-up Date (optional)", validators=[Optional()], format="%Y-%m-%d")
+    notes = TextAreaField("Notes (optional)", validators=[Optional(), Length(max=500)])
+    submit = SubmitField("Save Pledge")
+
+
+class CollectPledgeForm(FlaskForm):
+    amount = FloatField(
+        "Amount Received (₹)",
+        validators=[DataRequired(), NumberRange(min=0.01, message="Amount must be greater than 0.")],
+    )
+    payment_mode = SelectField("Payment Mode", validators=[DataRequired()])
+    upi_transaction_id = StringField(
+        "UPI Transaction ID (optional)", validators=[Optional(), Length(max=100)]
+    )
+    phone = StringField(
+        "Phone (optional)",
+        validators=[Optional(), Length(min=10, max=20, message="Enter a valid mobile number.")],
+    )
+    donation_date = DateField("Collection Date", validators=[DataRequired()], format="%Y-%m-%d")
+    notes = TextAreaField("Notes (optional)", validators=[Optional(), Length(max=500)])
+    submit = SubmitField("Mark as Collected")
+
+
 class ExpenseForm(FlaskForm):
     title = StringField("Expense Title", validators=[DataRequired(), Length(max=200)])
     category = SelectField("Category", validators=[DataRequired()])

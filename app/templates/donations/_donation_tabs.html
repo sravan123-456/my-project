@@ -1,0 +1,17 @@
+<ul class="nav nav-tabs mb-4 donation-view-tabs">
+    <li class="nav-item">
+        <a class="nav-link{% if active_tab == 'received' %} active{% endif %}"
+           href="{{ url_for('donations.list_donations') }}">
+            <i class="bi bi-check-circle"></i> {{ t('donations.tab_received') }}
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link{% if active_tab == 'pledges' %} active{% endif %}"
+           href="{{ url_for('pledges.list_pledges') }}">
+            <i class="bi bi-hourglass-split"></i> {{ t('donations.tab_pledges') }}
+            {% if pending_pledge_count and pending_pledge_count > 0 %}
+            <span class="badge bg-warning text-dark ms-1">{{ pending_pledge_count }}</span>
+            {% endif %}
+        </a>
+    </li>
+</ul>

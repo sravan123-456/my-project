@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('pledges.title') }} - {{ festival_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <h2 class="fw-bold mb-0"><i class="bi bi-hourglass-split text-warning"></i> {{ t('pledges.title') }}</h2>
+    {% if user_can_edit() %}
+    <a href="{{ url_for('pledges.add_pledge') }}" class="btn btn-warning text-dark">
+        <i class="bi bi-plus-circle"></i> {{ t('pledges.add') }}
+    </a>
+    {% endif %}
+</div>
+
+{% set active_tab = 'pledges' %}
+{% include "donations/_donation_tabs.html" %}
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100 border-start border-warning border-4">
+            <div class="card-body">
+                <p class="text-muted mb-1 small"><i class="bi bi-hourglass-split"></i> {{ t('pledges.pending_total') }}</p>
+                <h4 class="fw-bold text-warning mb-0">₹{{ "{:,.2f}".format(pending_total) }}</h4>
+                <small class="text-muted">{{ pending_count }} {{ t('pledges.donors') }}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100 border-start border-danger border-4">
+            <div class="card-body">
+                <p class="text-muted mb-1 small"><i class="bi bi-exclamation-circle"></i> {{ t('pledges.overdue_total') }}</p>
+                <h4 class="fw-bold text-danger mb-0">₹{{ "{:,.2f}".format(overdue_amount) }}</h4>
+                <small class="text-muted">{{ overdue_count }} {{ t('pledges.donors') }}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <p class="text-muted mb-1 small"><i class="bi bi-info-circle"></i> {{ t('pledges.not_in_balance') }}</p>
+                <p class="small mb-0 text-muted">{{ t('pledges.not_in_balance_desc') }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form method="GET" action="{{ url_for('pledges.list_pledges') }}" class="row g-2 align-items-center mb-3">
+    {% if status_filter != 'pending' %}
+    <input type="hidden" name="status" value="{{ status_filter }}">
+    {% endif %}
+    {% if group_filter != 'all' %}
+    <input type="hidden" name="group" value="{{ group_filter }}">
+    {% endif %}
+    <div class="col-md-8 col-lg-6">
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="search" name="q" class="form-control" value="{{ search_q }}"
+                   placeholder="{{ t('donations.search_placeholder') }}" aria-label="{{ t('donations.search') }}">
+            {% if search_q %}
+            <a href="{{ url_for('pledges.list_pledges', status=status_filter if status_filter != 'pending' else none, group=group_filter if group_filter != 'all' else none) }}"
+               class="btn btn-outline-secondary" title="{{ t('common.clear') }}">
+                <i class="bi bi-x-lg"></i>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-festival">{{ t('donations.search') }}</button>
+    </div>
+</form>
+
+<ul class="nav nav-pills mb-3">
+    <li class="nav-item">
+        <a class="nav-link {% if status_filter == 'pending' %}active{% endif %}"
+           href="{{ url_for('pledges.list_pledges', q=search_q or none, group=group_filter if group_filter != 'all' else none) }}">
+            {{ t('pledges.status_pending') }}
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if status_filter == 'collected' %}active{% endif %}"
+           href="{{ url_for('pledges.list_pledges', status='collected', q=search_q or none, group=group_filter if group_filter != 'all' else none) }}">
+            {{ t('pledges.status_collected') }}
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if status_filter == 'cancelled' %}active{% endif %}"
+           href="{{ url_for('pledges.list_pledges', status='cancelled', q=search_q or none, group=group_filter if group_filter != 'all' else none) }}">
+            {{ t('pledges.status_cancelled') }}
+        </a>
+    </li>
+</ul>
+
+<ul class="nav nav-pills mb-3">
+    <li class="nav-item">
+        <a class="nav-link {% if group_filter == 'all' %}active{% endif %}"
+           href="{{ url_for('pledges.list_pledges', status=status_filter if status_filter != 'pending' else none, q=search_q or none) }}">
+            {{ t('donations.filter_all') }}
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if group_filter == 'committee_member' %}active{% endif %}"
+           href="{{ url_for('pledges.list_pledges', status=status_filter if status_filter != 'pending' else none, group='committee_member', q=search_q or none) }}">
+            {{ t('dashboard.committee_member') }}
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if group_filter == 'other' %}active{% endif %}"
+           href="{{ url_for('pledges.list_pledges', status=status_filter if status_filter != 'pending' else none, group='other', q=search_q or none) }}">
+            {{ t('dashboard.other') }}
+        </a>
+    </li>
+</ul>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        {% if pledges %}
+        <div class="table-responsive d-none d-md-block">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>{{ t('donations.donor_name') }}</th>
+                        <th>{{ t('dashboard.from') }}</th>
+                        <th>{{ t('pledges.promised_amount') }}</th>
+                        <th>{{ t('donations.phone') }}</th>
+                        <th>{{ t('pledges.promised_by') }}</th>
+                        <th>{{ t('pledges.status') }}</th>
+                        <th>{{ t('donations.recorded_by') }}</th>
+                        <th class="text-center">{{ t('common.actions') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in pledges %}
+                    <tr class="{% if p.is_overdue() %}table-warning{% endif %}">
+                        <td>{{ loop.index }}</td>
+                        <td class="fw-semibold">{{ p.donor_name }}</td>
+                        <td>
+                            <span class="badge {% if p.donor_group == 'committee_member' %}bg-primary{% else %}bg-secondary{% endif %}">
+                                {{ p.donor_group_label() }}
+                            </span>
+                        </td>
+                        <td class="fw-bold text-warning">₹{{ "{:,.2f}".format(p.promised_amount) }}</td>
+                        <td>{{ p.phone or '-' }}</td>
+                        <td>
+                            {{ p.promised_date.strftime('%d %b %Y') }}
+                            {% if p.follow_up_date %}
+                            <br><small class="text-muted">{{ t('pledges.follow_up') }}: {{ p.follow_up_date.strftime('%d %b') }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if p.status == 'pending' %}
+                            <span class="badge {% if p.is_overdue() %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                                {% if p.is_overdue() %}{{ t('pledges.overdue') }}{% else %}{{ t('pledges.status_pending') }}{% endif %}
+                            </span>
+                            {% elif p.status == 'collected' %}
+                            <span class="badge bg-success">{{ t('pledges.status_collected') }}</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ t('pledges.status_cancelled') }}</span>
+                            {% endif %}
+                        </td>
+                        <td><small>{{ p.recorded_by.full_name }}</small></td>
+                        <td class="text-center text-nowrap">
+                            {% if user_can_edit() and p.status == 'pending' %}
+                            <a href="{{ url_for('pledges.collect_pledge', pledge_id=p.id) }}" class="btn btn-sm btn-success-festival" title="{{ t('pledges.collect') }}">
+                                <i class="bi bi-cash-coin"></i>
+                            </a>
+                            <a href="{{ url_for('pledges.edit_pledge', pledge_id=p.id) }}" class="btn btn-sm btn-outline-festival" title="{{ t('common.edit') }}">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form method="POST" action="{{ url_for('pledges.cancel_pledge', pledge_id=p.id) }}" class="d-inline"
+                                  onsubmit="return confirm('{{ t('pledges.cancel_confirm') }}');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ t('pledges.cancel') }}">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </form>
+                            {% elif p.status == 'collected' and p.donation_id %}
+                            <a href="{{ url_for('donations.edit_donation', donation_id=p.donation_id) }}" class="btn btn-sm btn-outline-success-festival">
+                                <i class="bi bi-heart"></i> {{ t('pledges.view_donation') }}
+                            </a>
+                            {% else %}
+                            <span class="text-muted small">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="d-md-none p-3">
+            {% for p in pledges %}
+            <div class="donation-mobile-card card border-0 shadow-sm mb-3 {% if p.is_overdue() %}border-warning border{% endif %}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                        <div>
+                            <div class="fw-bold">{{ p.donor_name }}</div>
+                            <small class="text-muted">{{ p.promised_date.strftime('%d %b %Y') }}</small>
+                        </div>
+                        <div class="donation-mobile-amount text-warning">₹{{ "{:,.2f}".format(p.promised_amount) }}</div>
+                    </div>
+                    <div class="d-flex flex-wrap gap-1 mb-2">
+                        <span class="badge {% if p.donor_group == 'committee_member' %}bg-primary{% else %}bg-secondary{% endif %}">
+                            {{ p.donor_group_label() }}
+                        </span>
+                        {% if p.status == 'pending' %}
+                        <span class="badge {% if p.is_overdue() %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                            {% if p.is_overdue() %}{{ t('pledges.overdue') }}{% else %}{{ t('pledges.status_pending') }}{% endif %}
+                        </span>
+                        {% elif p.status == 'collected' %}
+                        <span class="badge bg-success">{{ t('pledges.status_collected') }}</span>
+                        {% else %}
+                        <span class="badge bg-secondary">{{ t('pledges.status_cancelled') }}</span>
+                        {% endif %}
+                    </div>
+                    {% if p.phone %}<div class="small mb-1"><i class="bi bi-telephone"></i> {{ p.phone }}</div>{% endif %}
+                    {% if p.notes %}<div class="small text-muted mb-2">{{ p.notes }}</div>{% endif %}
+                    {% if user_can_edit() and p.status == 'pending' %}
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="{{ url_for('pledges.collect_pledge', pledge_id=p.id) }}" class="btn btn-sm btn-success-festival">
+                            <i class="bi bi-cash-coin"></i> {{ t('pledges.collect') }}
+                        </a>
+                        <a href="{{ url_for('pledges.edit_pledge', pledge_id=p.id) }}" class="btn btn-sm btn-outline-festival">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-hourglass-split display-4 text-muted"></i>
+            <p class="text-muted mt-3">
+                {% if search_q %}
+                {{ t('donations.search_empty', query=search_q) }}
+                {% else %}
+                {{ t('pledges.empty') }}
+                {% endif %}
+            </p>
+            {% if user_can_edit() and status_filter == 'pending' %}
+            <a href="{{ url_for('pledges.add_pledge') }}" class="btn btn-warning text-dark">{{ t('pledges.record_first') }}</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

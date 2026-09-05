@@ -174,6 +174,7 @@ def create_app():
     from app.routes.auth import auth_bp
     from app.routes.main import main_bp
     from app.routes.donations import donations_bp
+    from app.routes.pledges import pledges_bp
     from app.routes.expenses import expenses_bp
     from app.routes.reports import reports_bp
     from app.routes.activity import activity_bp
@@ -185,6 +186,7 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(donations_bp, url_prefix="/donations")
+    app.register_blueprint(pledges_bp, url_prefix="/donations/pledges")
     app.register_blueprint(expenses_bp, url_prefix="/expenses")
     app.register_blueprint(reports_bp, url_prefix="/reports")
     app.register_blueprint(activity_bp, url_prefix="/activity")

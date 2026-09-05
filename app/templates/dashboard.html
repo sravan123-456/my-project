@@ -30,6 +30,9 @@
             <a href="{{ url_for('donations.add_donation') }}" class="btn btn-success-festival">
                 <i class="bi bi-plus-circle"></i> {{ t('dashboard.add_donation') }}
             </a>
+            <a href="{{ url_for('pledges.add_pledge') }}" class="btn btn-warning text-dark">
+                <i class="bi bi-hourglass-split"></i> {{ t('pledges.add_short') }}
+            </a>
             <a href="{{ url_for('expenses.add_expense') }}" class="btn btn-danger-festival">
                 <i class="bi bi-plus-circle"></i> {{ t('dashboard.add_expense') }}
             </a>
@@ -92,6 +95,41 @@
         <div class="balance-ornament bottom-ornament">🪔 శుభం 🪔</div>
     </div>
 </div>
+
+{% if pending_pledge_count > 0 %}
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <a href="{{ url_for('pledges.list_pledges') }}" class="text-decoration-none">
+            <div class="card border-0 shadow-sm h-100 border-start border-warning border-4 pledge-summary-card">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1 small"><i class="bi bi-hourglass-split"></i> {{ t('pledges.pending_total') }}</p>
+                        <h4 class="fw-bold text-warning mb-0">₹{{ "{:,.2f}".format(pending_pledge_total) }}</h4>
+                        <small class="text-muted">{{ pending_pledge_count }} {{ t('pledges.donors') }}</small>
+                    </div>
+                    <i class="bi bi-chevron-right text-muted"></i>
+                </div>
+            </div>
+        </a>
+    </div>
+    {% if overdue_pledge_count > 0 %}
+    <div class="col-md-6">
+        <a href="{{ url_for('pledges.list_pledges') }}" class="text-decoration-none">
+            <div class="card border-0 shadow-sm h-100 border-start border-danger border-4 pledge-summary-card">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1 small"><i class="bi bi-exclamation-circle"></i> {{ t('pledges.overdue_total') }}</p>
+                        <h4 class="fw-bold text-danger mb-0">₹{{ "{:,.2f}".format(overdue_pledge_total) }}</h4>
+                        <small class="text-muted">{{ overdue_pledge_count }} {{ t('pledges.donors') }} · {{ t('pledges.tap_to_follow_up') }}</small>
+                    </div>
+                    <i class="bi bi-chevron-right text-muted"></i>
+                </div>
+            </div>
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
 
 <div class="row g-3 mb-4">
     <div class="col-md-4">

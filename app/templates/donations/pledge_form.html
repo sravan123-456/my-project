@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t(title_key) }} - {{ festival_name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-3">
+                <h4 class="mb-0"><i class="bi bi-hourglass-split text-warning"></i> {{ t(title_key) }}</h4>
+                <p class="text-muted small mb-0 mt-1">{{ t('pledges.form_hint') }}</p>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" novalidate>
+                    {{ form.hidden_tag() }}
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            {{ form.donor_name.label(class="form-label") }}
+                            {{ form.donor_name(class="form-control" + (" is-invalid" if form.donor_name.errors else ""), placeholder=t('pledges.donor_placeholder')) }}
+                            {% for error in form.donor_name.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.promised_amount.label(class="form-label") }}
+                            {{ form.promised_amount(class="form-control" + (" is-invalid" if form.promised_amount.errors else ""), placeholder="0.00", step="0.01") }}
+                            {% for error in form.promised_amount.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.donor_group.label(class="form-label") }}
+                            {{ form.donor_group(class="form-select" + (" is-invalid" if form.donor_group.errors else "")) }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="{{ form.phone.id }}">{{ t('donations.phone_optional') }}</label>
+                            {{ form.phone(class="form-control" + (" is-invalid" if form.phone.errors else ""), placeholder=t('donations.phone_placeholder')) }}
+                            {% for error in form.phone.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.promised_date.label(class="form-label") }}
+                            {{ form.promised_date(class="form-control" + (" is-invalid" if form.promised_date.errors else ""), type="date") }}
+                            <small class="text-muted">{{ t('pledges.promised_by_hint') }}</small>
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.follow_up_date.label(class="form-label") }}
+                            {{ form.follow_up_date(class="form-control", type="date") }}
+                            <small class="text-muted">{{ t('pledges.follow_up_hint') }}</small>
+                        </div>
+                        <div class="col-12">
+                            {{ form.notes.label(class="form-label") }}
+                            {{ form.notes(class="form-control", rows="2", placeholder=t('pledges.notes_placeholder')) }}
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2 mt-4">
+                        {{ form.submit(class="btn btn-warning text-dark", **{"data-loading-text": t('common.loading')}) }}
+                        <a href="{{ url_for('pledges.list_pledges') }}" class="btn btn-outline-secondary">{{ t('common.cancel') }}</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

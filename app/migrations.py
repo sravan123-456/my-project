@@ -184,6 +184,12 @@ def migrate_gallery_and_profiles():
         db.create_all()
 
 
+def migrate_pledges():
+    inspector = inspect(db.engine)
+    if "pledges" not in inspector.get_table_names():
+        db.create_all()
+
+
 def run_migrations():
     migrate_gallery_and_profiles()
     migrate_user_roles()
@@ -191,3 +197,4 @@ def run_migrations():
     migrate_donor_group_labels()
     migrate_donation_payments()
     migrate_organizations()
+    migrate_pledges()

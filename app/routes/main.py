@@ -6,7 +6,7 @@ from sqlalchemy import func
 
 from app import db
 from app.i18n import set_language
-from app.models import ActivityLog, DONOR_GROUP_COMMITTEE, DONOR_GROUP_OTHER, Donation, Expense
+from app.models import ActivityLog, DONOR_GROUP_COMMITTEE, DONOR_GROUP_OTHER, Donation, Expense, Pledge, PLEDGE_STATUS_PENDING
 from app.org_scope import org_query
 
 main_bp = Blueprint("main", __name__)
@@ -95,6 +95,13 @@ def dashboard():
         .scalar()
     )
 
+    pending_pledges = org_query(Pledge).filter_by(status=PLEDGE_STATUS_PENDING).all()
+    pending_pledge_total = sum(p.promised_amount for p in pending_pledges)
+    pending_pledge_count = len(pending_pledges)
+    overdue_pledges = [p for p in pending_pledges if p.is_overdue()]
+    overdue_pledge_total = sum(p.promised_amount for p in overdue_pledges)
+    overdue_pledge_count = len(overdue_pledges)
+
     recent_activities = (
         org_query(ActivityLog)
         .order_by(ActivityLog.created_at.desc(), ActivityLog.id.desc())
@@ -116,6 +123,10 @@ def dashboard():
         expense_count=expense_count,
         committee_donations=committee_donations,
         other_donations=other_donations,
+        pending_pledge_total=pending_pledge_total,
+        pending_pledge_count=pending_pledge_count,
+        overdue_pledge_total=overdue_pledge_total,
+        overdue_pledge_count=overdue_pledge_count,
         recent_activities=recent_activities,
         today=date.today(),
     )
