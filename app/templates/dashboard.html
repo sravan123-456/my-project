@@ -41,6 +41,16 @@
     </div>
 </div>
 
+{% if user_is_admin() and pending_password_resets > 0 %}
+<div class="alert alert-danger border-0 shadow-sm mb-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <div>
+        <i class="bi bi-key-fill"></i>
+        <strong>{{ t('admin.password_reset_alert', count=pending_password_resets) }}</strong>
+    </div>
+    <a href="{{ url_for('admin.users') }}" class="btn btn-sm btn-danger-festival">{{ t('admin.review_requests') }}</a>
+</div>
+{% endif %}
+
 <div class="row g-3 mb-4">
     <div class="col-md-4">
         <a href="{{ url_for('gallery.index') }}" class="quick-link-card card border-0 shadow-sm h-100 text-decoration-none">

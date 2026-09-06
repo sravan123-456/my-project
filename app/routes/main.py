@@ -6,7 +6,7 @@ from sqlalchemy import func
 
 from app import db
 from app.i18n import set_language
-from app.models import ActivityLog, DONOR_GROUP_COMMITTEE, DONOR_GROUP_OTHER, Donation, Expense, Pledge, PLEDGE_STATUS_PENDING
+from app.models import ActivityLog, DONOR_GROUP_COMMITTEE, DONOR_GROUP_OTHER, Donation, Expense, PasswordResetRequest, Pledge, PLEDGE_STATUS_PENDING
 from app.org_scope import org_query
 
 main_bp = Blueprint("main", __name__)
@@ -102,6 +102,13 @@ def dashboard():
     overdue_pledge_total = sum(p.promised_amount for p in overdue_pledges)
     overdue_pledge_count = len(overdue_pledges)
 
+    pending_password_resets = 0
+    if current_user.is_admin:
+        pending_password_resets = PasswordResetRequest.query.filter_by(
+            organization_id=org_id,
+            status=PasswordResetRequest.STATUS_PENDING,
+        ).count()
+
     recent_activities = (
         org_query(ActivityLog)
         .order_by(ActivityLog.created_at.desc(), ActivityLog.id.desc())
@@ -127,6 +134,7 @@ def dashboard():
         pending_pledge_count=pending_pledge_count,
         overdue_pledge_total=overdue_pledge_total,
         overdue_pledge_count=overdue_pledge_count,
+        pending_password_resets=pending_password_resets,
         recent_activities=recent_activities,
         today=date.today(),
     )

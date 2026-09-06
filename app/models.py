@@ -259,6 +259,7 @@ class PasswordResetRequest(db.Model):
 
     STATUS_PENDING = "pending"
     STATUS_RESOLVED = "resolved"
+    STATUS_CANCELLED = "cancelled"
 
     id = db.Column(db.Integer, primary_key=True)
     organization_id = db.Column(db.Integer, db.ForeignKey("organizations.id"), nullable=False, index=True)

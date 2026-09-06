@@ -7,6 +7,7 @@ from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 
 from app import db
+from app.activity import log_activity
 from app.forms import (
     ChangePasswordForm,
     ForgotPasswordForm,
@@ -331,6 +332,13 @@ def forgot_password():
                             organization_id=org.id,
                             user_id=user.id,
                         )
+                    )
+                    log_activity(
+                        user,
+                        "requested",
+                        "password_reset",
+                        f"{user.full_name} ({user.username}) requested a password reset",
+                        user.id,
                     )
                     db.session.commit()
                     flash(

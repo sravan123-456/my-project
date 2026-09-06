@@ -92,7 +92,7 @@ def create_app():
 
     from app.i18n import SUPPORTED_LANGUAGES, get_language, translate
     from app.models import DONOR_GROUP_LABELS, DEVELOPER_NAME, FESTIVAL_NAME, PLATFORM_NAME, User
-    from app.whatsapp import donation_whatsapp_url
+    from app.whatsapp import donation_whatsapp_url, pledge_whatsapp_url
     from app.storage import get_image_url
 
     def profile_photo_url(user):
@@ -162,6 +162,7 @@ def create_app():
             "current_lang": get_language(),
             "languages": SUPPORTED_LANGUAGES,
             "donation_whatsapp_url": donation_whatsapp_url,
+            "pledge_whatsapp_url": pledge_whatsapp_url,
             "profile_photo_url": profile_photo_url,
             "storage_image_url": storage_image_url,
             "nav_active": nav_active,

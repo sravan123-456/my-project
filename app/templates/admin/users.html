@@ -56,10 +56,17 @@
                         </td>
                         <td>{{ reset.user.username }}</td>
                         <td><small>{{ reset.created_at.strftime('%d %b %Y, %I:%M %p') }}</small></td>
-                        <td class="text-center">
+                        <td class="text-center text-nowrap">
                             <a href="{{ url_for('admin.reset_user_password', user_id=reset.user.id) }}" class="btn btn-sm btn-danger-festival">
                                 <i class="bi bi-key"></i> {{ t('admin.set_password') }}
                             </a>
+                            <form method="POST" action="{{ url_for('admin.cancel_password_reset', reset_id=reset.id) }}" class="d-inline"
+                                  onsubmit="return confirm('{{ t('admin.cancel_reset_confirm', name=reset.user.full_name) }}');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary" title="{{ t('admin.cancel_reset') }}">
+                                    <i class="bi bi-x-lg"></i> {{ t('admin.cancel_reset') }}
+                                </button>
+                            </form>
                         </td>
                     </tr>
                     {% endfor %}

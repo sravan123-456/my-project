@@ -278,3 +278,31 @@ def reset_user_password(user_id):
         form=form,
         user=user,
     )
+
+
+@admin_bp.route("/password-resets/<int:reset_id>/cancel", methods=["POST"])
+@org_admin_required
+def cancel_password_reset(reset_id):
+    reset_request = PasswordResetRequest.query.filter_by(
+        id=reset_id,
+        organization_id=current_user.organization_id,
+        status=PasswordResetRequest.STATUS_PENDING,
+    ).first()
+    if not reset_request:
+        flash("Password reset request not found or already handled.", "warning")
+        return redirect(url_for("admin.users"))
+
+    user = reset_request.user
+    reset_request.status = PasswordResetRequest.STATUS_CANCELLED
+    reset_request.resolved_at = datetime.utcnow()
+    reset_request.resolved_by_id = current_user.id
+    log_activity(
+        current_user,
+        "cancelled",
+        "password_reset",
+        f"Cancelled password reset request for {user.full_name}",
+        reset_request.id,
+    )
+    db.session.commit()
+    flash(f"Password reset request for {user.full_name} was cancelled.", "info")
+    return redirect(url_for("admin.users"))
