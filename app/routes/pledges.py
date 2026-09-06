@@ -20,7 +20,7 @@ from app.models import (
     Pledge,
 )
 from app.org_scope import org_get, org_query
-from app.permissions import write_required
+from app.permissions import donations_write_required
 from app.routes.donations import _normalize_phone
 
 pledges_bp = Blueprint("pledges", __name__)
@@ -90,7 +90,7 @@ def list_pledges():
 
 
 @pledges_bp.route("/add", methods=["GET", "POST"])
-@write_required
+@donations_write_required
 def add_pledge():
     form = PledgeForm()
     _prepare_pledge_form(form)
@@ -132,7 +132,7 @@ def add_pledge():
 
 
 @pledges_bp.route("/<int:pledge_id>/edit", methods=["GET", "POST"])
-@write_required
+@donations_write_required
 def edit_pledge(pledge_id):
     pledge = org_get(Pledge, pledge_id)
     if not pledge:
@@ -174,7 +174,7 @@ def edit_pledge(pledge_id):
 
 
 @pledges_bp.route("/<int:pledge_id>/collect", methods=["GET", "POST"])
-@write_required
+@donations_write_required
 def collect_pledge(pledge_id):
     pledge = org_get(Pledge, pledge_id)
     if not pledge:
@@ -248,7 +248,7 @@ def collect_pledge(pledge_id):
 
 
 @pledges_bp.route("/<int:pledge_id>/cancel", methods=["POST"])
-@write_required
+@donations_write_required
 def cancel_pledge(pledge_id):
     pledge = org_get(Pledge, pledge_id)
     if not pledge:

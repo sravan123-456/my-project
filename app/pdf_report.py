@@ -242,19 +242,22 @@ def generate_report_pdf(org_name, report_data, generated_at=None):
     story.extend([donation_table, Spacer(1, 0.15 * inch)])
 
     story.append(Paragraph("All Expenses", section_style))
-    expense_rows = [["Date", "Title", "Category", "Amount"]]
+    expense_rows = [["Date", "Title", "Category", "Total", "Advance", "Balance", "Paid"]]
     for expense in report_data["expenses"]:
         expense_rows.append(
             [
                 expense.expense_date.strftime("%d %b %Y"),
                 expense.title,
                 expense.category,
-                _money(expense.amount),
+                _money(expense.total_cost()),
+                _money(expense.advance_amount or 0),
+                _money(expense.balance_amount or 0),
+                _money(expense.paid_amount()),
             ]
         )
     if len(expense_rows) == 1:
         expense_rows.append(["-", "No expenses", "-", "-"])
-    expense_table = Table(expense_rows, colWidths=[1.1 * inch, 2.0 * inch, 1.4 * inch, 1.0 * inch])
+    expense_table = Table(expense_rows, colWidths=[0.9 * inch, 1.5 * inch, 1.0 * inch, 0.75 * inch, 0.75 * inch, 0.75 * inch, 0.75 * inch])
     expense_table.setStyle(
         TableStyle(
             [

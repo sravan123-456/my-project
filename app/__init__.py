@@ -125,6 +125,7 @@ def create_app():
     app.jinja_env.globals["profile_photo_url"] = profile_photo_url
     app.jinja_env.globals["storage_image_url"] = storage_image_url
     app.jinja_env.globals["committee_banner_url"] = committee_banner_url
+    app.jinja_env.globals["t"] = translate
 
     @app.context_processor
     def inject_globals():
@@ -177,6 +178,8 @@ def create_app():
             "current_year": datetime.now().year,
             "donor_group_labels": DONOR_GROUP_LABELS,
             "user_can_edit": lambda: current_user.is_authenticated and current_user.can_edit(),
+            "user_can_edit_donations": lambda: current_user.is_authenticated and current_user.can_edit_donations(),
+            "user_can_edit_expenses": lambda: current_user.is_authenticated and current_user.can_edit_expenses(),
             "user_is_admin": lambda: current_user.is_authenticated and current_user.is_admin,
             "user_is_site_admin": lambda: current_user.is_authenticated and current_user.is_site_admin,
             "pending_user_count": pending_count,

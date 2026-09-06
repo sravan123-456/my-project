@@ -72,6 +72,8 @@ class User(UserMixin, db.Model):
     is_site_admin = db.Column(db.Boolean, default=False, nullable=False)
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
     can_write = db.Column(db.Boolean, default=False, nullable=False)
+    can_write_donations = db.Column(db.Boolean, default=False, nullable=False)
+    can_write_expenses = db.Column(db.Boolean, default=False, nullable=False)
     is_approved = db.Column(db.Boolean, default=False, nullable=False)
     login_count = db.Column(db.Integer, default=0, nullable=False)
     last_login_at = db.Column(db.DateTime)
@@ -89,16 +91,29 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+    def can_edit_donations(self):
+        return self.is_admin or self.can_write_donations
+
+    def can_edit_expenses(self):
+        return self.is_admin or self.can_write_expenses
+
     def can_edit(self):
-        return self.is_admin or self.can_write
+        return self.can_edit_donations() or self.can_edit_expenses()
+
+    def sync_can_write(self):
+        self.can_write = self.can_edit()
 
     def access_label(self):
         if self.is_site_admin:
             return "Site Admin"
         if self.is_admin:
             return "Committee Admin"
-        if self.can_write:
-            return "Write Access"
+        if self.can_write_donations and self.can_write_expenses:
+            return "Donations & Expenses"
+        if self.can_write_donations:
+            return "Donations Write"
+        if self.can_write_expenses:
+            return "Expenses Write"
         return "Read Only"
 
     def is_org_admin(self):
@@ -229,11 +244,30 @@ class Expense(db.Model):
     title = db.Column(db.String(200), nullable=False)
     category = db.Column(db.String(80), nullable=False, default="General")
     amount = db.Column(db.Float, nullable=False)
+    total_amount = db.Column(db.Float, nullable=False, default=0)
+    advance_amount = db.Column(db.Float, nullable=False, default=0)
+    balance_amount = db.Column(db.Float, nullable=False, default=0)
     description = db.Column(db.Text)
     bill_filename = db.Column(db.String(255))
     expense_date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     recorded_by_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+
+    def total_cost(self):
+        if self.total_amount and self.total_amount > 0:
+            return float(self.total_amount)
+        return float(self.amount or 0)
+
+    def paid_amount(self):
+        return float((self.advance_amount or 0) + (self.balance_amount or 0))
+
+    def pending_amount(self):
+        return max(0.0, self.total_cost() - self.paid_amount())
+
+    def sync_amount(self):
+        self.amount = self.paid_amount()
+        if not self.total_amount or self.total_amount <= 0:
+            self.total_amount = self.amount
 
 
 class ActivityLog(db.Model):

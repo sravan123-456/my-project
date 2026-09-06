@@ -173,12 +173,35 @@ class CollectPledgeForm(FlaskForm):
 class ExpenseForm(FlaskForm):
     title = StringField("Expense Title", validators=[DataRequired(), Length(max=200)])
     category = SelectField("Category", validators=[DataRequired()])
-    amount = FloatField(
-        "Amount (₹)", validators=[DataRequired(), NumberRange(min=0.01, message="Amount must be greater than 0.")]
+    total_amount = FloatField(
+        "Total (₹)",
+        validators=[DataRequired(), NumberRange(min=0.01, message="Total must be greater than 0.")],
+    )
+    advance_amount = FloatField(
+        "Advance (₹)",
+        validators=[Optional(), NumberRange(min=0, message="Advance cannot be negative.")],
+        default=0,
+    )
+    balance_amount = FloatField(
+        "Balance Paid (₹)",
+        validators=[Optional(), NumberRange(min=0, message="Balance cannot be negative.")],
+        default=0,
     )
     description = TextAreaField("Description (optional)", validators=[Optional(), Length(max=500)])
     expense_date = DateField("Date", validators=[DataRequired()], format="%Y-%m-%d")
     submit = SubmitField("Save Expense")
+
+    def validate(self, extra_validators=None):
+        if not super().validate(extra_validators):
+            return False
+
+        total = float(self.total_amount.data or 0)
+        advance = float(self.advance_amount.data or 0)
+        balance = float(self.balance_amount.data or 0)
+        if advance + balance > total + 0.001:
+            self.balance_amount.errors.append("Advance + balance paid cannot exceed total.")
+            return False
+        return True
 
 
 class ProfilePhotoForm(FlaskForm):

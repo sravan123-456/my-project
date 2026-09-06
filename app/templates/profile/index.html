@@ -16,7 +16,7 @@
         <div class="card border-0 shadow-sm">
             <div class="card-body p-4">
                 <div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
-                    {{ user_avatar(profile_user, size='lg') }}
+                    {{ user_avatar(profile_user, size='lg', lightbox=True) }}
                     <div>
                         <h2 class="fw-bold mb-1">{{ profile_user.full_name }}</h2>
                         <p class="text-muted mb-1">@{{ profile_user.username }}</p>
@@ -46,7 +46,12 @@
                 <form method="POST" action="{{ url_for('profile.update_profile', welcome=1 if welcome else None) }}" enctype="multipart/form-data">
                     {{ form.hidden_tag() }}
                     <div class="mb-3">
-                        {{ form.profile_photo(class="form-control") }}
+                        {{ form.profile_photo(class="form-control", accept="image/*", **{
+                            "data-image-crop": "true",
+                            "data-crop-aspect": "1",
+                            "data-crop-preview": "#profileCropPreview"
+                        }) }}
+                        <img id="profileCropPreview" src="" alt="" class="d-none image-crop-preview-thumb mt-2" aria-hidden="true">
                         <div class="form-text">{{ t('profile.photo_hint') }}</div>
                     </div>
                     <div class="d-flex gap-2 flex-wrap">

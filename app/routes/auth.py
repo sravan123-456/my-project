@@ -243,6 +243,8 @@ def login():
                     organization_id=org.id,
                     is_admin=True,
                     can_write=True,
+                    can_write_donations=True,
+                    can_write_expenses=True,
                     is_approved=False,
                 )
                 admin.set_password(start_form.password.data)

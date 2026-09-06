@@ -35,7 +35,10 @@
         <p class="text-muted small mb-3">{{ t('admin.banner_desc') }}</p>
         {% if committee_banner_url() %}
         <div class="committee-banner-preview mb-3">
-            <img src="{{ committee_banner_url() }}" alt="{{ festival_name }}" class="committee-banner-preview-img">
+            <a href="#" data-lightbox data-src="{{ committee_banner_url() }}" data-alt="{{ festival_name }}"
+               data-caption="{{ festival_name }} — {{ t('admin.banner_title') }}">
+                <img src="{{ committee_banner_url() }}" alt="{{ festival_name }}" class="committee-banner-preview-img">
+            </a>
         </div>
         {% else %}
         <p class="small text-muted mb-3">{{ t('admin.banner_empty') }}</p>
@@ -43,7 +46,12 @@
         <form method="POST" action="{{ url_for('admin.update_committee_banner') }}" enctype="multipart/form-data" class="row g-2 align-items-end">
             {{ banner_form.hidden_tag() }}
             <div class="col-md-8">
-                {{ banner_form.banner_image(class="form-control", accept="image/*") }}
+                {{ banner_form.banner_image(class="form-control", accept="image/*", **{
+                    "data-image-crop": "true",
+                    "data-crop-aspect": "3",
+                    "data-crop-preview": "#bannerCropPreview"
+                }) }}
+                <img id="bannerCropPreview" src="" alt="" class="d-none image-crop-preview-thumb mt-2" aria-hidden="true">
                 <div class="form-text">{{ t('admin.banner_hint') }}</div>
             </div>
             <div class="col-md-4 d-flex gap-2 flex-wrap">
@@ -125,7 +133,7 @@
                     <tr>
                         <td>
                             <div class="d-flex align-items-center gap-2">
-                                {{ user_avatar(user, size='sm') }}
+                                {{ user_avatar(user, size='sm', lightbox=True) }}
                                 <span class="fw-semibold">{{ user.full_name }}</span>
                             </div>
                         </td>
@@ -179,7 +187,7 @@
                         <td>{{ loop.index }}</td>
                         <td>
                             <div class="d-flex align-items-center gap-2">
-                                {{ user_avatar(user, size='sm') }}
+                                {{ user_avatar(user, size='sm', lightbox=True) }}
                                 <span class="fw-semibold">
                                     {{ user.full_name }}
                                     {% if user.id == current_user.id %}
@@ -193,8 +201,12 @@
                         <td>
                             {% if user.is_admin %}
                             <span class="badge bg-danger">{{ t('admin.badge_admin') }}</span>
-                            {% elif user.can_write %}
-                            <span class="badge bg-success">{{ t('admin.badge_write') }}</span>
+                            {% elif user.can_write_donations and user.can_write_expenses %}
+                            <span class="badge bg-success">{{ t('admin.badge_write_full') }}</span>
+                            {% elif user.can_write_donations %}
+                            <span class="badge bg-success">{{ t('admin.badge_write_donations') }}</span>
+                            {% elif user.can_write_expenses %}
+                            <span class="badge bg-danger">{{ t('admin.badge_write_expenses') }}</span>
                             {% else %}
                             <span class="badge bg-secondary">{{ t('admin.badge_read') }}</span>
                             {% endif %}
@@ -202,14 +214,18 @@
                         <td class="text-center">
                             <div class="admin-actions-desktop">
                                 {% if not user.is_admin %}
-                                <form method="POST" action="{{ url_for('admin.toggle_write', user_id=user.id) }}" class="d-inline">
+                                <form method="POST" action="{{ url_for('admin.toggle_donations_write', user_id=user.id) }}" class="d-inline">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="btn btn-sm {% if user.can_write %}btn-outline-warning{% else %}btn-outline-success-festival{% endif %}" data-loading-text="{{ t('common.loading') }}">
-                                        {% if user.can_write %}
-                                        <i class="bi bi-eye"></i> {{ t('admin.revoke_write') }}
-                                        {% else %}
-                                        <i class="bi bi-pencil"></i> {{ t('admin.grant_write') }}
-                                        {% endif %}
+                                    <button type="submit" class="btn btn-sm {% if user.can_write_donations %}btn-outline-warning{% else %}btn-outline-success-festival{% endif %}" title="{{ t('admin.toggle_donations') }}" data-loading-text="{{ t('common.loading') }}">
+                                        <i class="bi bi-heart-fill"></i>
+                                        {% if user.can_write_donations %}{{ t('admin.revoke_donations') }}{% else %}{{ t('admin.grant_donations') }}{% endif %}
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ url_for('admin.toggle_expenses_write', user_id=user.id) }}" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm {% if user.can_write_expenses %}btn-outline-warning{% else %}btn-outline-danger-festival{% endif %}" title="{{ t('admin.toggle_expenses') }}" data-loading-text="{{ t('common.loading') }}">
+                                        <i class="bi bi-receipt"></i>
+                                        {% if user.can_write_expenses %}{{ t('admin.revoke_expenses') }}{% else %}{{ t('admin.grant_expenses') }}{% endif %}
                                     </button>
                                 </form>
                                 {% endif %}
@@ -247,10 +263,18 @@
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     {% if not user.is_admin %}
                                     <li>
-                                        <form method="POST" action="{{ url_for('admin.toggle_write', user_id=user.id) }}">
+                                        <form method="POST" action="{{ url_for('admin.toggle_donations_write', user_id=user.id) }}">
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                             <button type="submit" class="dropdown-item">
-                                                {% if user.can_write %}{{ t('admin.revoke_write') }}{% else %}{{ t('admin.grant_write') }}{% endif %}
+                                                {% if user.can_write_donations %}{{ t('admin.revoke_donations') }}{% else %}{{ t('admin.grant_donations') }}{% endif %}
+                                            </button>
+                                        </form>
+                                    </li>
+                                    <li>
+                                        <form method="POST" action="{{ url_for('admin.toggle_expenses_write', user_id=user.id) }}">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="dropdown-item">
+                                                {% if user.can_write_expenses %}{{ t('admin.revoke_expenses') }}{% else %}{{ t('admin.grant_expenses') }}{% endif %}
                                             </button>
                                         </form>
                                     </li>

@@ -56,13 +56,17 @@ def export_csv():
     writer.writerow([])
 
     writer.writerow(["EXPENSES"])
-    writer.writerow(["Date", "Title", "Category", "Amount", "Description", "Bill"])
+    writer.writerow(["Date", "Title", "Category", "Total", "Advance", "Balance Paid", "Paid", "Pending", "Description", "Bill"])
     for e in data["expenses"]:
         writer.writerow([
             e.expense_date.strftime("%Y-%m-%d"),
             e.title,
             e.category,
-            f"{e.amount:.2f}",
+            f"{e.total_cost():.2f}",
+            f"{(e.advance_amount or 0):.2f}",
+            f"{(e.balance_amount or 0):.2f}",
+            f"{e.paid_amount():.2f}",
+            f"{e.pending_amount():.2f}",
             e.description or "",
             "Yes" if e.bill_filename else "No",
         ])

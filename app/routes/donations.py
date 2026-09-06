@@ -18,7 +18,7 @@ from app.models import (
     PLEDGE_STATUS_PENDING,
 )
 from app.org_scope import org_get, org_query
-from app.permissions import write_required
+from app.permissions import donations_write_required
 from app.whatsapp import donation_whatsapp_url
 
 donations_bp = Blueprint("donations", __name__)
@@ -105,7 +105,7 @@ def list_donations():
 
 
 @donations_bp.route("/add", methods=["GET", "POST"])
-@write_required
+@donations_write_required
 def add_donation():
     form = DonationForm()
     _prepare_donation_form(form)
@@ -136,7 +136,7 @@ def add_donation():
 
 
 @donations_bp.route("/<int:donation_id>/saved")
-@write_required
+@donations_write_required
 def donation_saved(donation_id):
     donation = org_get(Donation, donation_id)
     if not donation:
@@ -153,7 +153,7 @@ def donation_saved(donation_id):
 
 
 @donations_bp.route("/<int:donation_id>/edit", methods=["GET", "POST"])
-@write_required
+@donations_write_required
 def edit_donation(donation_id):
     donation = org_get(Donation, donation_id)
     if not donation:
@@ -191,7 +191,7 @@ def edit_donation(donation_id):
 
 
 @donations_bp.route("/<int:donation_id>/whatsapp")
-@write_required
+@donations_write_required
 def send_whatsapp(donation_id):
     donation = org_get(Donation, donation_id)
     if not donation:
@@ -211,7 +211,7 @@ def send_whatsapp(donation_id):
 
 
 @donations_bp.route("/<int:donation_id>/delete", methods=["POST"])
-@write_required
+@donations_write_required
 def delete_donation(donation_id):
     donation = org_get(Donation, donation_id)
     if not donation:

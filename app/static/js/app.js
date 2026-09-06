@@ -120,16 +120,21 @@
     });
   });
 
-  (function initGalleryLightbox() {
-    var lightbox = document.getElementById("galleryLightbox");
+  (function initImageLightbox() {
+    var lightbox = document.getElementById("imageLightbox");
     if (!lightbox) return;
 
-    var imageEl = document.getElementById("galleryLightboxImage");
-    var captionEl = document.getElementById("galleryLightboxCaption");
-    var triggers = Array.prototype.slice.call(document.querySelectorAll("[data-lightbox]"));
+    var imageEl = document.getElementById("imageLightboxImage");
+    var captionEl = document.getElementById("imageLightboxCaption");
+    var triggers = [];
     var index = 0;
 
+    function collectTriggers() {
+      triggers = Array.prototype.slice.call(document.querySelectorAll("[data-lightbox]"));
+    }
+
     function showAt(i) {
+      collectTriggers();
       if (!triggers.length) return;
       index = (i + triggers.length) % triggers.length;
       var trigger = triggers[index];
@@ -146,6 +151,7 @@
       document.body.classList.remove("lightbox-open");
     }
 
+    collectTriggers();
     triggers.forEach(function (trigger, i) {
       trigger.addEventListener("click", function (event) {
         event.preventDefault();

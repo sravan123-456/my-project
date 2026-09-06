@@ -72,6 +72,12 @@ def dashboard():
     pending_organizations = Organization.query.filter_by(status="pending").order_by(
         Organization.created_at.asc()
     ).all()
+    users_with_photos = (
+        User.query.filter(User.profile_photo_key.isnot(None), User.is_approved.is_(True))
+        .order_by(User.id.desc())
+        .limit(36)
+        .all()
+    )
 
     return render_template(
         "site_admin/dashboard.html",
@@ -79,6 +85,7 @@ def dashboard():
         recent_logins=recent_logins,
         organizations=organizations,
         pending_organizations=pending_organizations,
+        users_with_photos=users_with_photos,
     )
 
 

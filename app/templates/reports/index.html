@@ -241,8 +241,11 @@
                         <th>Date</th>
                         <th>Title</th>
                         <th>Category</th>
+                        <th class="text-end">{{ t('expenses.total') }}</th>
+                        <th class="text-end">{{ t('expenses.advance') }}</th>
+                        <th class="text-end">{{ t('expenses.balance') }}</th>
+                        <th class="text-end">{{ t('expenses.paid') }}</th>
                         <th>Bill</th>
-                        <th class="text-end">Amount</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -251,8 +254,11 @@
                         <td>{{ e.expense_date.strftime('%d %b %Y') }}</td>
                         <td>{{ e.title }}</td>
                         <td>{{ e.category }}</td>
+                        <td class="text-end">₹{{ "{:,.2f}".format(e.total_cost()) }}</td>
+                        <td class="text-end">₹{{ "{:,.2f}".format(e.advance_amount or 0) }}</td>
+                        <td class="text-end">₹{{ "{:,.2f}".format(e.balance_amount or 0) }}</td>
+                        <td class="text-end">₹{{ "{:,.2f}".format(e.paid_amount()) }}</td>
                         <td>{% if e.bill_filename %}<i class="bi bi-check-circle text-success"></i>{% else %}-{% endif %}</td>
-                        <td class="text-end">₹{{ "{:,.2f}".format(e.amount) }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

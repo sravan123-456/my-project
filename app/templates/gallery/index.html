@@ -48,7 +48,12 @@
                 </div>
                 <div class="col-md-4">
                     {{ form.photo.label(class="form-label") }}
-                    {{ form.photo(class="form-control") }}
+                    {{ form.photo(class="form-control", accept="image/*", **{
+                        "data-image-crop": "true",
+                        "data-crop-aspect": "free",
+                        "data-crop-preview": "#galleryCropPreview"
+                    }) }}
+                    <img id="galleryCropPreview" src="" alt="" class="d-none image-crop-preview-thumb mt-2" aria-hidden="true">
                 </div>
                 <div class="col-12">
                     {{ form.caption.label(class="form-label") }}
@@ -118,11 +123,4 @@
 </div>
 {% endif %}
 
-<div id="galleryLightbox" class="gallery-lightbox" hidden role="dialog" aria-modal="true" aria-label="{{ t('gallery.title') }}">
-    <button type="button" class="gallery-lightbox-close" aria-label="{{ t('lightbox.close') }}">&times;</button>
-    <button type="button" class="gallery-lightbox-nav gallery-lightbox-prev" aria-label="{{ t('lightbox.prev') }}">&#8249;</button>
-    <img src="" alt="" id="galleryLightboxImage" class="gallery-lightbox-image">
-    <button type="button" class="gallery-lightbox-nav gallery-lightbox-next" aria-label="{{ t('lightbox.next') }}">&#8250;</button>
-    <p class="gallery-lightbox-caption" id="galleryLightboxCaption"></p>
-</div>
 {% endblock %}

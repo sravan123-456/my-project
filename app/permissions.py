@@ -16,6 +16,30 @@ def write_required(view):
     return wrapped
 
 
+def donations_write_required(view):
+    @wraps(view)
+    @login_required
+    def wrapped(*args, **kwargs):
+        if not current_user.can_edit_donations():
+            flash("You do not have permission to add or edit donations.", "warning")
+            return redirect(url_for("donations.list_donations"))
+        return view(*args, **kwargs)
+
+    return wrapped
+
+
+def expenses_write_required(view):
+    @wraps(view)
+    @login_required
+    def wrapped(*args, **kwargs):
+        if not current_user.can_edit_expenses():
+            flash("You do not have permission to add or edit expenses.", "warning")
+            return redirect(url_for("expenses.list_expenses"))
+        return view(*args, **kwargs)
+
+    return wrapped
+
+
 def org_admin_required(view):
     @wraps(view)
     @login_required

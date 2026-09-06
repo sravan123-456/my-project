@@ -14,7 +14,12 @@
 <div class="dashboard-festival-banner card border-0 shadow-sm mb-4 overflow-hidden">
     {% set banner_src = committee_banner_url() %}
     {% if banner_src %}
-    <img src="{{ banner_src }}" alt="" class="dashboard-festival-banner-img" aria-hidden="true">
+    <a href="#" class="dashboard-festival-banner-link" data-lightbox
+       data-src="{{ banner_src }}" data-alt="{{ festival_name }}"
+       data-caption="{{ festival_name }} — {{ t('admin.banner_title') }}"
+       title="{{ t('lightbox.view_photo') }}">
+        <img src="{{ banner_src }}" alt="" class="dashboard-festival-banner-img" aria-hidden="true">
+    </a>
     {% else %}
     <div class="dashboard-festival-banner-default" aria-hidden="true">
         <img src="{{ url_for('static', filename='images/ganesha-decor.svg') }}" alt="" class="dashboard-festival-banner-ganesha">
@@ -49,13 +54,15 @@
             </div>
         </div>
         <div class="d-flex gap-2 flex-wrap">
-            {% if user_can_edit() %}
+            {% if user_can_edit_donations() %}
             <a href="{{ url_for('donations.add_donation') }}" class="btn btn-success-festival">
                 <i class="bi bi-plus-circle"></i> {{ t('dashboard.add_donation') }}
             </a>
             <a href="{{ url_for('pledges.add_pledge') }}" class="btn btn-warning text-dark">
                 <i class="bi bi-hourglass-split"></i> {{ t('pledges.add_short') }}
             </a>
+            {% endif %}
+            {% if user_can_edit_expenses() %}
             <a href="{{ url_for('expenses.add_expense') }}" class="btn btn-danger-festival">
                 <i class="bi bi-plus-circle"></i> {{ t('dashboard.add_expense') }}
             </a>

@@ -11,6 +11,7 @@
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/favicon.svg') }}">
     <link href="{{ url_for('static', filename='vendor/bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='vendor/bootstrap-icons.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='vendor/cropper.min.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
 </head>
 <body>
@@ -190,6 +191,16 @@
 
     <div id="toastContainer" class="toast-container position-fixed bottom-0 end-0 p-3 no-print" aria-live="polite" aria-atomic="true"></div>
 
+    <div id="imageLightbox" class="gallery-lightbox" hidden role="dialog" aria-modal="true" aria-label="{{ t('lightbox.title') }}">
+        <button type="button" class="gallery-lightbox-close" aria-label="{{ t('lightbox.close') }}">&times;</button>
+        <button type="button" class="gallery-lightbox-nav gallery-lightbox-prev" aria-label="{{ t('lightbox.prev') }}">&#8249;</button>
+        <img src="" alt="" id="imageLightboxImage" class="gallery-lightbox-image">
+        <button type="button" class="gallery-lightbox-nav gallery-lightbox-next" aria-label="{{ t('lightbox.next') }}">&#8250;</button>
+        <p class="gallery-lightbox-caption" id="imageLightboxCaption"></p>
+    </div>
+
+    {% include "partials/image_crop_modal.html" %}
+
     <footer class="festival-footer text-center py-3 mt-auto no-print">
         <div class="container">
             <small>{{ nav_title }} &mdash; {{ t('footer.tagline') }}</small>
@@ -209,7 +220,9 @@
     </footer>
 
     <script src="{{ url_for('static', filename='vendor/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/cropper.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/image-crop.js') }}"></script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

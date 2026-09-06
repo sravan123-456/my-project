@@ -20,7 +20,7 @@ from app.activity import log_activity
 from app.forms import ExpenseForm
 from app.models import EXPENSE_CATEGORIES, Expense
 from app.org_scope import org_get, org_query
-from app.permissions import write_required
+from app.permissions import expenses_write_required
 
 expenses_bp = Blueprint("expenses", __name__)
 
@@ -58,7 +58,7 @@ def list_expenses():
 
 
 @expenses_bp.route("/add", methods=["GET", "POST"])
-@write_required
+@expenses_write_required
 def add_expense():
     form = ExpenseForm()
     form.category.choices = [(c, c) for c in EXPENSE_CATEGORIES]
@@ -70,30 +70,37 @@ def add_expense():
             organization_id=current_user.organization_id,
             title=form.title.data.strip(),
             category=form.category.data,
-            amount=form.amount.data,
+            total_amount=form.total_amount.data,
+            advance_amount=form.advance_amount.data or 0,
+            balance_amount=form.balance_amount.data or 0,
             description=form.description.data.strip() if form.description.data else None,
             expense_date=form.expense_date.data,
             bill_filename=bill_filename,
             recorded_by_id=current_user.id,
+            amount=0,
         )
+        expense.sync_amount()
         db.session.add(expense)
         db.session.flush()
         log_activity(
             current_user,
             "added",
             "expense",
-            f"Added expense '{expense.title}' of ₹{expense.amount:,.2f} ({expense.category})",
+            f"Added expense '{expense.title}' — paid ₹{expense.paid_amount():,.2f} of ₹{expense.total_cost():,.2f} ({expense.category})",
             expense.id,
         )
         db.session.commit()
-        flash(f"Expense of ₹{expense.amount:,.2f} for {expense.title} recorded.", "success")
+        flash(
+            f"Expense recorded — paid ₹{expense.paid_amount():,.2f} of ₹{expense.total_cost():,.2f} for {expense.title}.",
+            "success",
+        )
         return redirect(url_for("expenses.list_expenses"))
 
     return render_template("expenses/form.html", form=form, title="Add Expense")
 
 
 @expenses_bp.route("/<int:expense_id>/edit", methods=["GET", "POST"])
-@write_required
+@expenses_write_required
 def edit_expense(expense_id):
     expense = org_get(Expense, expense_id)
     if not expense:
@@ -101,12 +108,19 @@ def edit_expense(expense_id):
         return redirect(url_for("expenses.list_expenses"))
 
     form = ExpenseForm(obj=expense)
+    if expense.total_amount:
+        form.total_amount.data = expense.total_amount
+        form.advance_amount.data = expense.advance_amount or 0
+        form.balance_amount.data = expense.balance_amount or 0
     form.category.choices = [(c, c) for c in EXPENSE_CATEGORIES]
 
     if form.validate_on_submit():
         expense.title = form.title.data.strip()
         expense.category = form.category.data
-        expense.amount = form.amount.data
+        expense.total_amount = form.total_amount.data
+        expense.advance_amount = form.advance_amount.data or 0
+        expense.balance_amount = form.balance_amount.data or 0
+        expense.sync_amount()
         expense.description = form.description.data.strip() if form.description.data else None
         expense.expense_date = form.expense_date.data
 
@@ -122,7 +136,7 @@ def edit_expense(expense_id):
             current_user,
             "updated",
             "expense",
-            f"Updated expense '{expense.title}' to ₹{expense.amount:,.2f} ({expense.category})",
+            f"Updated expense '{expense.title}' — paid ₹{expense.paid_amount():,.2f} of ₹{expense.total_cost():,.2f} ({expense.category})",
             expense.id,
         )
         db.session.commit()
@@ -133,7 +147,7 @@ def edit_expense(expense_id):
 
 
 @expenses_bp.route("/<int:expense_id>/delete", methods=["POST"])
-@write_required
+@expenses_write_required
 def delete_expense(expense_id):
     expense = org_get(Expense, expense_id)
     if not expense:

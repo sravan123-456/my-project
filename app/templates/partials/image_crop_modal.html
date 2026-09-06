@@ -1,0 +1,34 @@
+<div class="modal fade" id="imageCropModal" tabindex="-1" aria-labelledby="imageCropModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageCropModalLabel"><i class="bi bi-crop"></i> {{ t('crop.title') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t('lightbox.close') }}"></button>
+            </div>
+            <div class="modal-body p-2">
+                <div class="image-crop-stage">
+                    <img src="" alt="" id="imageCropTarget" class="image-crop-target">
+                </div>
+                <div class="d-flex flex-wrap gap-2 justify-content-center mt-3">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="imageCropRotateLeft" title="{{ t('crop.rotate_left') }}">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="imageCropRotateRight" title="{{ t('crop.rotate_right') }}">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="imageCropZoomOut" title="{{ t('crop.zoom_out') }}">
+                        <i class="bi bi-zoom-out"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="imageCropZoomIn" title="{{ t('crop.zoom_in') }}">
+                        <i class="bi bi-zoom-in"></i>
+                    </button>
+                </div>
+                <p class="small text-muted text-center mb-0 mt-2">{{ t('crop.hint') }}</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" id="imageCropCancel">{{ t('common.cancel') }}</button>
+                <button type="button" class="btn btn-festival" id="imageCropApply">{{ t('crop.apply') }}</button>
+            </div>
+        </div>
+    </div>
+</div>

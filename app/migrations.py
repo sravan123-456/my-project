@@ -25,6 +25,14 @@ def migrate_user_roles():
         statements.append("ALTER TABLE users ADD COLUMN is_admin BOOLEAN NOT NULL DEFAULT 0")
     if "can_write" not in columns:
         statements.append("ALTER TABLE users ADD COLUMN can_write BOOLEAN NOT NULL DEFAULT 0")
+    if "can_write_donations" not in columns:
+        statements.append(
+            "ALTER TABLE users ADD COLUMN can_write_donations BOOLEAN NOT NULL DEFAULT 0"
+        )
+    if "can_write_expenses" not in columns:
+        statements.append(
+            "ALTER TABLE users ADD COLUMN can_write_expenses BOOLEAN NOT NULL DEFAULT 0"
+        )
     if "is_approved" not in columns:
         statements.append("ALTER TABLE users ADD COLUMN is_approved BOOLEAN NOT NULL DEFAULT 0")
         added_approval = True
@@ -51,6 +59,8 @@ def migrate_user_roles():
         if first_user:
             first_user.is_admin = True
             first_user.can_write = True
+            first_user.can_write_donations = True
+            first_user.can_write_expenses = True
             first_user.is_approved = True
             db.session.commit()
 
@@ -201,12 +211,60 @@ def migrate_organization_banner():
             conn.execute(text("ALTER TABLE organizations ADD COLUMN banner_image_key VARCHAR(512)"))
 
 
+def migrate_split_write_permissions():
+    inspector = inspect(db.engine)
+    if "users" not in inspector.get_table_names():
+        return
+
+    columns = {column["name"] for column in inspector.get_columns("users")}
+    if "can_write_donations" not in columns or "can_write_expenses" not in columns:
+        return
+
+    for user in User.query.all():
+        if user.is_admin or user.can_write:
+            user.can_write_donations = True
+            user.can_write_expenses = True
+        user.sync_can_write()
+    db.session.commit()
+
+
+def migrate_expense_payment_columns():
+    inspector = inspect(db.engine)
+    if "expenses" not in inspector.get_table_names():
+        return
+
+    columns = {column["name"] for column in inspector.get_columns("expenses")}
+    statements = []
+    if "total_amount" not in columns:
+        statements.append("ALTER TABLE expenses ADD COLUMN total_amount REAL NOT NULL DEFAULT 0")
+    if "advance_amount" not in columns:
+        statements.append("ALTER TABLE expenses ADD COLUMN advance_amount REAL NOT NULL DEFAULT 0")
+    if "balance_amount" not in columns:
+        statements.append("ALTER TABLE expenses ADD COLUMN balance_amount REAL NOT NULL DEFAULT 0")
+
+    if statements:
+        with db.engine.begin() as conn:
+            for statement in statements:
+                conn.execute(text(statement))
+
+    for expense in Expense.query.all():
+        if not expense.total_amount or expense.total_amount <= 0:
+            expense.total_amount = expense.amount
+        if (expense.advance_amount or 0) == 0 and (expense.balance_amount or 0) == 0:
+            expense.balance_amount = expense.amount
+            expense.advance_amount = 0
+        expense.sync_amount()
+    db.session.commit()
+
+
 def run_migrations():
     migrate_gallery_and_profiles()
     migrate_user_roles()
+    migrate_split_write_permissions()
     migrate_donation_groups()
     migrate_donor_group_labels()
     migrate_donation_payments()
     migrate_organization_banner()
     migrate_organizations()
     migrate_pledges()
+    migrate_expense_payment_columns()

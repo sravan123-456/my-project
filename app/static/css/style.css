@@ -793,6 +793,48 @@ body.lightbox-open {
     display: block;
 }
 
+.dashboard-festival-banner-link {
+    display: block;
+    cursor: zoom-in;
+}
+
+.image-crop-stage {
+    max-height: 60vh;
+    background: #111;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.image-crop-target {
+    display: block;
+    max-width: 100%;
+}
+
+.image-crop-preview-thumb {
+    max-width: 200px;
+    max-height: 120px;
+    object-fit: cover;
+    border-radius: 0.5rem;
+    border: 2px solid rgba(136, 14, 79, 0.2);
+}
+
+.user-avatar-lightbox {
+    cursor: zoom-in;
+}
+
+.site-admin-photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 1rem;
+}
+
+.site-admin-photo-card {
+    padding: 0.5rem;
+    border-radius: 0.75rem;
+    background: #fff8e1;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
 @media (max-width: 768px) {
     .dashboard-festival-banner-img,
     .dashboard-festival-banner-default {

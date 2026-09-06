@@ -4,13 +4,13 @@
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-lg-7">
+    <div class="col-lg-8">
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white border-0 py-3">
                 <h4 class="mb-0"><i class="bi bi-receipt text-danger"></i> {{ title }}</h4>
             </div>
             <div class="card-body p-4">
-                <form method="POST" enctype="multipart/form-data" novalidate>
+                <form method="POST" enctype="multipart/form-data" novalidate id="expenseForm">
                     {{ form.hidden_tag() }}
                     <div class="row g-3">
                         <div class="col-md-8">
@@ -21,9 +21,9 @@
                             {% endfor %}
                         </div>
                         <div class="col-md-4">
-                            {{ form.amount.label(class="form-label") }}
-                            {{ form.amount(class="form-control" + (" is-invalid" if form.amount.errors else ""), placeholder="0.00", step="0.01") }}
-                            {% for error in form.amount.errors %}
+                            {{ form.expense_date.label(class="form-label") }}
+                            {{ form.expense_date(class="form-control" + (" is-invalid" if form.expense_date.errors else ""), type="date") }}
+                            {% for error in form.expense_date.errors %}
                                 <div class="invalid-feedback">{{ error }}</div>
                             {% endfor %}
                         </div>
@@ -35,11 +35,46 @@
                             {% endfor %}
                         </div>
                         <div class="col-md-6">
-                            {{ form.expense_date.label(class="form-label") }}
-                            {{ form.expense_date(class="form-control" + (" is-invalid" if form.expense_date.errors else ""), type="date") }}
-                            {% for error in form.expense_date.errors %}
+                            {{ form.total_amount.label(class="form-label") }}
+                            {{ form.total_amount(class="form-control expense-pay-field" + (" is-invalid" if form.total_amount.errors else ""), placeholder="0.00", step="0.01", id="expenseTotal") }}
+                            {% for error in form.total_amount.errors %}
                                 <div class="invalid-feedback">{{ error }}</div>
                             {% endfor %}
+                            <div class="form-text">{{ t('expenses.total_hint') }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.advance_amount.label(class="form-label") }}
+                            {{ form.advance_amount(class="form-control expense-pay-field" + (" is-invalid" if form.advance_amount.errors else ""), placeholder="0.00", step="0.01", id="expenseAdvance") }}
+                            {% for error in form.advance_amount.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                            <div class="form-text">{{ t('expenses.advance_hint') }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.balance_amount.label(class="form-label") }}
+                            {{ form.balance_amount(class="form-control expense-pay-field" + (" is-invalid" if form.balance_amount.errors else ""), placeholder="0.00", step="0.01", id="expenseBalance") }}
+                            {% for error in form.balance_amount.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                            <div class="form-text">{{ t('expenses.balance_hint') }}</div>
+                        </div>
+                        <div class="col-12">
+                            <div class="alert alert-light border expense-pay-summary mb-0">
+                                <div class="row g-2 text-center">
+                                    <div class="col-4">
+                                        <small class="text-muted d-block">{{ t('expenses.paid') }}</small>
+                                        <strong class="text-danger" id="expensePaidSummary">₹0.00</strong>
+                                    </div>
+                                    <div class="col-4">
+                                        <small class="text-muted d-block">{{ t('expenses.pending') }}</small>
+                                        <strong class="text-warning" id="expensePendingSummary">₹0.00</strong>
+                                    </div>
+                                    <div class="col-4">
+                                        <small class="text-muted d-block">{{ t('expenses.total') }}</small>
+                                        <strong id="expenseTotalSummary">₹0.00</strong>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="col-12">
                             {{ form.description.label(class="form-label") }}
@@ -47,13 +82,25 @@
                         </div>
                         <div class="col-12">
                             <label class="form-label">Upload Bill / Receipt</label>
-                            <input type="file" name="bill" class="form-control" accept=".png,.jpg,.jpeg,.gif,.webp,.pdf">
-                            <small class="text-muted">Accepted: PNG, JPG, GIF, WEBP, PDF (max 16MB)</small>
+                            <input type="file" name="bill" class="form-control" accept=".png,.jpg,.jpeg,.gif,.webp,.pdf"
+                                   data-image-crop="true" data-crop-optional="true" data-crop-aspect="free"
+                                   data-crop-preview="#expenseBillPreview">
+                            <img id="expenseBillPreview" src="" alt="" class="d-none image-crop-preview-thumb mt-2" aria-hidden="true">
+                            <small class="text-muted">{{ t('expenses.bill_hint') }}</small>
                             {% if expense and expense.bill_filename %}
                             <div class="mt-2">
-                                <a href="{{ url_for('expenses.view_bill', filename=expense.bill_filename) }}" target="_blank" class="btn btn-sm btn-outline-info">
-                                    <i class="bi bi-file-earmark-image"></i> View Current Bill
+                                {% set bill_url = url_for('expenses.view_bill', filename=expense.bill_filename) %}
+                                {% if expense.bill_filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp')) %}
+                                <a href="#" class="btn btn-sm btn-outline-info" data-lightbox
+                                   data-src="{{ bill_url }}" data-alt="{{ expense.title }}"
+                                   data-caption="{{ expense.title }} — {{ t('expenses.bill') }}">
+                                    <i class="bi bi-file-earmark-image"></i> {{ t('expenses.view_bill') }}
                                 </a>
+                                {% else %}
+                                <a href="{{ bill_url }}" target="_blank" class="btn btn-sm btn-outline-info">
+                                    <i class="bi bi-file-earmark-pdf"></i> {{ t('expenses.view_bill') }}
+                                </a>
+                                {% endif %}
                             </div>
                             {% endif %}
                         </div>
@@ -67,4 +114,28 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  function money(n) {
+    return "₹" + (Number(n) || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function updateExpenseSummary() {
+    var total = parseFloat(document.getElementById("expenseTotal").value) || 0;
+    var advance = parseFloat(document.getElementById("expenseAdvance").value) || 0;
+    var balance = parseFloat(document.getElementById("expenseBalance").value) || 0;
+    var paid = advance + balance;
+    var pending = Math.max(0, total - paid);
+    document.getElementById("expensePaidSummary").textContent = money(paid);
+    document.getElementById("expensePendingSummary").textContent = money(pending);
+    document.getElementById("expenseTotalSummary").textContent = money(total);
+  }
+  document.querySelectorAll(".expense-pay-field").forEach(function (el) {
+    el.addEventListener("input", updateExpenseSummary);
+  });
+  updateExpenseSummary();
+})();
+</script>
 {% endblock %}

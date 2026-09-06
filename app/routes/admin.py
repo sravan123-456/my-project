@@ -123,6 +123,60 @@ def reject_user(user_id):
     return redirect(url_for("admin.users"))
 
 
+@admin_bp.route("/users/<int:user_id>/toggle-donations-write", methods=["POST"])
+@org_admin_required
+def toggle_donations_write(user_id):
+    user = _org_user(user_id)
+    if not user:
+        flash("User not found.", "danger")
+        return redirect(url_for("admin.users"))
+
+    if user.is_admin or user.is_site_admin:
+        flash("Admins always have full access.", "info")
+        return redirect(url_for("admin.users"))
+
+    user.can_write_donations = not user.can_write_donations
+    user.sync_can_write()
+    access = "donations write" if user.can_write_donations else "no donations write"
+    log_activity(
+        current_user,
+        "updated",
+        "user",
+        f"Changed {user.full_name} access to {access}",
+        user.id,
+    )
+    db.session.commit()
+    flash(f"{user.full_name} — donations: {'enabled' if user.can_write_donations else 'disabled'}.", "success")
+    return redirect(url_for("admin.users"))
+
+
+@admin_bp.route("/users/<int:user_id>/toggle-expenses-write", methods=["POST"])
+@org_admin_required
+def toggle_expenses_write(user_id):
+    user = _org_user(user_id)
+    if not user:
+        flash("User not found.", "danger")
+        return redirect(url_for("admin.users"))
+
+    if user.is_admin or user.is_site_admin:
+        flash("Admins always have full access.", "info")
+        return redirect(url_for("admin.users"))
+
+    user.can_write_expenses = not user.can_write_expenses
+    user.sync_can_write()
+    access = "expenses write" if user.can_write_expenses else "no expenses write"
+    log_activity(
+        current_user,
+        "updated",
+        "user",
+        f"Changed {user.full_name} access to {access}",
+        user.id,
+    )
+    db.session.commit()
+    flash(f"{user.full_name} — expenses: {'enabled' if user.can_write_expenses else 'disabled'}.", "success")
+    return redirect(url_for("admin.users"))
+
+
 @admin_bp.route("/users/<int:user_id>/toggle-write", methods=["POST"])
 @org_admin_required
 def toggle_write(user_id):
@@ -135,8 +189,11 @@ def toggle_write(user_id):
         flash("Admins always have full access.", "info")
         return redirect(url_for("admin.users"))
 
-    user.can_write = not user.can_write
-    access = "write" if user.can_write else "read-only"
+    has_any = user.can_write_donations or user.can_write_expenses
+    user.can_write_donations = not has_any
+    user.can_write_expenses = not has_any
+    user.sync_can_write()
+    access = "full write" if user.can_edit() else "read-only"
     log_activity(
         current_user,
         "updated",
@@ -181,7 +238,9 @@ def toggle_admin(user_id):
         flash(f"{user.full_name} is no longer a committee admin.", "info")
     else:
         user.is_admin = True
-        user.can_write = True
+        user.can_write_donations = True
+        user.can_write_expenses = True
+        user.sync_can_write()
         log_activity(
             current_user,
             "updated",
