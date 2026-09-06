@@ -108,11 +108,14 @@ def edit_expense(expense_id):
         return redirect(url_for("expenses.list_expenses"))
 
     form = ExpenseForm(obj=expense)
-    if expense.total_amount:
-        form.total_amount.data = expense.total_amount
+    form.category.choices = [(c, c) for c in EXPENSE_CATEGORIES]
+
+    if request.method == "GET":
+        form.total_amount.data = expense.total_cost()
         form.advance_amount.data = expense.advance_amount or 0
         form.balance_amount.data = expense.balance_amount or 0
-    form.category.choices = [(c, c) for c in EXPENSE_CATEGORIES]
+        if not form.advance_amount.data and not form.balance_amount.data and expense.amount:
+            form.balance_amount.data = expense.amount
 
     if form.validate_on_submit():
         expense.title = form.title.data.strip()

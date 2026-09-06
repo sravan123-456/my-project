@@ -54,7 +54,7 @@
                             {{ form.balance_amount.label(class="form-label") }}
                             {{ form.balance_amount(class="form-control expense-pay-field" + (" is-invalid" if form.balance_amount.errors else ""), placeholder="0.00", step="0.01", id="expenseBalance") }}
                             {% for error in form.balance_amount.errors %}
-                                <div class="invalid-feedback">{{ error }}</div>
+                                <div class="invalid-feedback d-block">{{ error }}</div>
                             {% endfor %}
                             <div class="form-text">{{ t('expenses.balance_hint') }}</div>
                         </div>
@@ -125,7 +125,12 @@
   function updateExpenseSummary() {
     var total = parseFloat(document.getElementById("expenseTotal").value) || 0;
     var advance = parseFloat(document.getElementById("expenseAdvance").value) || 0;
-    var balance = parseFloat(document.getElementById("expenseBalance").value) || 0;
+    var balanceEl = document.getElementById("expenseBalance");
+    var balance = parseFloat(balanceEl.value) || 0;
+    if (advance + balance > total && total > 0) {
+      balance = Math.max(0, total - advance);
+      balanceEl.value = balance.toFixed(2);
+    }
     var paid = advance + balance;
     var pending = Math.max(0, total - paid);
     document.getElementById("expensePaidSummary").textContent = money(paid);
