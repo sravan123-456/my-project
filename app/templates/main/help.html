@@ -63,6 +63,23 @@
 
             <div class="accordion-item border-0 shadow-sm mb-3">
                 <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#helpPledges">
+                        {{ t('help.pledges_title') }}
+                    </button>
+                </h2>
+                <div id="helpPledges" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                    <div class="accordion-body">
+                        <ol class="mb-0">
+                            <li>{{ t('help.pledges_1') }}</li>
+                            <li>{{ t('help.pledges_2') }}</li>
+                            <li>{{ t('help.pledges_3') }}</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item border-0 shadow-sm mb-3">
+                <h2 class="accordion-header">
                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#helpExpenses">
                         {{ t('help.expenses_title') }}
                     </button>
@@ -72,6 +89,22 @@
                         <ol class="mb-0">
                             <li>{{ t('help.expenses_1') }}</li>
                             <li>{{ t('help.expenses_2') }}</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item border-0 shadow-sm mb-3">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#helpGallery">
+                        {{ t('help.gallery_title') }}
+                    </button>
+                </h2>
+                <div id="helpGallery" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                    <div class="accordion-body">
+                        <ol class="mb-0">
+                            <li>{{ t('help.gallery_1') }}</li>
+                            <li>{{ t('help.gallery_2') }}</li>
                         </ol>
                     </div>
                 </div>
@@ -106,6 +139,7 @@
                             <li>{{ t('help.admin_1') }}</li>
                             <li>{{ t('help.admin_2') }}</li>
                             <li>{{ t('help.admin_3') }}</li>
+                            <li>{{ t('help.admin_4') }}</li>
                         </ol>
                     </div>
                 </div>
@@ -122,6 +156,7 @@
                         <ol class="mb-0">
                             <li>{{ t('help.password_1') }}</li>
                             <li>{{ t('help.password_2') }}</li>
+                            <li>{{ t('help.password_3') }}</li>
                         </ol>
                         <a href="{{ url_for('auth.forgot_password') }}" class="btn btn-outline-festival btn-sm mt-3">{{ t('login.forgot_password') }}</a>
                     </div>

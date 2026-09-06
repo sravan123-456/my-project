@@ -190,11 +190,23 @@ def migrate_pledges():
         db.create_all()
 
 
+def migrate_organization_banner():
+    inspector = inspect(db.engine)
+    if "organizations" not in inspector.get_table_names():
+        return
+
+    columns = {column["name"] for column in inspector.get_columns("organizations")}
+    if "banner_image_key" not in columns:
+        with db.engine.begin() as conn:
+            conn.execute(text("ALTER TABLE organizations ADD COLUMN banner_image_key VARCHAR(512)"))
+
+
 def run_migrations():
     migrate_gallery_and_profiles()
     migrate_user_roles()
     migrate_donation_groups()
     migrate_donor_group_labels()
     migrate_donation_payments()
+    migrate_organization_banner()
     migrate_organizations()
     migrate_pledges()

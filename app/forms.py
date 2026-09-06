@@ -192,6 +192,17 @@ class ProfilePhotoForm(FlaskForm):
     remove_photo = SubmitField("Remove Photo")
 
 
+class CommitteeBannerForm(FlaskForm):
+    banner_image = FileField(
+        "Festival Banner",
+        validators=[
+            FileAllowed(["jpg", "jpeg", "png", "gif", "webp"], "Images only (JPG, PNG, GIF, WEBP)."),
+        ],
+    )
+    submit = SubmitField("Save Banner")
+    remove_banner = SubmitField("Remove Banner")
+
+
 class GalleryUploadForm(FlaskForm):
     festival_year = SelectField("Festival Year", coerce=int, validators=[DataRequired()])
     title = StringField("Title (optional)", validators=[Optional(), Length(max=200)])

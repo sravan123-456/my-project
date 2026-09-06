@@ -24,6 +24,7 @@ class Organization(db.Model):
     district = db.Column(db.String(120))
     festival_name = db.Column(db.String(160), nullable=False)
     festival_year = db.Column(db.Integer)
+    banner_image_key = db.Column(db.String(512))
     status = db.Column(db.String(20), nullable=False, default=ORG_STATUS_ACTIVE)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -47,6 +48,17 @@ class Organization(db.Model):
 
     def display_name(self):
         return self.festival_name or self.name
+
+    def location_label(self):
+        parts = []
+        if self.village:
+            parts.append(self.village.strip())
+        if self.district:
+            parts.append(self.district.strip())
+        return ", ".join(parts) if parts else None
+
+    def has_banner(self):
+        return bool(self.banner_image_key)
 
 
 class User(UserMixin, db.Model):

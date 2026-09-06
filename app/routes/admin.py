@@ -1,14 +1,15 @@
 from datetime import datetime
 
-from flask import Blueprint, flash, redirect, render_template, url_for
+from flask import Blueprint, abort, flash, redirect, render_template, url_for
 from flask_login import current_user, login_required
 
 from app import db
 from app.activity import log_activity
-from app.forms import AdminResetPasswordForm
+from app.forms import AdminResetPasswordForm, CommitteeBannerForm
 from app.models import ActivityLog, Donation, Expense, PasswordResetRequest, User
 from app.org_scope import org_get, org_users_query
 from app.permissions import org_admin_required
+from app.storage import delete_image, get_image_url, save_image, serve_image
 
 admin_bp = Blueprint("admin", __name__)
 
@@ -53,6 +54,7 @@ def users():
         users=approved_users,
         invite_url=invite_url,
         committee_code=committee_code,
+        banner_form=CommitteeBannerForm(),
     )
 
 
@@ -305,4 +307,60 @@ def cancel_password_reset(reset_id):
     )
     db.session.commit()
     flash(f"Password reset request for {user.full_name} was cancelled.", "info")
+    return redirect(url_for("admin.users"))
+
+
+@admin_bp.route("/banner/image")
+@login_required
+def committee_banner_image():
+    org = current_user.organization
+    if not org or not org.banner_image_key:
+        abort(404)
+    response = serve_image(org.banner_image_key, "admin.committee_banner_image")
+    if not response:
+        abort(404)
+    return response
+
+
+@admin_bp.route("/banner", methods=["POST"])
+@org_admin_required
+def update_committee_banner():
+    org = current_user.organization
+    if not org:
+        flash("Committee not found.", "danger")
+        return redirect(url_for("admin.users"))
+
+    form = CommitteeBannerForm()
+    if form.remove_banner.data:
+        if org.banner_image_key:
+            delete_image(org.banner_image_key)
+            org.banner_image_key = None
+            log_activity(current_user, "updated", "organization", "Removed festival dashboard banner")
+            db.session.commit()
+            flash("Festival banner removed.", "info")
+        return redirect(url_for("admin.users"))
+
+    if not form.validate_on_submit():
+        for field_errors in form.errors.values():
+            for message in field_errors:
+                flash(message, "danger")
+        return redirect(url_for("admin.users"))
+
+    if not form.banner_image.data:
+        flash("Please choose a banner image to upload.", "warning")
+        return redirect(url_for("admin.users"))
+
+    prefix = f"banners/org-{org.id}"
+    if org.banner_image_key:
+        delete_image(org.banner_image_key)
+
+    storage_key = save_image(form.banner_image.data, prefix)
+    if not storage_key:
+        flash("Invalid image file. Allowed: JPG, PNG, GIF, WEBP.", "warning")
+        return redirect(url_for("admin.users"))
+
+    org.banner_image_key = storage_key
+    log_activity(current_user, "updated", "organization", "Updated festival dashboard banner")
+    db.session.commit()
+    flash("Festival banner updated. It will appear on your committee dashboard.", "success")
     return redirect(url_for("admin.users"))

@@ -708,3 +708,104 @@ body.lightbox-open {
 .print-only {
     display: none;
 }
+
+/* Dashboard festival banner (per committee) */
+.dashboard-festival-banner {
+    position: relative;
+    min-height: 200px;
+    border-radius: 1rem;
+    background: linear-gradient(135deg, var(--festival-maroon), var(--festival-saffron-dark));
+}
+
+.dashboard-festival-banner-img {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+    display: block;
+}
+
+.dashboard-festival-banner-default {
+    min-height: 220px;
+    background: linear-gradient(135deg, #6a1b4d 0%, #c62828 45%, #e65100 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.dashboard-festival-banner-ganesha {
+    position: absolute;
+    right: 1.5rem;
+    bottom: -0.5rem;
+    width: 140px;
+    opacity: 0.22;
+    pointer-events: none;
+}
+
+.dashboard-festival-banner-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.55) 100%);
+}
+
+.dashboard-festival-banner-text {
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+.dashboard-festival-banner-eyebrow {
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    opacity: 0.9;
+}
+
+.dashboard-festival-banner-title {
+    font-size: clamp(1.35rem, 3vw, 2rem);
+    font-weight: 800;
+    line-height: 1.15;
+}
+
+.dashboard-festival-banner-location {
+    font-size: 0.95rem;
+    margin-bottom: 0;
+    opacity: 0.92;
+}
+
+.dashboard-festival-year-badge {
+    background: rgba(255, 236, 179, 0.95);
+    color: var(--festival-maroon);
+    font-weight: 700;
+}
+
+.committee-banner-preview {
+    border-radius: 0.75rem;
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    max-width: 640px;
+}
+
+.committee-banner-preview-img {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    display: block;
+}
+
+@media (max-width: 768px) {
+    .dashboard-festival-banner-img,
+    .dashboard-festival-banner-default {
+        min-height: 180px;
+        height: 180px;
+    }
+
+    .dashboard-festival-banner-overlay {
+        padding: 1rem;
+    }
+
+    .dashboard-festival-banner-ganesha {
+        width: 100px;
+        right: 0.5rem;
+    }
+}

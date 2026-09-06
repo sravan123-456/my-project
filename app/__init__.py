@@ -111,18 +111,37 @@ def create_app():
             return direct
         return None
 
+    def committee_banner_url():
+        if not current_user.is_authenticated or not current_user.organization:
+            return None
+        org = current_user.organization
+        if not org.banner_image_key:
+            return None
+        direct = get_image_url(org.banner_image_key)
+        if direct:
+            return direct
+        return url_for("admin.committee_banner_image")
+
     app.jinja_env.globals["profile_photo_url"] = profile_photo_url
     app.jinja_env.globals["storage_image_url"] = storage_image_url
+    app.jinja_env.globals["committee_banner_url"] = committee_banner_url
 
     @app.context_processor
     def inject_globals():
         pending_count = 0
         festival_name = PLATFORM_NAME
         organization_name = None
+        organization_village = None
+        organization_location = None
+        festival_year = None
         if current_user.is_authenticated:
             if current_user.organization:
-                festival_name = current_user.organization.display_name()
-                organization_name = current_user.organization.name
+                org = current_user.organization
+                festival_name = org.display_name()
+                organization_name = org.name
+                organization_village = org.village
+                organization_location = org.location_label()
+                festival_year = org.festival_year
             if current_user.is_admin:
                 pending_count = User.query.filter_by(
                     organization_id=current_user.organization_id,
@@ -148,6 +167,9 @@ def create_app():
         return {
             "festival_name": festival_name,
             "organization_name": organization_name,
+            "organization_village": organization_village,
+            "organization_location": organization_location,
+            "festival_year": festival_year,
             "platform_name": PLATFORM_NAME,
             "nav_title": festival_name if current_user.is_authenticated and organization_name else PLATFORM_NAME,
             "developer_name": DEVELOPER_NAME,
@@ -165,6 +187,7 @@ def create_app():
             "pledge_whatsapp_url": pledge_whatsapp_url,
             "profile_photo_url": profile_photo_url,
             "storage_image_url": storage_image_url,
+            "committee_banner_url": committee_banner_url,
             "nav_active": nav_active,
         }
 
