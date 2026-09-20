@@ -1,0 +1,19 @@
+<div class="donor-search-wrap position-relative">
+    <div class="input-group">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <input type="search" name="q" class="form-control" value="{{ search_q }}"
+               placeholder="{{ t('donations.search_placeholder') }}"
+               aria-label="{{ t('donations.search') }}"
+               aria-autocomplete="list"
+               aria-controls="donor-suggestions-{{ list_id }}"
+               autocomplete="off"
+               data-donor-search-autocomplete
+               data-suggestions-url="{{ url_for('donations.donor_suggestions') }}">
+        {% if search_q and clear_href %}
+        <a href="{{ clear_href }}" class="btn btn-outline-secondary" title="{{ t('common.clear') }}">
+            <i class="bi bi-x-lg"></i>
+        </a>
+        {% endif %}
+    </div>
+    <ul id="donor-suggestions-{{ list_id }}" class="donor-search-suggestions list-unstyled mb-0" role="listbox" hidden></ul>
+</div>

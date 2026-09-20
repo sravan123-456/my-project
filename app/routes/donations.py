@@ -1,6 +1,6 @@
 from datetime import date
 
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 from sqlalchemy import func
 
@@ -52,6 +52,14 @@ def _normalize_phone(phone_value):
     return stripped if stripped else None
 
 
+def _escape_like_pattern(value):
+    return (
+        value.replace("\\", "\\\\")
+        .replace("%", "\\%")
+        .replace("_", "\\_")
+    )
+
+
 def _save_donation_from_form(form, recorded_by_id, organization_id):
     donation = Donation(
         organization_id=organization_id,
@@ -71,6 +79,36 @@ def _save_donation_from_form(form, recorded_by_id, organization_id):
     )
     db.session.add(donation)
     return donation
+
+
+@donations_bp.route("/api/donor-suggestions")
+@login_required
+def donor_suggestions():
+    query = (request.args.get("q") or "").strip()
+    if len(query) < 2:
+        return jsonify(results=[])
+
+    pattern = f"%{_escape_like_pattern(query)}%"
+    names = set()
+    for row in (
+        org_query(Donation)
+        .filter(Donation.donor_name.ilike(pattern, escape="\\"))
+        .with_entities(Donation.donor_name)
+        .distinct()
+        .limit(20)
+    ):
+        names.add(row[0])
+    for row in (
+        org_query(Pledge)
+        .filter(Pledge.donor_name.ilike(pattern, escape="\\"))
+        .with_entities(Pledge.donor_name)
+        .distinct()
+        .limit(20)
+    ):
+        names.add(row[0])
+
+    results = sorted(names, key=str.lower)[:10]
+    return jsonify(results=results)
 
 
 @donations_bp.route("/")

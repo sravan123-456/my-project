@@ -1267,3 +1267,43 @@ a.mobile-stat-card:active {
         padding-right: 0.75rem;
     }
 }
+
+.donor-search-wrap {
+    position: relative;
+}
+
+.donor-search-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1050;
+    margin-top: 0.25rem;
+    max-height: 14rem;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.12);
+}
+
+.donor-search-suggestion-item {
+    display: block;
+    width: 100%;
+    padding: 0.55rem 0.85rem;
+    border: none;
+    background: transparent;
+    text-align: left;
+    color: inherit;
+    cursor: pointer;
+}
+
+.donor-search-suggestions li + li {
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.donor-search-suggestion-item:hover,
+.donor-search-suggestion-item:focus {
+    background: var(--festival-cream);
+    outline: none;
+}

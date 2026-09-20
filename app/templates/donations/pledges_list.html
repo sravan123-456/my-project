@@ -53,18 +53,10 @@
     {% if group_filter != 'all' %}
     <input type="hidden" name="group" value="{{ group_filter }}">
     {% endif %}
+    {% set list_id = 'pledges-list' %}
     <div class="col-md-8 col-lg-6">
-        <div class="input-group">
-            <span class="input-group-text"><i class="bi bi-search"></i></span>
-            <input type="search" name="q" class="form-control" value="{{ search_q }}"
-                   placeholder="{{ t('donations.search_placeholder') }}" aria-label="{{ t('donations.search') }}">
-            {% if search_q %}
-            <a href="{{ url_for('pledges.list_pledges', status=status_filter if status_filter != 'pending' else none, group=group_filter if group_filter != 'all' else none) }}"
-               class="btn btn-outline-secondary" title="{{ t('common.clear') }}">
-                <i class="bi bi-x-lg"></i>
-            </a>
-            {% endif %}
-        </div>
+        {% set clear_href = url_for('pledges.list_pledges', status=status_filter if status_filter != 'pending' else none, group=group_filter if group_filter != 'all' else none) %}
+        {% include 'donations/_donor_search_input.html' with context %}
     </div>
     <div class="col-auto">
         <button type="submit" class="btn btn-festival">{{ t('donations.search') }}</button>
