@@ -1,17 +1,19 @@
-<div class="donation-main-tabs mb-4" role="tablist" aria-label="{{ t('donations.title') }}">
-    <a class="donation-main-tab{% if active_tab == 'received' %} active{% endif %}"
-       href="{{ url_for('donations.list_donations') }}"
-       role="tab"{% if active_tab == 'received' %} aria-selected="true"{% endif %}>
-        <i class="bi bi-check-circle-fill"></i>
-        <span>{{ t('donations.tab_received') }}</span>
-    </a>
-    <a class="donation-main-tab{% if active_tab == 'pledges' %} active{% endif %}"
-       href="{{ url_for('pledges.list_pledges') }}"
-       role="tab"{% if active_tab == 'pledges' %} aria-selected="true"{% endif %}>
-        <i class="bi bi-hourglass-split"></i>
-        <span>{{ t('donations.tab_pledges') }}</span>
-        {% if pending_pledge_count and pending_pledge_count > 0 %}
-        <span class="badge rounded-pill bg-warning text-dark">{{ pending_pledge_count }}</span>
-        {% endif %}
-    </a>
-</div>
+<ul class="donation-filter-chips donation-view-tabs mb-3" role="tablist" aria-label="{{ t('donations.title') }}">
+    <li>
+        <a class="donation-filter-chip donation-filter-chip-received{% if active_tab == 'received' %} active{% endif %}"
+           href="{{ url_for('donations.list_donations') }}"
+           role="tab"{% if active_tab == 'received' %} aria-selected="true"{% endif %}>
+            <i class="bi bi-check-circle-fill"></i> {{ t('donations.tab_received') }}
+        </a>
+    </li>
+    <li>
+        <a class="donation-filter-chip donation-filter-chip-pledged{% if active_tab == 'pledges' %} active{% endif %}"
+           href="{{ url_for('pledges.list_pledges') }}"
+           role="tab"{% if active_tab == 'pledges' %} aria-selected="true"{% endif %}>
+            <i class="bi bi-hourglass-split"></i> {{ t('donations.tab_pledges') }}
+            {% if pending_pledge_count and pending_pledge_count > 0 %}
+            <span class="donation-chip-count">{{ pending_pledge_count }}</span>
+            {% endif %}
+        </a>
+    </li>
+</ul>
