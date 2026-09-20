@@ -211,6 +211,17 @@ def migrate_organization_banner():
             conn.execute(text("ALTER TABLE organizations ADD COLUMN banner_image_key VARCHAR(512)"))
 
 
+def migrate_organization_payment_qr():
+    inspector = inspect(db.engine)
+    if "organizations" not in inspector.get_table_names():
+        return
+
+    columns = {column["name"] for column in inspector.get_columns("organizations")}
+    if "payment_qr_image_key" not in columns:
+        with db.engine.begin() as conn:
+            conn.execute(text("ALTER TABLE organizations ADD COLUMN payment_qr_image_key VARCHAR(512)"))
+
+
 def migrate_split_write_permissions():
     inspector = inspect(db.engine)
     if "users" not in inspector.get_table_names():
@@ -265,6 +276,7 @@ def run_migrations():
     migrate_donor_group_labels()
     migrate_donation_payments()
     migrate_organization_banner()
+    migrate_organization_payment_qr()
     migrate_organizations()
     migrate_pledges()
     migrate_expense_payment_columns()

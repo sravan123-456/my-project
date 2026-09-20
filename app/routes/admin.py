@@ -5,7 +5,7 @@ from flask_login import current_user, login_required
 
 from app import db
 from app.activity import log_activity
-from app.forms import AdminResetPasswordForm, CommitteeBannerForm
+from app.forms import AdminResetPasswordForm, CommitteeBannerForm, CommitteePaymentQrForm
 from app.models import ActivityLog, Donation, Expense, PasswordResetRequest, User
 from app.org_scope import org_get, org_users_query
 from app.permissions import org_admin_required
@@ -55,6 +55,7 @@ def users():
         invite_url=invite_url,
         committee_code=committee_code,
         banner_form=CommitteeBannerForm(),
+        payment_qr_form=CommitteePaymentQrForm(),
     )
 
 
@@ -422,4 +423,60 @@ def update_committee_banner():
     log_activity(current_user, "updated", "organization", "Updated festival dashboard banner")
     db.session.commit()
     flash("Festival banner updated. It will appear on your committee dashboard.", "success")
+    return redirect(url_for("admin.users"))
+
+
+@admin_bp.route("/payment-qr/image")
+@login_required
+def committee_payment_qr_image():
+    org = current_user.organization
+    if not org or not org.payment_qr_image_key:
+        abort(404)
+    response = serve_image(org.payment_qr_image_key, "admin.committee_payment_qr_image")
+    if not response:
+        abort(404)
+    return response
+
+
+@admin_bp.route("/payment-qr", methods=["POST"])
+@org_admin_required
+def update_committee_payment_qr():
+    org = current_user.organization
+    if not org:
+        flash("Committee not found.", "danger")
+        return redirect(url_for("admin.users"))
+
+    form = CommitteePaymentQrForm()
+    if form.remove_payment_qr.data:
+        if org.payment_qr_image_key:
+            delete_image(org.payment_qr_image_key)
+            org.payment_qr_image_key = None
+            log_activity(current_user, "updated", "organization", "Removed UPI payment QR code")
+            db.session.commit()
+            flash("Payment QR code removed.", "info")
+        return redirect(url_for("admin.users"))
+
+    if not form.validate_on_submit():
+        for field_errors in form.errors.values():
+            for message in field_errors:
+                flash(message, "danger")
+        return redirect(url_for("admin.users"))
+
+    if not form.payment_qr_image.data:
+        flash("Please choose a QR code image to upload.", "warning")
+        return redirect(url_for("admin.users"))
+
+    prefix = f"payment-qr/org-{org.id}"
+    if org.payment_qr_image_key:
+        delete_image(org.payment_qr_image_key)
+
+    storage_key = save_image(form.payment_qr_image.data, prefix)
+    if not storage_key:
+        flash("Invalid image file. Allowed: JPG, PNG, GIF, WEBP.", "warning")
+        return redirect(url_for("admin.users"))
+
+    org.payment_qr_image_key = storage_key
+    log_activity(current_user, "updated", "organization", "Updated UPI payment QR code for donations")
+    db.session.commit()
+    flash("Payment QR code saved. Collectors can show it on the Donations page.", "success")
     return redirect(url_for("admin.users"))

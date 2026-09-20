@@ -122,9 +122,21 @@ def create_app():
             return direct
         return url_for("admin.committee_banner_image")
 
+    def committee_payment_qr_url():
+        if not current_user.is_authenticated or not current_user.organization:
+            return None
+        org = current_user.organization
+        if not org.payment_qr_image_key:
+            return None
+        direct = get_image_url(org.payment_qr_image_key)
+        if direct:
+            return direct
+        return url_for("admin.committee_payment_qr_image")
+
     app.jinja_env.globals["profile_photo_url"] = profile_photo_url
     app.jinja_env.globals["storage_image_url"] = storage_image_url
     app.jinja_env.globals["committee_banner_url"] = committee_banner_url
+    app.jinja_env.globals["committee_payment_qr_url"] = committee_payment_qr_url
     app.jinja_env.globals["t"] = translate
 
     @app.context_processor
@@ -191,6 +203,7 @@ def create_app():
             "profile_photo_url": profile_photo_url,
             "storage_image_url": storage_image_url,
             "committee_banner_url": committee_banner_url,
+            "committee_payment_qr_url": committee_payment_qr_url,
             "nav_active": nav_active,
         }
 

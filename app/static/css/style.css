@@ -1126,6 +1126,29 @@ a.mobile-stat-card:active {
     padding: 0.85rem 1rem;
 }
 
+.payment-qr-image {
+    max-width: 220px;
+    width: 100%;
+    height: auto;
+    border-radius: 0.75rem;
+    border: 2px solid rgba(46, 125, 50, 0.2);
+    background: #fff;
+    padding: 0.35rem;
+}
+
+.payment-qr-image-preview {
+    max-width: 160px;
+}
+
+.payment-qr-link {
+    cursor: zoom-in;
+    text-decoration: none;
+}
+
+.payment-qr-card {
+    border-start: 4px solid #2e7d32 !important;
+}
+
 @media (max-width: 991.98px) {
     main.container.has-mobile-bottom-nav {
         padding-left: 0.75rem;

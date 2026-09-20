@@ -25,6 +25,7 @@ class Organization(db.Model):
     festival_name = db.Column(db.String(160), nullable=False)
     festival_year = db.Column(db.Integer)
     banner_image_key = db.Column(db.String(512))
+    payment_qr_image_key = db.Column(db.String(512))
     status = db.Column(db.String(20), nullable=False, default=ORG_STATUS_ACTIVE)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -59,6 +60,9 @@ class Organization(db.Model):
 
     def has_banner(self):
         return bool(self.banner_image_key)
+
+    def has_payment_qr(self):
+        return bool(self.payment_qr_image_key)
 
 
 class User(UserMixin, db.Model):
