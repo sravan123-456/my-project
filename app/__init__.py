@@ -39,7 +39,7 @@ def create_app():
     }
     app.config["UPLOAD_FOLDER"] = os.getenv("UPLOAD_FOLDER", "uploads")
     app.config["MAX_CONTENT_LENGTH"] = int(
-        os.getenv("MAX_CONTENT_LENGTH", 16 * 1024 * 1024)
+        os.getenv("MAX_CONTENT_LENGTH", 50 * 1024 * 1024)
     )
     app.config["GCS_BUCKET_NAME"] = os.getenv("GCS_BUCKET_NAME", "").strip()
     app.config["GCS_PUBLIC_READ"] = os.getenv("GCS_PUBLIC_READ", "false").lower() in ("1", "true", "yes")

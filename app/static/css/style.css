@@ -1307,3 +1307,19 @@ a.mobile-stat-card:active {
     background: var(--festival-cream);
     outline: none;
 }
+
+.gallery-video-wrap {
+    background: #111;
+    aspect-ratio: 4 / 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.gallery-video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    background: #000;
+}

@@ -324,12 +324,17 @@ class PasswordResetRequest(db.Model):
     organization = db.relationship("Organization", backref="password_reset_requests", lazy=True)
 
 
+GALLERY_MEDIA_IMAGE = "image"
+GALLERY_MEDIA_VIDEO = "video"
+
+
 class GalleryImage(db.Model):
     __tablename__ = "gallery_images"
 
     id = db.Column(db.Integer, primary_key=True)
     organization_id = db.Column(db.Integer, db.ForeignKey("organizations.id"), nullable=False, index=True)
     storage_key = db.Column(db.String(512), nullable=False)
+    media_type = db.Column(db.String(10), nullable=False, default=GALLERY_MEDIA_IMAGE)
     title = db.Column(db.String(200))
     caption = db.Column(db.Text)
     festival_year = db.Column(db.Integer)
@@ -338,6 +343,9 @@ class GalleryImage(db.Model):
 
     uploaded_by = db.relationship("User", backref="gallery_uploads", lazy=True)
     organization = db.relationship("Organization", backref="gallery_images", lazy=True)
+
+    def is_video(self):
+        return self.media_type == GALLERY_MEDIA_VIDEO
 
 
 EXPENSE_CATEGORIES = [

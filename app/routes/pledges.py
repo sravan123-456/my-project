@@ -270,3 +270,32 @@ def cancel_pledge(pledge_id):
         db.session.commit()
         flash(f"Pledge from {donor_name} cancelled.", "info")
     return redirect(url_for("pledges.list_pledges", status=request.args.get("status", PLEDGE_STATUS_PENDING)))
+
+
+@pledges_bp.route("/<int:pledge_id>/delete", methods=["POST"])
+@donations_write_required
+def delete_pledge(pledge_id):
+    pledge = org_get(Pledge, pledge_id)
+    status_filter = request.args.get("status", PLEDGE_STATUS_PENDING)
+    if not pledge:
+        flash("Pledge not found.", "danger")
+    elif pledge.status == PLEDGE_STATUS_COLLECTED:
+        flash(
+            "Collected promises cannot be deleted. Open the linked donation instead.",
+            "warning",
+        )
+    else:
+        donor_name = pledge.donor_name
+        amount = pledge.promised_amount
+        deleted_id = pledge.id
+        db.session.delete(pledge)
+        log_activity(
+            current_user,
+            "deleted",
+            "pledge",
+            f"Deleted pledge of ₹{amount:,.2f} from {donor_name}",
+            deleted_id,
+        )
+        db.session.commit()
+        flash(f"Pledge from {donor_name} deleted.", "info")
+    return redirect(url_for("pledges.list_pledges", status=status_filter))

@@ -13,16 +13,24 @@ from app.gallery_service import (
     get_gallery_years,
     resolve_gallery_year,
 )
-from app.models import GalleryImage
+from app.models import GALLERY_MEDIA_IMAGE, GALLERY_MEDIA_VIDEO, GalleryImage
 from app.org_scope import org_get, org_query
 from app.permissions import write_required
-from app.storage import delete_image, save_image, serve_image
+from app.storage import delete_image, gallery_media_type, save_gallery_file, serve_image
 
 gallery_bp = Blueprint("gallery", __name__)
 
 
 def _gallery_redirect(year):
     return redirect(url_for("gallery.index", year=year))
+
+
+def _selected_media_files(field_name):
+    return [
+        upload
+        for upload in request.files.getlist(field_name)
+        if upload and upload.filename
+    ]
 
 
 @gallery_bp.route("/")
@@ -71,38 +79,74 @@ def upload():
         return _gallery_redirect(request.args.get("year", type=int) or date.today().year)
 
     year = form.festival_year.data
-    if not gallery_has_room(org_id, year):
+    files = _selected_media_files(form.media_files.name)
+    remaining_slots = GALLERY_MAX_PHOTOS_PER_YEAR - count_gallery_photos(org_id, year)
+    if remaining_slots <= 0:
         flash(
-            f"This year already has {GALLERY_MAX_PHOTOS_PER_YEAR} photos. "
-            "Delete an old photo or choose another year.",
+            f"This year already has {GALLERY_MAX_PHOTOS_PER_YEAR} items. "
+            "Delete an old item or choose another year.",
             "warning",
         )
         return _gallery_redirect(year)
 
-    prefix = f"gallery/org-{org_id}/{year}"
-    storage_key = save_image(form.photo.data, prefix)
-    if not storage_key:
-        flash("Invalid image file. Allowed: JPG, PNG, GIF, WEBP.", "warning")
-        return _gallery_redirect(year)
+    if len(files) > remaining_slots:
+        flash(
+            f"Only {remaining_slots} slot(s) left for {year}. "
+            f"Uploading the first {remaining_slots} file(s).",
+            "warning",
+        )
+        files = files[:remaining_slots]
 
-    image = GalleryImage(
-        organization_id=org_id,
-        storage_key=storage_key,
-        title=form.title.data.strip() if form.title.data else None,
-        caption=form.caption.data.strip() if form.caption.data else None,
-        festival_year=year,
-        uploaded_by_id=current_user.id,
-    )
-    db.session.add(image)
-    log_activity(
-        current_user,
-        "added",
-        "gallery",
-        f"Uploaded {year} festival photo{f': {image.title}' if image.title else ''}",
-        image.id,
-    )
-    db.session.commit()
-    flash("Photo added to the festival gallery.", "success")
+    prefix = f"gallery/org-{org_id}/{year}"
+    shared_title = form.title.data.strip() if form.title.data else None
+    shared_caption = form.caption.data.strip() if form.caption.data else None
+    apply_shared_metadata = len(files) == 1
+
+    uploaded = 0
+    failed = 0
+    for upload_file in files:
+        storage_key = save_gallery_file(upload_file, prefix)
+        if not storage_key:
+            failed += 1
+            continue
+
+        media_kind = gallery_media_type(upload_file.filename) or GALLERY_MEDIA_IMAGE
+        image = GalleryImage(
+            organization_id=org_id,
+            storage_key=storage_key,
+            media_type=(
+                GALLERY_MEDIA_VIDEO if media_kind == "video" else GALLERY_MEDIA_IMAGE
+            ),
+            title=shared_title if apply_shared_metadata else None,
+            caption=shared_caption if apply_shared_metadata else None,
+            festival_year=year,
+            uploaded_by_id=current_user.id,
+        )
+        db.session.add(image)
+        db.session.flush()
+        log_activity(
+            current_user,
+            "added",
+            "gallery",
+            f"Uploaded {year} festival {media_kind}"
+            f"{f': {image.title}' if image.title else ''}",
+            image.id,
+        )
+        uploaded += 1
+
+    if uploaded:
+        db.session.commit()
+        if uploaded == 1:
+            flash("Item added to the festival gallery.", "success")
+        else:
+            flash(f"{uploaded} items added to the festival gallery.", "success")
+    else:
+        db.session.rollback()
+        flash("No valid files were uploaded. Allowed: JPG, PNG, GIF, WEBP, MP4, WEBM, MOV.", "warning")
+
+    if failed:
+        flash(f"{failed} file(s) could not be uploaded.", "warning")
+
     return _gallery_redirect(year)
 
 
@@ -123,11 +167,11 @@ def photo(image_id):
 def delete(image_id):
     image = org_get(GalleryImage, image_id)
     if not image:
-        flash("Photo not found.", "danger")
+        flash("Gallery item not found.", "danger")
         return redirect(url_for("gallery.index"))
 
     year = image.festival_year or date.today().year
-    title = image.title or "Festival photo"
+    title = image.title or ("Festival video" if image.is_video() else "Festival photo")
     deleted_id = image.id
     delete_image(image.storage_key)
     db.session.delete(image)
@@ -135,9 +179,9 @@ def delete(image_id):
         current_user,
         "deleted",
         "gallery",
-        f"Removed gallery photo: {title}",
+        f"Removed gallery item: {title}",
         deleted_id,
     )
     db.session.commit()
-    flash("Photo removed from gallery.", "info")
+    flash("Item removed from gallery.", "info")
     return _gallery_redirect(year)

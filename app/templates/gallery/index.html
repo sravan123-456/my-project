@@ -45,15 +45,12 @@
                 <div class="col-md-4">
                     {{ form.title.label(class="form-label") }}
                     {{ form.title(class="form-control", placeholder=t('gallery.title_placeholder')) }}
+                    <small class="text-muted">{{ t('gallery.single_file_metadata_hint') }}</small>
                 </div>
                 <div class="col-md-4">
-                    {{ form.photo.label(class="form-label") }}
-                    {{ form.photo(class="form-control", accept="image/*", **{
-                        "data-image-crop": "true",
-                        "data-crop-aspect": "free",
-                        "data-crop-preview": "#galleryCropPreview"
-                    }) }}
-                    <img id="galleryCropPreview" src="" alt="" class="d-none image-crop-preview-thumb mt-2" aria-hidden="true">
+                    {{ form.media_files.label(class="form-label") }}
+                    {{ form.media_files(class="form-control", multiple=True, accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm,video/quicktime") }}
+                    <small class="text-muted d-block mt-1">{{ t('gallery.bulk_upload_hint') }}</small>
                 </div>
                 <div class="col-12">
                     {{ form.caption.label(class="form-label") }}
@@ -83,15 +80,25 @@
 {% if images %}
 <div class="gallery-grid">
     {% for image in images %}
-    {% set image_url = storage_image_url(image.storage_key) or url_for('gallery.photo', image_id=image.id) %}
+    {% set media_url = storage_image_url(image.storage_key) or url_for('gallery.photo', image_id=image.id) %}
     <div class="gallery-card card border-0 shadow-sm">
+        {% if image.is_video() %}
+        <div class="gallery-video-wrap">
+            <video src="{{ media_url }}" class="gallery-video" controls preload="metadata"
+                   {% if image.title %}aria-label="{{ image.title }}"{% endif %}></video>
+        </div>
+        {% else %}
         <a href="#" class="gallery-image-link" data-lightbox
-           data-src="{{ image_url }}"
+           data-src="{{ media_url }}"
            data-alt="{{ image.title or t('gallery.title') }}"
            data-caption="{{ image.title or '' }}{% if image.caption %} — {{ image.caption }}{% endif %}">
-            <img src="{{ image_url }}" alt="{{ image.title or t('gallery.title') }}" class="gallery-image" loading="lazy">
+            <img src="{{ media_url }}" alt="{{ image.title or t('gallery.title') }}" class="gallery-image" loading="lazy">
         </a>
+        {% endif %}
         <div class="card-body p-3">
+            {% if image.is_video() %}
+            <span class="badge bg-dark mb-2"><i class="bi bi-camera-video"></i> {{ t('gallery.video_badge') }}</span>
+            {% endif %}
             {% if image.title %}
             <h6 class="fw-semibold mb-1">{{ image.title }}</h6>
             {% endif %}

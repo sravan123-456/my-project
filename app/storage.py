@@ -7,12 +7,17 @@ from flask import current_app, redirect, send_file
 from werkzeug.utils import secure_filename
 
 IMAGE_EXTENSIONS = frozenset({"png", "jpg", "jpeg", "gif", "webp"})
+VIDEO_EXTENSIONS = frozenset({"mp4", "webm", "mov"})
+GALLERY_EXTENSIONS = IMAGE_EXTENSIONS | VIDEO_EXTENSIONS
 CONTENT_TYPES = {
     "png": "image/png",
     "jpg": "image/jpeg",
     "jpeg": "image/jpeg",
     "gif": "image/gif",
     "webp": "image/webp",
+    "mp4": "video/mp4",
+    "webm": "video/webm",
+    "mov": "video/quicktime",
 }
 
 _gcs_client = None
@@ -20,6 +25,21 @@ _gcs_client = None
 
 def allowed_image(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in IMAGE_EXTENSIONS
+
+
+def allowed_gallery_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in GALLERY_EXTENSIONS
+
+
+def gallery_media_type(filename):
+    if not filename or "." not in filename:
+        return None
+    ext = filename.rsplit(".", 1)[1].lower()
+    if ext in VIDEO_EXTENSIONS:
+        return "video"
+    if ext in IMAGE_EXTENSIONS:
+        return "image"
+    return None
 
 
 def _extension(filename):
@@ -78,10 +98,10 @@ def get_image_url(storage_key):
         return f"https://storage.googleapis.com/{bucket.name}/{storage_key}"
 
 
-def save_image(file, prefix):
+def _save_uploaded_file(file, prefix, allowed_extensions):
     if not file or file.filename == "":
         return None
-    if not allowed_image(file.filename):
+    if not ("." in file.filename and file.filename.rsplit(".", 1)[1].lower() in allowed_extensions):
         return None
 
     ext = _extension(file.filename)
@@ -102,6 +122,14 @@ def save_image(file, prefix):
         file.save(full_path)
 
     return storage_key
+
+
+def save_image(file, prefix):
+    return _save_uploaded_file(file, prefix, IMAGE_EXTENSIONS)
+
+
+def save_gallery_file(file, prefix):
+    return _save_uploaded_file(file, prefix, GALLERY_EXTENSIONS)
 
 
 def delete_image(storage_key):

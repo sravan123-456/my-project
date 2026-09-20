@@ -10,7 +10,7 @@ from wtforms import (
     SubmitField,
     TextAreaField,
 )
-from wtforms.validators import DataRequired, EqualTo, Length, NumberRange, Optional
+from wtforms.validators import DataRequired, EqualTo, Length, NumberRange, Optional, ValidationError
 
 
 class LoginForm(FlaskForm):
@@ -241,11 +241,19 @@ class GalleryUploadForm(FlaskForm):
     festival_year = SelectField("Festival Year", coerce=int, validators=[DataRequired()])
     title = StringField("Title (optional)", validators=[Optional(), Length(max=200)])
     caption = TextAreaField("Caption (optional)", validators=[Optional(), Length(max=500)])
-    photo = FileField(
-        "Photo",
-        validators=[
-            DataRequired(message="Please choose a photo to upload."),
-            FileAllowed(["jpg", "jpeg", "png", "gif", "webp"], "Images only (JPG, PNG, GIF, WEBP)."),
-        ],
-    )
+    media_files = FileField("Photos or Videos")
     submit = SubmitField("Upload to Gallery")
+
+    def validate_media_files(self, field):
+        from flask import request
+
+        from app.storage import allowed_gallery_file
+
+        files = [upload for upload in request.files.getlist(field.name) if upload and upload.filename]
+        if not files:
+            raise ValidationError("Please choose at least one file to upload.")
+        for upload in files:
+            if not allowed_gallery_file(upload.filename):
+                raise ValidationError(
+                    "Invalid file. Allowed: JPG, PNG, GIF, WEBP, MP4, WEBM, MOV."
+                )

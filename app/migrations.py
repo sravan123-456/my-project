@@ -193,6 +193,17 @@ def migrate_gallery_and_profiles():
     if "gallery_images" not in tables:
         db.create_all()
 
+    if "gallery_images" in tables:
+        columns = {column["name"] for column in inspector.get_columns("gallery_images")}
+        if "media_type" not in columns:
+            with db.engine.begin() as conn:
+                conn.execute(
+                    text(
+                        "ALTER TABLE gallery_images "
+                        "ADD COLUMN media_type VARCHAR(10) NOT NULL DEFAULT 'image'"
+                    )
+                )
+
 
 def migrate_pledges():
     inspector = inspect(db.engine)

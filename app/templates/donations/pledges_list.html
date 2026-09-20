@@ -171,8 +171,23 @@
                             <form method="POST" action="{{ url_for('pledges.cancel_pledge', pledge_id=p.id) }}" class="d-inline"
                                   onsubmit="return confirm('{{ t('pledges.cancel_confirm') }}');">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ t('pledges.cancel') }}">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary" title="{{ t('pledges.cancel') }}">
                                     <i class="bi bi-x-lg"></i>
+                                </button>
+                            </form>
+                            <form method="POST" action="{{ url_for('pledges.delete_pledge', pledge_id=p.id, status=status_filter) }}" class="d-inline"
+                                  onsubmit="return confirm('{{ t('pledges.delete_confirm') }}');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ t('common.delete') }}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                            {% elif p.status == 'cancelled' and user_can_edit_donations() %}
+                            <form method="POST" action="{{ url_for('pledges.delete_pledge', pledge_id=p.id, status=status_filter) }}" class="d-inline"
+                                  onsubmit="return confirm('{{ t('pledges.delete_confirm') }}');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ t('common.delete') }}">
+                                    <i class="bi bi-trash"></i>
                                 </button>
                             </form>
                             {% elif p.status == 'collected' and p.donation_id %}
@@ -230,7 +245,22 @@
                         <a href="{{ url_for('pledges.edit_pledge', pledge_id=p.id) }}" class="btn btn-sm btn-outline-festival">
                             <i class="bi bi-pencil"></i>
                         </a>
+                        <form method="POST" action="{{ url_for('pledges.delete_pledge', pledge_id=p.id, status=status_filter) }}" class="d-inline"
+                              onsubmit="return confirm('{{ t('pledges.delete_confirm') }}');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ t('common.delete') }}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
                     </div>
+                    {% elif user_can_edit_donations() and p.status == 'cancelled' %}
+                    <form method="POST" action="{{ url_for('pledges.delete_pledge', pledge_id=p.id, status=status_filter) }}" class="d-inline"
+                          onsubmit="return confirm('{{ t('pledges.delete_confirm') }}');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-trash"></i> {{ t('common.delete') }}
+                        </button>
+                    </form>
                     {% endif %}
                 </div>
             </div>
