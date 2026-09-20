@@ -21,13 +21,50 @@
             <a class="navbar-brand fw-bold" href="{{ url_for('main.index') }}">
                 <i class="bi bi-flower1"></i> {{ nav_title }}
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+            {% if current_user.is_authenticated %}
+            <div class="d-flex d-lg-none align-items-center gap-1 ms-auto mobile-nav-utils">
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-light mobile-lang-btn dropdown-toggle" type="button"
+                            data-bs-toggle="dropdown" aria-expanded="false" aria-label="{{ t('nav.language') }}">
+                        <i class="bi bi-globe"></i> {{ current_lang|upper }}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        {% for code, label in languages.items() %}
+                        <li>
+                            <a class="dropdown-item {% if code == current_lang %}active{% endif %}"
+                               href="{{ url_for('main.set_language_route', lang=code) }}">{{ label }}</a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% from "partials/user_avatar.html" import user_avatar %}
+                <div class="dropdown profile-menu">
+                    {{ user_avatar(current_user, size='sm', dropdown_toggle=True) }}
+                    <ul class="dropdown-menu dropdown-menu-end profile-dropdown shadow">
+                        <li class="dropdown-header profile-dropdown-header">
+                            <div class="d-flex align-items-center gap-2">
+                                {{ user_avatar(current_user, size='md') }}
+                                <div>
+                                    <div class="fw-semibold">{{ current_user.full_name }}</div>
+                                    <small class="text-muted">@{{ current_user.username }}</small>
+                                </div>
+                            </div>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{{ url_for('profile.view_profile') }}"><i class="bi bi-person"></i> {{ t('nav.my_profile') }}</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> {{ t('nav.logout') }}</a></li>
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+            <button class="navbar-toggler{% if current_user.is_authenticated %} d-none{% endif %}" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#navbarNav"
                     aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 {% if current_user.is_authenticated %}
-                <ul class="navbar-nav me-auto">
+                <ul class="navbar-nav me-auto d-none d-lg-flex">
                     <li class="nav-item">
                         <a class="nav-link{% if nav_active('main.dashboard') %} active{% endif %}"
                            href="{{ url_for('main.dashboard') }}"{% if nav_active('main.dashboard') %} aria-current="page"{% endif %}>
@@ -53,7 +90,7 @@
                         </a>
                     </li>
                 </ul>
-                <ul class="navbar-nav ms-lg-auto align-items-lg-center">
+                <ul class="navbar-nav ms-lg-auto align-items-lg-center d-none d-lg-flex">
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
                            aria-expanded="false" aria-label="{{ t('nav.language') }}">
@@ -179,7 +216,7 @@
         </div>
     </nav>
 
-    <main id="main-content" class="container py-4" tabindex="-1">
+    <main id="main-content" class="container py-4{% if current_user.is_authenticated %} has-mobile-bottom-nav{% endif %}" tabindex="-1">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
             <script type="application/json" id="flash-messages">{{ messages|tojson }}</script>
@@ -201,7 +238,11 @@
 
     {% include "partials/image_crop_modal.html" %}
 
-    <footer class="festival-footer text-center py-3 mt-auto no-print">
+    {% if current_user.is_authenticated %}
+    {% include "partials/mobile_bottom_nav.html" %}
+    {% endif %}
+
+    <footer class="festival-footer text-center py-3 mt-auto no-print{% if current_user.is_authenticated %} has-mobile-bottom-nav{% endif %}">
         <div class="container">
             <small>{{ nav_title }} &mdash; {{ t('footer.tagline') }}</small>
             <br>

@@ -677,6 +677,8 @@ body.lightbox-open {
     }
 
     .no-print,
+    .mobile-bottom-nav,
+    .mobile-more-menu,
     .festival-nav,
     .festival-footer,
     .toast-container,
@@ -838,16 +840,254 @@ body.lightbox-open {
 @media (max-width: 768px) {
     .dashboard-festival-banner-img,
     .dashboard-festival-banner-default {
-        min-height: 180px;
-        height: 180px;
+        min-height: 160px;
+        height: 160px;
     }
 
     .dashboard-festival-banner-overlay {
-        padding: 1rem;
+        padding: 0.85rem 1rem 0.5rem;
     }
 
     .dashboard-festival-banner-ganesha {
         width: 100px;
         right: 0.5rem;
     }
+
+    main.container.has-mobile-bottom-nav {
+        padding-bottom: 5.5rem !important;
+    }
+
+    .festival-footer.has-mobile-bottom-nav {
+        padding-bottom: 4.5rem;
+    }
+}
+
+/* Mobile bottom navigation */
+.mobile-bottom-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1030;
+    display: flex;
+    align-items: stretch;
+    justify-content: space-around;
+    background: #fff;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+    padding: 0.35rem 0 calc(0.35rem + env(safe-area-inset-bottom));
+}
+
+.mobile-bottom-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15rem;
+    padding: 0.4rem 0.25rem;
+    border: none;
+    background: transparent;
+    color: #6c757d;
+    text-decoration: none;
+    font-size: 0.68rem;
+    font-weight: 600;
+    line-height: 1.1;
+    min-width: 0;
+}
+
+.mobile-bottom-nav-item i {
+    font-size: 1.25rem;
+}
+
+.mobile-bottom-nav-item.active {
+    color: var(--festival-maroon);
+}
+
+.mobile-bottom-nav-more {
+    cursor: pointer;
+}
+
+.mobile-more-menu {
+    max-height: 70vh;
+    border-radius: 1rem 1rem 0 0;
+}
+
+.mobile-lang-btn {
+    border-color: rgba(255, 255, 255, 0.45) !important;
+    color: #fff !important;
+    font-size: 0.75rem;
+    padding: 0.2rem 0.45rem;
+}
+
+/* Mobile dashboard header */
+.mobile-dashboard-header {
+    padding: 0.25rem 0;
+}
+
+.mobile-dashboard-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--festival-maroon);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mobile-dashboard-festival {
+    font-size: 0.8rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Balance strip on festival banner */
+.dashboard-banner-balance {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.85rem 1.1rem;
+    background: linear-gradient(90deg, var(--festival-maroon), var(--festival-saffron-dark));
+    color: #fff;
+}
+
+.dashboard-banner-balance-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    opacity: 0.92;
+}
+
+.dashboard-banner-balance-amount {
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+@media (min-width: 992px) {
+    .dashboard-banner-balance {
+        border-radius: 0 0 1rem 1rem;
+    }
+}
+
+/* Mobile stat grid (2x2) */
+.mobile-stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.65rem;
+}
+
+.mobile-stat-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    padding: 0.85rem;
+    border-radius: 0.85rem;
+    text-decoration: none;
+    color: inherit;
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    min-height: 88px;
+}
+
+.mobile-stat-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.55rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1rem;
+    color: #fff;
+}
+
+.mobile-stat-funds .mobile-stat-icon { background: #2e7d32; }
+.mobile-stat-expenses .mobile-stat-icon { background: #c2185b; }
+.mobile-stat-gallery .mobile-stat-icon { background: #f57c00; }
+.mobile-stat-activity .mobile-stat-icon { background: #1565c0; }
+
+.mobile-stat-body {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.mobile-stat-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #6c757d;
+    line-height: 1.2;
+}
+
+.mobile-stat-value {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #212529;
+    line-height: 1.2;
+    margin-top: 0.15rem;
+}
+
+.mobile-stat-sub {
+    font-size: 0.7rem;
+    color: #868e96;
+    margin-top: 0.1rem;
+    line-height: 1.2;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Mobile action list rows */
+.mobile-action-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.mobile-action-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.9rem 1rem;
+    border-radius: 0.85rem;
+    text-decoration: none;
+    color: #212529;
+    font-weight: 600;
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.mobile-action-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.55rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.mobile-action-reports .mobile-action-icon { background: #f3e5f5; color: #7b1fa2; }
+.mobile-action-gallery .mobile-action-icon { background: #e8f5e9; color: #2e7d32; }
+.mobile-action-activity .mobile-action-icon { background: #e3f2fd; color: #1565c0; }
+.mobile-action-donate .mobile-action-icon { background: #e8f5e9; color: #2e7d32; }
+.mobile-action-expense .mobile-action-icon { background: #fce4ec; color: #c2185b; }
+
+.mobile-action-text {
+    flex: 1;
+    font-size: 0.92rem;
+}
+
+.mobile-action-chevron {
+    color: #adb5bd;
+    font-size: 0.9rem;
 }

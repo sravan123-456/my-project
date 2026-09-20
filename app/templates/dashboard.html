@@ -11,7 +11,19 @@
 </div>
 {% endif %}
 
-<div class="dashboard-festival-banner card border-0 shadow-sm mb-4 overflow-hidden">
+<div class="mobile-dashboard-header d-lg-none mb-3">
+    <div class="d-flex align-items-center gap-3">
+        <a href="{{ url_for('profile.view_profile') }}" class="text-decoration-none">
+            {{ user_avatar(current_user, size='md') }}
+        </a>
+        <div class="flex-grow-1 min-w-0">
+            <h2 class="mobile-dashboard-name mb-0">{{ current_user.full_name }}</h2>
+            <p class="mobile-dashboard-festival mb-0 text-muted">{{ festival_name }}{% if festival_year %} · {{ festival_year }}{% endif %}</p>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-festival-banner card border-0 shadow-sm mb-3 mb-lg-4 overflow-hidden">
     {% set banner_src = committee_banner_url() %}
     {% if banner_src %}
     <a href="#" class="dashboard-festival-banner-link" data-lightbox
@@ -36,13 +48,82 @@
                 {% if festival_year %}
                 <span class="badge dashboard-festival-year-badge">{{ t('nav.festival_year') }} {{ festival_year }}</span>
                 {% endif %}
-                <span class="badge bg-light text-dark border">{{ today.strftime('%d %B %Y') }}</span>
+                <span class="badge bg-light text-dark border d-none d-lg-inline">{{ today.strftime('%d %B %Y') }}</span>
             </div>
         </div>
     </div>
+    <div class="dashboard-banner-balance">
+        <span class="dashboard-banner-balance-label">{{ t('dashboard.current_balance') }}</span>
+        <span class="dashboard-banner-balance-amount">₹{{ "{:,.2f}".format(balance) }}</span>
+    </div>
 </div>
 
-<div class="dashboard-welcome card border-0 shadow-sm mb-4">
+<div class="mobile-stat-grid d-lg-none mb-3">
+    <a href="{{ url_for('donations.list_donations') }}" class="mobile-stat-card mobile-stat-funds">
+        <div class="mobile-stat-icon"><i class="bi bi-heart-fill"></i></div>
+        <div class="mobile-stat-body">
+            <span class="mobile-stat-label">{{ t('dashboard.total_donations') }}</span>
+            <span class="mobile-stat-value">₹{{ "{:,.0f}".format(total_donations) }}</span>
+            <span class="mobile-stat-sub">{{ donation_count }} {{ t('dashboard.entries') }}</span>
+        </div>
+    </a>
+    <a href="{{ url_for('expenses.list_expenses') }}" class="mobile-stat-card mobile-stat-expenses">
+        <div class="mobile-stat-icon"><i class="bi bi-receipt-cutoff"></i></div>
+        <div class="mobile-stat-body">
+            <span class="mobile-stat-label">{{ t('dashboard.total_expenses') }}</span>
+            <span class="mobile-stat-value">₹{{ "{:,.0f}".format(total_expenses) }}</span>
+            <span class="mobile-stat-sub">{{ expense_count }} {{ t('dashboard.entries') }}</span>
+        </div>
+    </a>
+    <a href="{{ url_for('gallery.index') }}" class="mobile-stat-card mobile-stat-gallery">
+        <div class="mobile-stat-icon"><i class="bi bi-images"></i></div>
+        <div class="mobile-stat-body">
+            <span class="mobile-stat-label">{{ t('nav.gallery') }}</span>
+            <span class="mobile-stat-sub">{{ t('dashboard.gallery_hint') }}</span>
+        </div>
+    </a>
+    <a href="{{ url_for('activity.activity_log') }}" class="mobile-stat-card mobile-stat-activity">
+        <div class="mobile-stat-icon"><i class="bi bi-clock-history"></i></div>
+        <div class="mobile-stat-body">
+            <span class="mobile-stat-label">{{ t('nav.activity') }}</span>
+            <span class="mobile-stat-sub">{{ t('dashboard.activity_hint') }}</span>
+        </div>
+    </a>
+</div>
+
+<div class="mobile-action-list d-lg-none mb-4">
+    <a href="{{ url_for('reports.reports') }}" class="mobile-action-item mobile-action-reports">
+        <span class="mobile-action-icon"><i class="bi bi-file-earmark-bar-graph"></i></span>
+        <span class="mobile-action-text">{{ t('dashboard.generate_report') }}</span>
+        <i class="bi bi-chevron-right mobile-action-chevron"></i>
+    </a>
+    <a href="{{ url_for('gallery.index') }}" class="mobile-action-item mobile-action-gallery">
+        <span class="mobile-action-icon"><i class="bi bi-images"></i></span>
+        <span class="mobile-action-text">{{ t('nav.gallery') }}</span>
+        <i class="bi bi-chevron-right mobile-action-chevron"></i>
+    </a>
+    <a href="{{ url_for('activity.activity_log') }}" class="mobile-action-item mobile-action-activity">
+        <span class="mobile-action-icon"><i class="bi bi-clock-history"></i></span>
+        <span class="mobile-action-text">{{ t('nav.activity') }}</span>
+        <i class="bi bi-chevron-right mobile-action-chevron"></i>
+    </a>
+    {% if user_can_edit_donations() %}
+    <a href="{{ url_for('donations.add_donation') }}" class="mobile-action-item mobile-action-donate">
+        <span class="mobile-action-icon"><i class="bi bi-plus-circle"></i></span>
+        <span class="mobile-action-text">{{ t('dashboard.add_donation') }}</span>
+        <i class="bi bi-chevron-right mobile-action-chevron"></i>
+    </a>
+    {% endif %}
+    {% if user_can_edit_expenses() %}
+    <a href="{{ url_for('expenses.add_expense') }}" class="mobile-action-item mobile-action-expense">
+        <span class="mobile-action-icon"><i class="bi bi-plus-circle"></i></span>
+        <span class="mobile-action-text">{{ t('dashboard.add_expense') }}</span>
+        <i class="bi bi-chevron-right mobile-action-chevron"></i>
+    </a>
+    {% endif %}
+</div>
+
+<div class="dashboard-welcome card border-0 shadow-sm mb-4 d-none d-lg-block">
     <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
         <div class="d-flex align-items-center gap-3">
             <a href="{{ url_for('profile.view_profile') }}" class="text-decoration-none" title="{{ t('nav.my_profile') }}">
@@ -81,7 +162,7 @@
 </div>
 {% endif %}
 
-<div class="row g-3 mb-4">
+<div class="row g-3 mb-4 d-none d-lg-flex">
     <div class="col-md-4">
         <a href="{{ url_for('gallery.index') }}" class="quick-link-card card border-0 shadow-sm h-100 text-decoration-none">
             <div class="card-body">
@@ -115,7 +196,7 @@
     <h5 class="fw-semibold mb-0"><i class="bi bi-cash-stack"></i> {{ t('dashboard.finance_overview') }}</h5>
 </div>
 
-<div class="balance-card card border-0 shadow-lg mb-4">
+<div class="balance-card card border-0 shadow-lg mb-4 d-none d-lg-block">
     <div class="balance-card-pattern"></div>
     <div class="balance-card-glow"></div>
     <div class="balance-decor balance-decor-left">
@@ -171,7 +252,7 @@
 </div>
 {% endif %}
 
-<div class="row g-3 mb-4">
+<div class="row g-3 mb-4 d-none d-lg-flex">
     <div class="col-md-4">
         <div class="stat-card card border-0 shadow-sm h-100">
             <div class="card-body">

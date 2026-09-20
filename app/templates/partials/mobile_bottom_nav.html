@@ -1,0 +1,75 @@
+<nav class="mobile-bottom-nav no-print d-lg-none" aria-label="{{ t('nav.mobile_nav') }}">
+    <a href="{{ url_for('main.dashboard') }}"
+       class="mobile-bottom-nav-item{% if nav_active('main.dashboard') %} active{% endif %}"
+       {% if nav_active('main.dashboard') %}aria-current="page"{% endif %}>
+        <i class="bi bi-house-door{% if nav_active('main.dashboard') %}-fill{% endif %}"></i>
+        <span>{{ t('nav.dashboard') }}</span>
+    </a>
+    <a href="{{ url_for('donations.list_donations') }}"
+       class="mobile-bottom-nav-item{% if nav_active('donations.', 'pledges.') %} active{% endif %}"
+       {% if nav_active('donations.', 'pledges.') %}aria-current="page"{% endif %}>
+        <i class="bi bi-heart{% if nav_active('donations.', 'pledges.') %}-fill{% endif %}"></i>
+        <span>{{ t('nav.donations') }}</span>
+    </a>
+    <a href="{{ url_for('expenses.list_expenses') }}"
+       class="mobile-bottom-nav-item{% if nav_active('expenses.') %} active{% endif %}"
+       {% if nav_active('expenses.') %}aria-current="page"{% endif %}>
+        <i class="bi bi-receipt{% if nav_active('expenses.') %}-cutoff{% endif %}"></i>
+        <span>{{ t('nav.expenses') }}</span>
+    </a>
+    <a href="{{ url_for('reports.reports') }}"
+       class="mobile-bottom-nav-item{% if nav_active('reports.') %} active{% endif %}"
+       {% if nav_active('reports.') %}aria-current="page"{% endif %}>
+        <i class="bi bi-bar-chart{% if nav_active('reports.') %}-fill{% endif %}"></i>
+        <span>{{ t('nav.reports') }}</span>
+    </a>
+    <button type="button" class="mobile-bottom-nav-item mobile-bottom-nav-more"
+            data-bs-toggle="offcanvas" data-bs-target="#mobileMoreMenu"
+            aria-controls="mobileMoreMenu" aria-label="{{ t('nav.more') }}">
+        <i class="bi bi-three-dots"></i>
+        <span>{{ t('nav.more') }}</span>
+    </button>
+</nav>
+
+<div class="offcanvas offcanvas-bottom mobile-more-menu no-print d-lg-none" tabindex="-1"
+     id="mobileMoreMenu" aria-labelledby="mobileMoreMenuLabel">
+    <div class="offcanvas-header border-bottom">
+        <h5 class="offcanvas-title" id="mobileMoreMenuLabel">{{ t('nav.more') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="{{ t('lightbox.close') }}"></button>
+    </div>
+    <div class="offcanvas-body p-0">
+        <div class="list-group list-group-flush">
+            <a href="{{ url_for('gallery.index') }}" class="list-group-item list-group-item-action py-3">
+                <i class="bi bi-images text-warning me-2"></i> {{ t('nav.gallery') }}
+            </a>
+            <a href="{{ url_for('activity.activity_log') }}" class="list-group-item list-group-item-action py-3">
+                <i class="bi bi-clock-history text-secondary me-2"></i> {{ t('nav.activity') }}
+            </a>
+            <a href="{{ url_for('profile.view_profile') }}" class="list-group-item list-group-item-action py-3">
+                <i class="bi bi-person text-info me-2"></i> {{ t('nav.my_profile') }}
+            </a>
+            {% if user_is_admin() %}
+            <a href="{{ url_for('admin.users') }}" class="list-group-item list-group-item-action py-3">
+                <i class="bi bi-shield-lock text-danger me-2"></i> {{ t('nav.admin') }}
+                {% if pending_user_count > 0 %}
+                <span class="badge bg-warning text-dark ms-1">{{ pending_user_count }}</span>
+                {% endif %}
+            </a>
+            {% endif %}
+            {% if user_is_site_admin() %}
+            <a href="{{ url_for('site_admin.dashboard') }}" class="list-group-item list-group-item-action py-3">
+                <i class="bi bi-globe text-primary me-2"></i> {{ t('nav.site_admin') }}
+            </a>
+            {% endif %}
+            <a href="{{ url_for('main.help_page') }}" class="list-group-item list-group-item-action py-3">
+                <i class="bi bi-question-circle text-success me-2"></i> {{ t('nav.help') }}
+            </a>
+            <a href="{{ url_for('auth.change_password') }}" class="list-group-item list-group-item-action py-3">
+                <i class="bi bi-key text-muted me-2"></i> {{ t('nav.password') }}
+            </a>
+            <a href="{{ url_for('auth.logout') }}" class="list-group-item list-group-item-action py-3 text-danger">
+                <i class="bi bi-box-arrow-right me-2"></i> {{ t('nav.logout') }}
+            </a>
+        </div>
+    </div>
+</div>
