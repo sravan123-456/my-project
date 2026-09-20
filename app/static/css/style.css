@@ -726,7 +726,7 @@ body.lightbox-open {
 
 @media (max-width: 991.98px) {
     .dashboard-festival-banner-media {
-        border-radius: 1rem;
+        border-radius: 1rem 1rem 0 0;
     }
 }
 
@@ -851,17 +851,58 @@ body.lightbox-open {
 @media (max-width: 768px) {
     .dashboard-festival-banner-img,
     .dashboard-festival-banner-default {
-        min-height: 120px;
-        height: 120px;
+        min-height: 148px;
+        height: 148px;
     }
 
     .dashboard-festival-banner-overlay {
-        padding: 0.85rem 1rem 0.5rem;
+        align-items: flex-end;
+        padding: 0.75rem 0.9rem;
+        background: linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.52) 100%);
+    }
+
+    .dashboard-festival-banner-text {
+        max-width: calc(100% - 4.5rem);
+    }
+
+    .dashboard-festival-banner-title {
+        font-size: 1.05rem;
+        line-height: 1.2;
+        margin-bottom: 0.15rem !important;
+    }
+
+    .dashboard-festival-banner-location {
+        font-size: 0.78rem;
+        margin-bottom: 0.35rem !important;
+        line-height: 1.25;
+    }
+
+    .dashboard-festival-banner-badges {
+        gap: 0.35rem !important;
+    }
+
+    .dashboard-festival-year-badge {
+        font-size: 0.68rem;
+        padding: 0.25rem 0.45rem;
     }
 
     .dashboard-festival-banner-ganesha {
-        width: 100px;
-        right: 0.5rem;
+        width: 76px;
+        right: 0.35rem;
+        bottom: 0;
+        opacity: 0.2;
+    }
+
+    .dashboard-banner-balance {
+        padding: 0.8rem 0.9rem;
+    }
+
+    .dashboard-banner-balance-label {
+        font-size: 0.68rem;
+    }
+
+    .dashboard-banner-balance-amount {
+        font-size: 1.25rem;
     }
 
     main.container.has-mobile-bottom-nav {
@@ -870,6 +911,10 @@ body.lightbox-open {
 
     .festival-footer.has-mobile-bottom-nav {
         padding-bottom: 4.5rem;
+    }
+
+    .mobile-dashboard-header {
+        margin-bottom: 0.75rem !important;
     }
 }
 

@@ -18,7 +18,9 @@
         </a>
         <div class="flex-grow-1 min-w-0">
             <h2 class="mobile-dashboard-name mb-0">{{ current_user.full_name }}</h2>
-            <p class="mobile-dashboard-festival mb-0 text-muted">{{ festival_name }}{% if festival_year %} · {{ festival_year }}{% endif %}</p>
+            {% if organization_location %}
+            <p class="mobile-dashboard-festival mb-0 text-muted">{{ organization_location }}</p>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -38,18 +40,18 @@
             <img src="{{ url_for('static', filename='images/ganesha-decor.svg') }}" alt="" class="dashboard-festival-banner-ganesha">
         </div>
         {% endif %}
-        <div class="dashboard-festival-banner-overlay d-none d-lg-flex">
+        <div class="dashboard-festival-banner-overlay">
             <div class="dashboard-festival-banner-text">
-                <p class="dashboard-festival-banner-eyebrow mb-1">🪔 {{ t('dashboard.festival_banner_eyebrow') }}</p>
+                <p class="dashboard-festival-banner-eyebrow mb-1 d-none d-lg-block">🪔 {{ t('dashboard.festival_banner_eyebrow') }}</p>
                 <h1 class="dashboard-festival-banner-title mb-1">{{ festival_name }}</h1>
                 {% if organization_location %}
-                <p class="dashboard-festival-banner-location mb-2">{{ organization_location }}</p>
+                <p class="dashboard-festival-banner-location mb-lg-2">{{ organization_location }}</p>
                 {% endif %}
-                <div class="d-flex flex-wrap gap-2 align-items-center">
+                <div class="dashboard-festival-banner-badges d-flex flex-wrap gap-2 align-items-center">
                     {% if festival_year %}
                     <span class="badge dashboard-festival-year-badge">{{ t('nav.festival_year') }} {{ festival_year }}</span>
                     {% endif %}
-                    <span class="badge bg-light text-dark border">{{ today.strftime('%d %B %Y') }}</span>
+                    <span class="badge bg-light text-dark border d-none d-lg-inline">{{ today.strftime('%d %B %Y') }}</span>
                 </div>
             </div>
         </div>
