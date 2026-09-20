@@ -1,17 +1,17 @@
-<ul class="nav nav-tabs mb-4 donation-view-tabs">
-    <li class="nav-item">
-        <a class="nav-link{% if active_tab == 'received' %} active{% endif %}"
-           href="{{ url_for('donations.list_donations') }}">
-            <i class="bi bi-check-circle"></i> {{ t('donations.tab_received') }}
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link{% if active_tab == 'pledges' %} active{% endif %}"
-           href="{{ url_for('pledges.list_pledges') }}">
-            <i class="bi bi-hourglass-split"></i> {{ t('donations.tab_pledges') }}
-            {% if pending_pledge_count and pending_pledge_count > 0 %}
-            <span class="badge bg-warning text-dark ms-1">{{ pending_pledge_count }}</span>
-            {% endif %}
-        </a>
-    </li>
-</ul>
+<div class="donation-main-tabs mb-4" role="tablist" aria-label="{{ t('donations.title') }}">
+    <a class="donation-main-tab{% if active_tab == 'received' %} active{% endif %}"
+       href="{{ url_for('donations.list_donations') }}"
+       role="tab"{% if active_tab == 'received' %} aria-selected="true"{% endif %}>
+        <i class="bi bi-check-circle-fill"></i>
+        <span>{{ t('donations.tab_received') }}</span>
+    </a>
+    <a class="donation-main-tab{% if active_tab == 'pledges' %} active{% endif %}"
+       href="{{ url_for('pledges.list_pledges') }}"
+       role="tab"{% if active_tab == 'pledges' %} aria-selected="true"{% endif %}>
+        <i class="bi bi-hourglass-split"></i>
+        <span>{{ t('donations.tab_pledges') }}</span>
+        {% if pending_pledge_count and pending_pledge_count > 0 %}
+        <span class="badge rounded-pill bg-warning text-dark">{{ pending_pledge_count }}</span>
+        {% endif %}
+    </a>
+</div>

@@ -71,44 +71,44 @@
     </div>
 </form>
 
-<ul class="nav nav-pills mb-3">
-    <li class="nav-item">
-        <a class="nav-link {% if status_filter == 'pending' %}active{% endif %}"
+<ul class="donation-filter-chips mb-3">
+    <li>
+        <a class="donation-filter-chip donation-filter-chip-pending{% if status_filter == 'pending' %} active{% endif %}"
            href="{{ url_for('pledges.list_pledges', q=search_q or none, group=group_filter if group_filter != 'all' else none) }}">
-            {{ t('pledges.status_pending') }}
+            <i class="bi bi-hourglass-split"></i> {{ t('pledges.status_pending') }}
         </a>
     </li>
-    <li class="nav-item">
-        <a class="nav-link {% if status_filter == 'collected' %}active{% endif %}"
+    <li>
+        <a class="donation-filter-chip donation-filter-chip-success{% if status_filter == 'collected' %} active{% endif %}"
            href="{{ url_for('pledges.list_pledges', status='collected', q=search_q or none, group=group_filter if group_filter != 'all' else none) }}">
-            {{ t('pledges.status_collected') }}
+            <i class="bi bi-check-circle-fill"></i> {{ t('pledges.status_collected') }}
         </a>
     </li>
-    <li class="nav-item">
-        <a class="nav-link {% if status_filter == 'cancelled' %}active{% endif %}"
+    <li>
+        <a class="donation-filter-chip donation-filter-chip-muted{% if status_filter == 'cancelled' %} active{% endif %}"
            href="{{ url_for('pledges.list_pledges', status='cancelled', q=search_q or none, group=group_filter if group_filter != 'all' else none) }}">
-            {{ t('pledges.status_cancelled') }}
+            <i class="bi bi-x-circle"></i> {{ t('pledges.status_cancelled') }}
         </a>
     </li>
 </ul>
 
-<ul class="nav nav-pills mb-3">
-    <li class="nav-item">
-        <a class="nav-link {% if group_filter == 'all' %}active{% endif %}"
+<ul class="donation-filter-chips mb-3">
+    <li>
+        <a class="donation-filter-chip{% if group_filter == 'all' %} active{% endif %}"
            href="{{ url_for('pledges.list_pledges', status=status_filter if status_filter != 'pending' else none, q=search_q or none) }}">
-            {{ t('donations.filter_all') }}
+            <i class="bi bi-grid-fill"></i> {{ t('donations.filter_all') }}
         </a>
     </li>
-    <li class="nav-item">
-        <a class="nav-link {% if group_filter == 'committee_member' %}active{% endif %}"
+    <li>
+        <a class="donation-filter-chip donation-filter-chip-committee{% if group_filter == 'committee_member' %} active{% endif %}"
            href="{{ url_for('pledges.list_pledges', status=status_filter if status_filter != 'pending' else none, group='committee_member', q=search_q or none) }}">
-            {{ t('dashboard.committee_member') }}
+            <i class="bi bi-people-fill"></i> {{ t('dashboard.committee_member') }}
         </a>
     </li>
-    <li class="nav-item">
-        <a class="nav-link {% if group_filter == 'other' %}active{% endif %}"
+    <li>
+        <a class="donation-filter-chip donation-filter-chip-other{% if group_filter == 'other' %} active{% endif %}"
            href="{{ url_for('pledges.list_pledges', status=status_filter if status_filter != 'pending' else none, group='other', q=search_q or none) }}">
-            {{ t('dashboard.other') }}
+            <i class="bi bi-person-plus-fill"></i> {{ t('dashboard.other') }}
         </a>
     </li>
 </ul>

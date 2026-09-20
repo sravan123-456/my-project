@@ -57,18 +57,24 @@
     </div>
 </form>
 
-<ul class="nav nav-pills mb-3">
-    <li class="nav-item">
-        <a class="nav-link {% if group_filter == 'all' %}active{% endif %}"
-           href="{{ url_for('donations.list_donations', q=search_q or none) }}">{{ t('donations.filter_all') }}</a>
+<ul class="donation-filter-chips mb-3">
+    <li>
+        <a class="donation-filter-chip{% if group_filter == 'all' %} active{% endif %}"
+           href="{{ url_for('donations.list_donations', q=search_q or none) }}">
+            <i class="bi bi-grid-fill"></i> {{ t('donations.filter_all') }}
+        </a>
     </li>
-    <li class="nav-item">
-        <a class="nav-link {% if group_filter == 'committee_member' %}active{% endif %}"
-           href="{{ url_for('donations.list_donations', group='committee_member', q=search_q or none) }}">{{ t('dashboard.committee_member') }}</a>
+    <li>
+        <a class="donation-filter-chip donation-filter-chip-committee{% if group_filter == 'committee_member' %} active{% endif %}"
+           href="{{ url_for('donations.list_donations', group='committee_member', q=search_q or none) }}">
+            <i class="bi bi-people-fill"></i> {{ t('dashboard.committee_member') }}
+        </a>
     </li>
-    <li class="nav-item">
-        <a class="nav-link {% if group_filter == 'other' %}active{% endif %}"
-           href="{{ url_for('donations.list_donations', group='other', q=search_q or none) }}">{{ t('dashboard.other') }}</a>
+    <li>
+        <a class="donation-filter-chip donation-filter-chip-other{% if group_filter == 'other' %} active{% endif %}"
+           href="{{ url_for('donations.list_donations', group='other', q=search_q or none) }}">
+            <i class="bi bi-person-plus-fill"></i> {{ t('dashboard.other') }}
+        </a>
     </li>
 </ul>
 

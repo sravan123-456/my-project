@@ -132,6 +132,138 @@ body {
     padding: 0.25rem 0.5rem;
 }
 
+/* Donation page tabs and filter chips */
+.donation-main-tabs {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.35rem;
+    background: #fff;
+    border-radius: 1rem;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.donation-main-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-decoration: none;
+    color: #6c757d;
+    background: transparent;
+    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+    min-width: 0;
+}
+
+.donation-main-tab i {
+    font-size: 1.1rem;
+}
+
+.donation-main-tab.active {
+    color: #fff;
+    background: linear-gradient(135deg, #2e7d32, #1b5e20);
+    box-shadow: 0 3px 10px rgba(46, 125, 50, 0.35);
+}
+
+.donation-main-tab:not(.active):hover {
+    background: #f1f8e9;
+    color: #2e7d32;
+}
+
+.donation-filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1rem;
+}
+
+.donation-filter-chips > li {
+    margin: 0;
+}
+
+.donation-filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.95rem;
+    border-radius: 2rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1.5px solid rgba(136, 14, 79, 0.18);
+    background: #fff;
+    color: var(--festival-maroon);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.donation-filter-chip:hover {
+    background: #fff8e1;
+    border-color: rgba(136, 14, 79, 0.35);
+    color: var(--festival-maroon);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.donation-filter-chip.active {
+    color: #fff;
+    border-color: transparent;
+    background: linear-gradient(135deg, var(--festival-maroon), var(--festival-saffron-dark));
+    box-shadow: 0 2px 10px rgba(136, 14, 79, 0.3);
+}
+
+.donation-filter-chip-committee.active {
+    background: linear-gradient(135deg, #1565c0, #0d47a1);
+    box-shadow: 0 2px 10px rgba(21, 101, 192, 0.3);
+}
+
+.donation-filter-chip-other.active {
+    background: linear-gradient(135deg, #6c757d, #495057);
+    box-shadow: 0 2px 10px rgba(108, 117, 125, 0.3);
+}
+
+.donation-filter-chip-pending.active {
+    background: linear-gradient(135deg, #f57c00, #e65100);
+    box-shadow: 0 2px 10px rgba(245, 124, 0, 0.3);
+}
+
+.donation-filter-chip-success.active {
+    background: linear-gradient(135deg, #2e7d32, #1b5e20);
+    box-shadow: 0 2px 10px rgba(46, 125, 50, 0.3);
+}
+
+.donation-filter-chip-muted.active {
+    background: linear-gradient(135deg, #78909c, #546e7a);
+    box-shadow: 0 2px 10px rgba(120, 144, 156, 0.3);
+}
+
+@media (max-width: 576px) {
+    .donation-main-tab {
+        flex-direction: column;
+        font-size: 0.78rem;
+        padding: 0.6rem 0.5rem;
+        gap: 0.2rem;
+    }
+
+    .donation-main-tab span {
+        text-align: center;
+        line-height: 1.2;
+    }
+
+    .donation-filter-chip {
+        font-size: 0.78rem;
+        padding: 0.4rem 0.75rem;
+    }
+}
+
 .donation-mobile-card {
     border-radius: 12px;
     border-left: 4px solid #2e7d32;
