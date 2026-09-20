@@ -713,10 +713,21 @@ body.lightbox-open {
 
 /* Dashboard festival banner (per committee) */
 .dashboard-festival-banner {
-    position: relative;
-    min-height: 200px;
     border-radius: 1rem;
+    background: #fff;
+}
+
+.dashboard-festival-banner-media {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1rem 1rem 0 0;
     background: linear-gradient(135deg, var(--festival-maroon), var(--festival-saffron-dark));
+}
+
+@media (max-width: 991.98px) {
+    .dashboard-festival-banner-media {
+        border-radius: 1rem;
+    }
 }
 
 .dashboard-festival-banner-img {
@@ -840,8 +851,8 @@ body.lightbox-open {
 @media (max-width: 768px) {
     .dashboard-festival-banner-img,
     .dashboard-festival-banner-default {
-        min-height: 160px;
-        height: 160px;
+        min-height: 120px;
+        height: 120px;
     }
 
     .dashboard-festival-banner-overlay {
@@ -884,16 +895,26 @@ body.lightbox-open {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.15rem;
-    padding: 0.4rem 0.25rem;
+    gap: 0.1rem;
+    padding: 0.35rem 0.15rem;
     border: none;
     background: transparent;
     color: #6c757d;
     text-decoration: none;
-    font-size: 0.68rem;
+    font-size: 0.6rem;
     font-weight: 600;
-    line-height: 1.1;
+    line-height: 1.15;
     min-width: 0;
+    max-width: 20%;
+}
+
+.mobile-bottom-nav-item span {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
 }
 
 .mobile-bottom-nav-item i {
@@ -941,35 +962,35 @@ body.lightbox-open {
     text-overflow: ellipsis;
 }
 
-/* Balance strip on festival banner */
+/* Balance strip on festival banner (mobile only) */
 .dashboard-banner-balance {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
-    padding: 0.85rem 1.1rem;
+    gap: 0.75rem;
+    padding: 0.9rem 1rem;
     background: linear-gradient(90deg, var(--festival-maroon), var(--festival-saffron-dark));
     color: #fff;
+    border-radius: 0 0 1rem 1rem;
+    margin-top: -1px;
 }
 
 .dashboard-banner-balance-label {
-    font-size: 0.78rem;
+    flex: 1;
+    min-width: 0;
+    font-size: 0.72rem;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
-    opacity: 0.92;
+    letter-spacing: 0.03em;
+    line-height: 1.25;
 }
 
 .dashboard-banner-balance-amount {
-    font-size: 1.5rem;
+    flex-shrink: 0;
+    font-size: 1.35rem;
     font-weight: 800;
     line-height: 1;
-}
-
-@media (min-width: 992px) {
-    .dashboard-banner-balance {
-        border-radius: 0 0 1rem 1rem;
-    }
+    white-space: nowrap;
 }
 
 /* Mobile stat grid (2x2) */
@@ -982,15 +1003,19 @@ body.lightbox-open {
 .mobile-stat-card {
     display: flex;
     align-items: flex-start;
-    gap: 0.65rem;
-    padding: 0.85rem;
+    gap: 0.55rem;
+    padding: 0.75rem;
     border-radius: 0.85rem;
     text-decoration: none;
     color: inherit;
     background: #fff;
     border: 1px solid rgba(0, 0, 0, 0.06);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-    min-height: 88px;
+    min-height: 82px;
+}
+
+a.mobile-stat-card:active {
+    background: #fafafa;
 }
 
 .mobile-stat-icon {
@@ -1017,20 +1042,22 @@ body.lightbox-open {
 }
 
 .mobile-stat-label {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.02em;
     color: #6c757d;
-    line-height: 1.2;
+    line-height: 1.25;
+    word-break: break-word;
 }
 
 .mobile-stat-value {
-    font-size: 1.05rem;
+    font-size: 0.95rem;
     font-weight: 800;
     color: #212529;
     line-height: 1.2;
     margin-top: 0.15rem;
+    word-break: break-word;
 }
 
 .mobile-stat-sub {
@@ -1044,50 +1071,19 @@ body.lightbox-open {
     overflow: hidden;
 }
 
-/* Mobile action list rows */
-.mobile-action-list {
+.mobile-quick-actions {
     display: flex;
-    flex-direction: column;
-    gap: 0.55rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
 }
 
-.mobile-action-item {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.9rem 1rem;
-    border-radius: 0.85rem;
-    text-decoration: none;
-    color: #212529;
-    font-weight: 600;
-    background: #fff;
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+.mobile-finance-card .card-body {
+    padding: 0.85rem 1rem;
 }
 
-.mobile-action-icon {
-    width: 2.25rem;
-    height: 2.25rem;
-    border-radius: 0.55rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.1rem;
-    flex-shrink: 0;
-}
-
-.mobile-action-reports .mobile-action-icon { background: #f3e5f5; color: #7b1fa2; }
-.mobile-action-gallery .mobile-action-icon { background: #e8f5e9; color: #2e7d32; }
-.mobile-action-activity .mobile-action-icon { background: #e3f2fd; color: #1565c0; }
-.mobile-action-donate .mobile-action-icon { background: #e8f5e9; color: #2e7d32; }
-.mobile-action-expense .mobile-action-icon { background: #fce4ec; color: #c2185b; }
-
-.mobile-action-text {
-    flex: 1;
-    font-size: 0.92rem;
-}
-
-.mobile-action-chevron {
-    color: #adb5bd;
-    font-size: 0.9rem;
+@media (max-width: 991.98px) {
+    main.container.has-mobile-bottom-nav {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
 }
