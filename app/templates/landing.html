@@ -25,8 +25,10 @@
 
     <div class="landing-shell">
         <div class="landing-topbar">
-            <button type="button" id="landingBackBtn" class="btn btn-sm landing-back-btn d-none" aria-label="{{ t('landing.back') }}">
-                <i class="bi bi-arrow-left"></i> {{ t('landing.back') }}
+            <button type="button" id="landingBackBtn"
+                    class="btn btn-sm landing-back-btn{% if landing_view == 'choice' %} d-none{% endif %}"
+                    aria-label="{{ t('landing.back_home') }}">
+                <i class="bi bi-arrow-left"></i> {{ t('landing.back_home') }}
             </button>
             <div class="dropdown ms-auto">
                 <button class="btn btn-sm landing-lang-btn dropdown-toggle" type="button"
@@ -147,6 +149,11 @@
                     </div>
                     {{ start_form.start_submit(class="btn w-100 landing-btn-cta", value=t('landing.join.create')) }}
                 </form>
+                <p class="landing-switch text-center mt-3 mb-0">
+                    <button type="button" class="btn btn-link p-0 landing-switch-link" data-landing-go="choice">
+                        <i class="bi bi-house-door"></i> {{ t('landing.back_home') }}
+                    </button>
+                </p>
             </section>
 
             <!-- Step 2b: Existing Committee — create account (join) -->
@@ -209,10 +216,15 @@
                     and
                     <a href="{{ url_for('main.help_page') }}#privacy">{{ t('landing.join.privacy_link') }}</a>.
                 </p>
-                <p class="landing-switch text-center mb-0">
+                <p class="landing-switch text-center mb-2">
                     {{ t('landing.join.have_account') }}
                     <button type="button" class="btn btn-link p-0 landing-switch-link" data-landing-go="existing-login">
                         {{ t('landing.join.login_link') }}
+                    </button>
+                </p>
+                <p class="landing-switch text-center mb-0">
+                    <button type="button" class="btn btn-link p-0 landing-switch-link" data-landing-go="choice">
+                        <i class="bi bi-house-door"></i> {{ t('landing.back_home') }}
                     </button>
                 </p>
             </section>
@@ -251,10 +263,15 @@
                     {{ login_form.login_submit(class="btn w-100 landing-btn-cta", value=t('landing.join.login_link'), **{"data-loading-text": t('common.loading')}) }}
                 </form>
 
-                <p class="landing-switch text-center mt-4 mb-0">
+                <p class="landing-switch text-center mt-3 mb-2">
                     New to your committee?
                     <button type="button" class="btn btn-link p-0 landing-switch-link" data-landing-go="existing-join">
                         {{ t('landing.join.create') }}
+                    </button>
+                </p>
+                <p class="landing-switch text-center mb-0">
+                    <button type="button" class="btn btn-link p-0 landing-switch-link" data-landing-go="choice">
+                        <i class="bi bi-house-door"></i> {{ t('landing.back_home') }}
                     </button>
                 </p>
             </section>

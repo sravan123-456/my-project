@@ -295,16 +295,20 @@ def _handle_landing_post(login_form, join_form, start_form):
                     "After approval, log in using your committee code.",
                     "success",
                 )
-                login_form.committee_code.data = slug
-                active_tab = "existing"
+                return (
+                    redirect(
+                        url_for("auth.login", org=slug, _anchor="login")
+                    ),
+                    "existing",
+                )
 
     return None, active_tab
 
 
 def _landing_view(login_form, join_form, start_form, active_tab):
     if request.method == "POST":
-        if start_form.start_submit.data or (
-            active_tab == "new" and start_form.errors
+        if start_form.errors or (
+            start_form.start_submit.data and active_tab == "new"
         ):
             return "new"
         if join_form.join_submit.data or join_form.errors:

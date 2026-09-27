@@ -40,11 +40,22 @@
       var current = document.body.getAttribute("data-landing-view");
       if (current === "existing-login") {
         showStep("existing-join");
-      } else {
-        showStep("choice");
+        return;
+      }
+      showStep("choice");
+      if (window.history.replaceState) {
+        window.history.replaceState(null, "", window.location.pathname);
       }
     });
   }
+
+  document.querySelectorAll('[data-landing-go="choice"]').forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      if (window.history.replaceState) {
+        window.history.replaceState(null, "", window.location.pathname);
+      }
+    });
+  });
 
   var joinForm = document.getElementById("joinAccountForm");
   if (joinForm) {
