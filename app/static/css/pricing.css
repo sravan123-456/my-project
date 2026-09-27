@@ -1,0 +1,288 @@
+.pricing-page {
+    min-height: 100vh;
+    background: #faf9f7;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: #1a1a1a;
+}
+
+.pricing-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    background: #fff;
+    border-bottom: 1px solid #eee;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.pricing-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    color: #1a1a1a;
+    font-weight: 800;
+    font-size: 1rem;
+}
+
+.pricing-brand-icon {
+    font-size: 1.35rem;
+    line-height: 1;
+}
+
+.pricing-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.pricing-lang-btn {
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.pricing-get-started {
+    background: #a52a2a;
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 0.45rem 0.9rem;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.pricing-get-started:hover {
+    background: #8b2222;
+    color: #fff;
+}
+
+.pricing-main {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 3rem;
+}
+
+.pricing-hero-title {
+    font-size: 1.85rem;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 0.75rem;
+    text-align: center;
+}
+
+.pricing-hero-subtitle {
+    color: #555;
+    text-align: center;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
+}
+
+.pricing-hero-accent {
+    color: #a52a2a;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.pricing-card {
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 1.1rem;
+    padding: 1.25rem 1.25rem 1.1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+    position: relative;
+}
+
+.pricing-card.popular {
+    border-color: #a52a2a;
+    box-shadow: 0 4px 20px rgba(165, 42, 42, 0.12);
+}
+
+.pricing-card-badge {
+    position: absolute;
+    top: -0.55rem;
+    right: 1rem;
+    background: #a52a2a;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+}
+
+.pricing-card-label {
+    color: #a52a2a;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.35rem;
+}
+
+.pricing-card-title {
+    font-size: 1.45rem;
+    font-weight: 800;
+    margin-bottom: 0.25rem;
+}
+
+.pricing-card-summary {
+    color: #666;
+    font-size: 0.88rem;
+    margin-bottom: 0.85rem;
+}
+
+.pricing-card-price {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 0.85rem;
+}
+
+.pricing-card-price span {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #777;
+}
+
+.pricing-features {
+    list-style: none;
+    margin: 0 0 0.85rem;
+    padding: 0;
+    border-top: 1px solid #f0f0f0;
+}
+
+.pricing-features li {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 0.9rem;
+}
+
+.pricing-features li span:last-child {
+    font-weight: 700;
+    color: #333;
+    white-space: nowrap;
+}
+
+.pricing-card-note {
+    font-size: 0.78rem;
+    color: #888;
+    margin-bottom: 0.85rem;
+}
+
+.pricing-card-cta {
+    display: block;
+    width: 100%;
+    text-align: center;
+    padding: 0.75rem 1rem;
+    border-radius: 999px;
+    font-weight: 700;
+    text-decoration: none;
+    border: 2px solid #1a1a1a;
+    color: #1a1a1a;
+    background: #fff;
+    transition: background 0.15s, color 0.15s;
+}
+
+.pricing-card-cta:hover {
+    background: #1a1a1a;
+    color: #fff;
+}
+
+.pricing-card-cta.primary {
+    background: #a52a2a;
+    border-color: #a52a2a;
+    color: #fff;
+}
+
+.pricing-card-cta.primary:hover {
+    background: #8b2222;
+    border-color: #8b2222;
+    color: #fff;
+}
+
+.pricing-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: #555;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.pricing-back-link:hover {
+    color: #1a1a1a;
+}
+
+.pricing-selected-plan {
+    background: #fff8f5;
+    border: 1px solid #f0d8cc;
+    border-radius: 1rem;
+    padding: 1rem 1.1rem;
+    margin-bottom: 1.25rem;
+}
+
+.pricing-selected-plan .pricing-card-label {
+    margin-bottom: 0.15rem;
+}
+
+.pricing-payment-note {
+    background: #fff3cd;
+    border: 1px solid #ffe69c;
+    border-radius: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    font-size: 0.85rem;
+    color: #664d03;
+    margin-bottom: 1rem;
+}
+
+.pricing-register-form .form-label {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.pricing-register-form .form-control {
+    border-radius: 0.75rem;
+    min-height: 2.75rem;
+}
+
+.pricing-submit-btn {
+    background: #e85d2c;
+    border: none;
+    color: #fff;
+    font-weight: 700;
+    border-radius: 0.85rem;
+    min-height: 3rem;
+    width: 100%;
+}
+
+.pricing-submit-btn:hover {
+    background: #d35400;
+    color: #fff;
+}
+
+@media (min-width: 768px) {
+    .pricing-main {
+        max-width: 640px;
+        padding-top: 2rem;
+    }
+
+    .pricing-hero-title {
+        font-size: 2.2rem;
+    }
+}

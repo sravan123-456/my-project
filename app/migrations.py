@@ -303,6 +303,21 @@ def migrate_user_auth_fields():
                 conn.execute(text(statement))
 
 
+def migrate_subscription_plan():
+    inspector = inspect(db.engine)
+    if "organizations" not in inspector.get_table_names():
+        return
+    columns = {col["name"] for col in inspector.get_columns("organizations")}
+    if "subscription_plan" not in columns:
+        with db.engine.begin() as conn:
+            conn.execute(
+                text(
+                    "ALTER TABLE organizations ADD COLUMN subscription_plan "
+                    "VARCHAR(20) NOT NULL DEFAULT 'free'"
+                )
+            )
+
+
 def run_migrations():
     migrate_gallery_and_profiles()
     migrate_user_auth_fields()
@@ -316,3 +331,4 @@ def run_migrations():
     migrate_organizations()
     migrate_pledges()
     migrate_expense_payment_columns()
+    migrate_subscription_plan()

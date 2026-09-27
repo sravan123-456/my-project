@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="{{ current_lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{{ t('pricing.register_title') }} - {{ platform_name }}</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.svg') }}" type="image/svg+xml">
+    <link href="{{ url_for('static', filename='vendor/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='vendor/bootstrap-icons.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/pricing.css') }}" rel="stylesheet">
+</head>
+<body class="pricing-page">
+    <header class="pricing-header">
+        <a href="{{ url_for('pricing.index') }}" class="pricing-brand">
+            <span class="pricing-brand-icon">🙏</span>
+            <span>{{ platform_name }}</span>
+        </a>
+        <div class="pricing-header-actions">
+            <div class="dropdown">
+                <button class="btn btn-sm pricing-lang-btn dropdown-toggle" type="button"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                    {{ current_lang|upper }}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow">
+                    {% for code, label in languages.items() %}
+                    <li>
+                        <a class="dropdown-item {% if code == current_lang %}active{% endif %}"
+                           href="{{ url_for('main.set_language_route', lang=code) }}">{{ label }}</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <main class="pricing-main">
+        <a href="{{ url_for('pricing.index') }}" class="pricing-back-link">
+            <i class="bi bi-arrow-left"></i> {{ t('pricing.back_to_plans') }}
+        </a>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category in ('error', 'danger') else category }} py-2 mb-3">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="pricing-selected-plan">
+            <div class="pricing-card-label">{{ plan.label }}</div>
+            <div class="d-flex justify-content-between align-items-end gap-2">
+                <div>
+                    <strong class="fs-5">{{ plan.name }}</strong>
+                    <div class="text-muted small">{{ t(plan.summary_key) }}</div>
+                </div>
+                <div class="text-end">
+                    <strong>{{ plan.price_display }}</strong>
+                    <div class="text-muted small">/ {{ t(plan.period_key) }}</div>
+                </div>
+            </div>
+        </div>
+
+        {% if plan.price_inr > 0 %}
+        <div class="pricing-payment-note">
+            <i class="bi bi-info-circle"></i> {{ t('pricing.payment_coming_soon') }}
+        </div>
+        {% endif %}
+
+        <h1 class="pricing-hero-title text-start fs-3 mb-1">{{ t('pricing.register_title') }}</h1>
+        <p class="pricing-hero-subtitle text-start mb-4">{{ t('pricing.register_subtitle') }}</p>
+
+        <form method="POST" novalidate class="pricing-register-form">
+            {{ form.hidden_tag() }}
+            <input type="hidden" name="subscription_plan" value="{{ plan.id }}">
+            <div class="mb-2">
+                {{ form.name.label(class="form-label") }}
+                {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else "")) }}
+                {% for error in form.name.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="row g-2 mb-2">
+                <div class="col-6">
+                    {{ form.slug.label(class="form-label") }}
+                    {{ form.slug(class="form-control" + (" is-invalid" if form.slug.errors else "")) }}
+                    {% for error in form.slug.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                </div>
+                <div class="col-6">
+                    {{ form.village.label(class="form-label") }}
+                    {{ form.village(class="form-control" + (" is-invalid" if form.village.errors else "")) }}
+                    {% for error in form.village.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                </div>
+            </div>
+            <div class="mb-2">
+                {{ form.festival_name.label(class="form-label") }}
+                {{ form.festival_name(class="form-control" + (" is-invalid" if form.festival_name.errors else "")) }}
+                {% for error in form.festival_name.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="mb-2">
+                {{ form.full_name.label(class="form-label") }}
+                {{ form.full_name(class="form-control" + (" is-invalid" if form.full_name.errors else "")) }}
+                {% for error in form.full_name.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="mb-2">
+                {{ form.phone.label(class="form-label") }}
+                {{ form.phone(class="form-control" + (" is-invalid" if form.phone.errors else ""), placeholder="10-digit mobile", inputmode="numeric", maxlength="10") }}
+                <div class="form-text">{{ t('landing.auth.phone_required_hint') }}</div>
+                {% for error in form.phone.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="mb-2">
+                {{ form.username.label(class="form-label") }}
+                {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else "")) }}
+                {% for error in form.username.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="mb-2">
+                {{ form.password.label(class="form-label") }}
+                <div class="password-toggle-wrap">
+                    {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), id="registerPassword") }}
+                    <button type="button" class="password-toggle-btn" data-password-toggle="registerPassword" aria-label="Show password">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
+                {% for error in form.password.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="mb-3">
+                {{ form.confirm_password.label(class="form-label") }}
+                {{ form.confirm_password(class="form-control" + (" is-invalid" if form.confirm_password.errors else "")) }}
+                {% for error in form.confirm_password.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+            </div>
+            {{ form.start_submit(class="btn pricing-submit-btn", value=t('pricing.register_submit')) }}
+        </form>
+    </main>
+
+    <script src="{{ url_for('static', filename='vendor/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

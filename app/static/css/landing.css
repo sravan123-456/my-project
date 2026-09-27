@@ -121,6 +121,7 @@
 .landing-choice-card:hover {
     border-color: #d35400;
     box-shadow: 0 4px 14px rgba(211, 84, 0, 0.12);
+    color: inherit;
 }
 
 .landing-choice-icon {

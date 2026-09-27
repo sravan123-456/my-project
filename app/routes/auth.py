@@ -1,5 +1,5 @@
 import re
-from datetime import date, datetime
+from datetime import datetime
 
 from flask import Blueprint, flash, jsonify, redirect, render_template, request, session, url_for
 from flask_login import current_user, login_required, login_user, logout_user
@@ -14,7 +14,6 @@ from app.forms import (
     JoinRegisterForm,
     LoginForm,
     RegisterForm,
-    StartCommitteeForm,
 )
 from app.firebase_auth import (
     firebase_enabled,
@@ -144,7 +143,7 @@ def _complete_login(user, username_attempt):
     return user, None
 
 
-def _handle_landing_post(login_form, join_form, start_form):
+def _handle_landing_post(login_form, join_form):
     active_tab = request.form.get("active_tab", "existing")
 
     if login_form.login_submit.data and login_form.validate_on_submit():
@@ -238,85 +237,15 @@ def _handle_landing_post(login_form, join_form, start_form):
         active_tab = "existing"
         flash("Please correct the errors in the join request form below.", "danger")
 
-    elif start_form.start_submit.data and start_form.validate_on_submit():
-        active_tab = "new"
-        slug = _normalize_slug(start_form.slug.data)
-        if not SLUG_PATTERN.match(slug):
-            flash("Committee code may only use lowercase letters, numbers, and hyphens.", "warning")
-        elif Organization.query.filter_by(slug=slug).first():
-            flash("That committee code is already taken. Choose another.", "warning")
-        else:
-            username = start_form.username.data.strip().lower()
-            normalized_phone = normalize_phone(start_form.phone.data)
-            if not normalized_phone:
-                start_form.phone.errors.append(
-                    "Enter a valid 10-digit Indian mobile number."
-                )
-                flash("Enter a valid 10-digit Indian mobile number.", "danger")
-            elif User.query.filter_by(phone=normalized_phone).first():
-                start_form.phone.errors.append(
-                    "This phone number is already linked to another account."
-                )
-                flash(
-                    "This phone number is already linked to another account.",
-                    "danger",
-                )
-            elif User.query.filter_by(username=username).first():
-                start_form.username.errors.append(USERNAME_IN_USE_MESSAGE)
-                flash(USERNAME_IN_USE_MESSAGE, "danger")
-            else:
-                org = Organization(
-                    name=start_form.name.data.strip(),
-                    slug=slug,
-                    village=start_form.village.data.strip(),
-                    festival_name=start_form.festival_name.data.strip(),
-                    festival_year=start_form.festival_year.data or date.today().year,
-                    status=ORG_STATUS_PENDING,
-                )
-                db.session.add(org)
-                db.session.flush()
-
-                admin = User(
-                    username=username,
-                    full_name=start_form.full_name.data.strip(),
-                    phone=normalized_phone,
-                    organization_id=org.id,
-                    is_admin=True,
-                    can_write=True,
-                    can_write_donations=True,
-                    can_write_expenses=True,
-                    is_approved=False,
-                )
-                admin.set_password(start_form.password.data)
-                db.session.add(admin)
-                db.session.commit()
-                flash(
-                    "New committee registered. The site admin will approve it. "
-                    "After approval, log in using your committee code.",
-                    "success",
-                )
-                return (
-                    redirect(
-                        url_for("auth.login", org=slug, _anchor="login")
-                    ),
-                    "existing",
-                )
-
     return None, active_tab
 
 
-def _landing_view(login_form, join_form, start_form, active_tab):
+def _landing_view(login_form, join_form, active_tab):
     if request.method == "POST":
-        if start_form.errors or (
-            start_form.start_submit.data and active_tab == "new"
-        ):
-            return "new"
         if join_form.join_submit.data or join_form.errors:
             return "existing-join"
         if login_form.login_submit.data or login_form.errors:
             return "existing-login"
-    if active_tab == "new":
-        return "new"
     return "choice"
 
 
@@ -327,25 +256,19 @@ def render_landing_page():
 
     login_form = LoginForm()
     join_form = JoinRegisterForm()
-    start_form = StartCommitteeForm()
     active_tab = request.form.get("active_tab", "existing")
 
     if request.method == "POST":
-        redirect_response, active_tab = _handle_landing_post(
-            login_form, join_form, start_form
-        )
+        redirect_response, active_tab = _handle_landing_post(login_form, join_form)
         if redirect_response:
             return redirect_response
-
-    if not start_form.festival_year.data:
-        start_form.festival_year.data = date.today().year
 
     org_slug = request.args.get("org")
     if org_slug and request.method == "GET":
         login_form.committee_code.data = org_slug
         join_form.committee_code.data = org_slug
 
-    landing_view = _landing_view(login_form, join_form, start_form, active_tab)
+    landing_view = _landing_view(login_form, join_form, active_tab)
     if org_slug and request.method == "GET" and landing_view == "choice":
         landing_view = "existing-join"
 
@@ -353,7 +276,6 @@ def render_landing_page():
         "landing.html",
         login_form=login_form,
         join_form=join_form,
-        start_form=start_form,
         active_tab=active_tab,
         landing_view=landing_view,
     )
@@ -470,7 +392,7 @@ def register():
 
 @auth_bp.route("/start-committee", methods=["GET", "POST"])
 def start_committee():
-    return redirect(url_for("auth.login", _anchor="new-committee"))
+    return redirect(url_for("pricing.index"))
 
 
 @auth_bp.route("/forgot-password", methods=["GET", "POST"])

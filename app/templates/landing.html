@@ -67,14 +67,14 @@
                 <h1 class="landing-step-title">{{ t('landing.choice.title') }}</h1>
                 <p class="landing-step-subtitle">{{ t('landing.choice.subtitle') }}</p>
 
-                <button type="button" class="landing-choice-card" data-landing-go="new">
+                <a href="{{ url_for('pricing.index') }}" class="landing-choice-card text-decoration-none">
                     <span class="landing-choice-icon"><i class="bi bi-building-add"></i></span>
                     <span class="landing-choice-text">
                         <strong>{{ t('landing.choice.new') }}</strong>
                         <small>{{ t('landing.choice.new_desc') }}</small>
                     </span>
                     <i class="bi bi-chevron-right landing-choice-arrow"></i>
-                </button>
+                </a>
 
                 <button type="button" class="landing-choice-card" data-landing-go="existing-join">
                     <span class="landing-choice-icon"><i class="bi bi-people"></i></span>
@@ -86,77 +86,7 @@
                 </button>
             </section>
 
-            <!-- Step 2a: New Committee registration -->
-            <section id="landingNewCommitteeStep" class="landing-step{% if landing_view == 'new' %} active{% endif %}">
-                <h1 class="landing-step-title">{{ t('landing.new.title') }}</h1>
-                <p class="landing-step-subtitle">{{ t('landing.new.subtitle') }}</p>
-
-                <form method="POST" novalidate>
-                    {{ start_form.hidden_tag() }}
-                    <input type="hidden" name="active_tab" value="new">
-                    <div class="mb-2">
-                        {{ start_form.name.label(class="form-label landing-label") }}
-                        {{ start_form.name(class="form-control landing-input" + (" is-invalid" if start_form.name.errors else "")) }}
-                        {% for error in start_form.name.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-                    </div>
-                    <div class="row g-2 mb-2">
-                        <div class="col-6">
-                            {{ start_form.slug.label(class="form-label landing-label") }}
-                            {{ start_form.slug(class="form-control landing-input" + (" is-invalid" if start_form.slug.errors else "")) }}
-                            {% for error in start_form.slug.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-                        </div>
-                        <div class="col-6">
-                            {{ start_form.village.label(class="form-label landing-label") }}
-                            {{ start_form.village(class="form-control landing-input" + (" is-invalid" if start_form.village.errors else "")) }}
-                            {% for error in start_form.village.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-                        </div>
-                    </div>
-                    <div class="mb-2">
-                        {{ start_form.festival_name.label(class="form-label landing-label") }}
-                        {{ start_form.festival_name(class="form-control landing-input" + (" is-invalid" if start_form.festival_name.errors else "")) }}
-                        {% for error in start_form.festival_name.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-                    </div>
-                    <div class="mb-2">
-                        {{ start_form.full_name.label(class="form-label landing-label") }}
-                        {{ start_form.full_name(class="form-control landing-input" + (" is-invalid" if start_form.full_name.errors else "")) }}
-                        {% for error in start_form.full_name.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-                    </div>
-                    <div class="mb-2">
-                        {{ start_form.phone.label(class="form-label landing-label") }}
-                        {{ start_form.phone(class="form-control landing-input" + (" is-invalid" if start_form.phone.errors else ""), placeholder="10-digit mobile", inputmode="numeric", maxlength="10") }}
-                        <div class="form-text">{{ t('landing.auth.phone_required_hint') }}</div>
-                        {% for error in start_form.phone.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-                    </div>
-                    <div class="mb-2">
-                        {{ start_form.username.label(class="form-label landing-label") }}
-                        {{ start_form.username(class="form-control landing-input" + (" is-invalid" if start_form.username.errors else "")) }}
-                        {% for error in start_form.username.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-                    </div>
-                    <div class="mb-2">
-                        {{ start_form.password.label(class="form-label landing-label") }}
-                        <div class="password-toggle-wrap">
-                            {{ start_form.password(class="form-control landing-input" + (" is-invalid" if start_form.password.errors else ""), id="newCommitteePassword") }}
-                            <button type="button" class="password-toggle-btn" data-password-toggle="newCommitteePassword" aria-label="Show password">
-                                <i class="bi bi-eye"></i>
-                            </button>
-                        </div>
-                        {% for error in start_form.password.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-                    </div>
-                    <div class="mb-3">
-                        {{ start_form.confirm_password.label(class="form-label landing-label") }}
-                        {{ start_form.confirm_password(class="form-control landing-input" + (" is-invalid" if start_form.confirm_password.errors else "")) }}
-                        {% for error in start_form.confirm_password.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-                    </div>
-                    {{ start_form.start_submit(class="btn w-100 landing-btn-cta", value=t('landing.join.create')) }}
-                </form>
-                <p class="landing-switch text-center mt-3 mb-0">
-                    <button type="button" class="btn btn-link p-0 landing-switch-link" data-landing-go="choice">
-                        <i class="bi bi-house-door"></i> {{ t('landing.back_home') }}
-                    </button>
-                </p>
-            </section>
-
-            <!-- Step 2b: Existing Committee — create account (join) -->
+            <!-- Step 2: Existing Committee — create account (join) -->
             <section id="landingExistingJoinStep" class="landing-step{% if landing_view == 'existing-join' %} active{% endif %}">
                 <h1 class="landing-step-title">{{ t('landing.join.title') }}</h1>
                 <p class="landing-step-subtitle">{{ t('landing.join.subtitle') }}</p>

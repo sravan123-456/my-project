@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="{{ current_lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{{ t('pricing.meta_description') }}">
+    <meta name="theme-color" content="#880E4F">
+    <title>{{ t('pricing.page_title') }} - {{ platform_name }}</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.svg') }}" type="image/svg+xml">
+    <link href="{{ url_for('static', filename='vendor/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='vendor/bootstrap-icons.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/pricing.css') }}" rel="stylesheet">
+</head>
+<body class="pricing-page">
+    <header class="pricing-header">
+        <a href="{{ url_for('main.index') }}" class="pricing-brand">
+            <span class="pricing-brand-icon">🙏</span>
+            <span>{{ platform_name }}</span>
+        </a>
+        <div class="pricing-header-actions">
+            <div class="dropdown">
+                <button class="btn btn-sm pricing-lang-btn dropdown-toggle" type="button"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                    {{ current_lang|upper }}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow">
+                    {% for code, label in languages.items() %}
+                    <li>
+                        <a class="dropdown-item {% if code == current_lang %}active{% endif %}"
+                           href="{{ url_for('main.set_language_route', lang=code) }}">{{ label }}</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <a href="{{ url_for('auth.login', _anchor='existing-join') }}" class="pricing-get-started">
+                {{ t('pricing.get_started') }}
+            </a>
+        </div>
+    </header>
+
+    <main class="pricing-main">
+        <h1 class="pricing-hero-title">{{ t('pricing.hero_title') }}</h1>
+        <p class="pricing-hero-subtitle">{{ t('pricing.hero_subtitle') }}</p>
+        <p class="pricing-hero-accent">{{ t('pricing.hero_accent') }}</p>
+
+        {% for plan in plans %}
+        <article class="pricing-card{% if plan.popular %} popular{% endif %}">
+            {% if plan.popular %}
+            <span class="pricing-card-badge">{{ t('pricing.best_value') }}</span>
+            {% endif %}
+            <div class="pricing-card-label">{{ plan.label }}</div>
+            <h2 class="pricing-card-title">{{ plan.name }}</h2>
+            <p class="pricing-card-summary">{{ t(plan.summary_key) }}</p>
+            <div class="pricing-card-price">
+                {{ plan.price_display }}
+                <span>/ {{ t(plan.period_key) }}</span>
+            </div>
+            <ul class="pricing-features">
+                <li><span>{{ t('pricing.feature_admins') }}</span><span>{{ plan.limits.admins }}</span></li>
+                <li><span>{{ t('pricing.feature_members') }}</span><span>{{ plan.limits.members }}</span></li>
+                <li><span>{{ t('pricing.feature_donations') }}</span><span>{% if plan.limits.donations is none %}{{ t('pricing.unlimited') }}{% else %}{{ plan.limits.donations }}{% endif %}</span></li>
+                <li><span>{{ t('pricing.feature_expenses') }}</span><span>{% if plan.limits.expenses is none %}{{ t('pricing.unlimited') }}{% else %}{{ plan.limits.expenses }}{% endif %}</span></li>
+                <li><span>{{ t('pricing.feature_gallery') }}</span><span>{{ plan.limits.gallery_photos }}</span></li>
+            </ul>
+            <p class="pricing-card-note">{{ t('pricing.card_note') }}</p>
+            <a href="{{ url_for('pricing.register', plan_id=plan.id) }}"
+               class="pricing-card-cta{% if plan.popular %} primary{% endif %}">
+                {% if plan.price_inr == 0 %}{{ t('pricing.cta_free') }}{% else %}{{ t('pricing.cta_start') }}{% endif %}
+            </a>
+        </article>
+        {% endfor %}
+
+        <p class="text-center text-muted small mt-3 mb-0">{{ t('pricing.payment_coming_soon') }}</p>
+    </main>
+
+    <script src="{{ url_for('static', filename='vendor/bootstrap.bundle.min.js') }}"></script>
+</body>
+</html>

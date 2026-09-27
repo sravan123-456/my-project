@@ -27,6 +27,7 @@ class Organization(db.Model):
     banner_image_key = db.Column(db.String(512))
     payment_qr_image_key = db.Column(db.String(512))
     status = db.Column(db.String(20), nullable=False, default=ORG_STATUS_ACTIVE)
+    subscription_plan = db.Column(db.String(20), nullable=False, default="free")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     users = db.relationship("User", backref="organization", lazy=True)

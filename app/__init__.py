@@ -78,6 +78,10 @@ def create_app():
             "auth.register_hub",
             "auth.start_committee",
             "auth.forgot_password",
+            "auth.forgot_password_otp",
+            "auth.forgot_password_complete",
+            "pricing.index",
+            "pricing.register",
             "main.pending",
             "main.index",
             "main.help_page",
@@ -243,8 +247,10 @@ def create_app():
     from app.routes.site_admin import site_admin_bp
     from app.routes.gallery import gallery_bp
     from app.routes.profile import profile_bp
+    from app.routes.pricing import pricing_bp
 
     app.register_blueprint(auth_bp)
+    app.register_blueprint(pricing_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(donations_bp, url_prefix="/donations")
     app.register_blueprint(pledges_bp, url_prefix="/donations/pledges")

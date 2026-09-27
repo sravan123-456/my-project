@@ -3,7 +3,6 @@
 
   var steps = {
     choice: document.getElementById("landingChoiceStep"),
-    new: document.getElementById("landingNewCommitteeStep"),
     "existing-join": document.getElementById("landingExistingJoinStep"),
     "existing-login": document.getElementById("landingExistingLoginStep"),
   };
@@ -15,7 +14,8 @@
   } else if (hash === "login" || hash === "committee") {
     initialView = "existing-login";
   } else if (hash === "new-committee" || hash === "new") {
-    initialView = "new";
+    window.location.href = "/pricing";
+    return;
   }
 
   function showStep(view) {
