@@ -328,7 +328,7 @@ def run_migrations():
     migrate_donation_payments()
     migrate_organization_banner()
     migrate_organization_payment_qr()
+    migrate_subscription_plan()
     migrate_organizations()
     migrate_pledges()
     migrate_expense_payment_columns()
-    migrate_subscription_plan()

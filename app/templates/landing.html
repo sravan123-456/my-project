@@ -14,13 +14,29 @@
     <link href="{{ url_for('static', filename='css/landing.css') }}" rel="stylesheet">
 </head>
 <body class="landing-page" data-landing-view="{{ landing_view }}">
-    <div class="landing-collage" aria-hidden="true">
-        <div class="landing-collage-item landing-collage-1"></div>
-        <div class="landing-collage-item landing-collage-2"></div>
-        <div class="landing-collage-item landing-collage-3"></div>
-        <div class="landing-collage-item landing-collage-4"></div>
-        <div class="landing-collage-item landing-collage-5"></div>
-        <div class="landing-collage-item landing-collage-6"></div>
+    <div class="landing-hero" aria-hidden="false">
+        <div class="landing-collage" aria-hidden="true">
+            <div class="landing-collage-item landing-collage-1"></div>
+            <div class="landing-collage-item landing-collage-2"></div>
+            <div class="landing-collage-item landing-collage-3"></div>
+            <div class="landing-collage-item landing-collage-4"></div>
+            <div class="landing-collage-item landing-collage-5"></div>
+            <div class="landing-collage-item landing-collage-6"></div>
+            <div class="landing-collage-item landing-collage-7"></div>
+            <div class="landing-collage-item landing-collage-8"></div>
+            <div class="landing-collage-item landing-collage-9"></div>
+            <div class="landing-collage-item landing-collage-10"></div>
+            <div class="landing-collage-item landing-collage-11"></div>
+            <div class="landing-collage-item landing-collage-12"></div>
+        </div>
+        <div class="landing-hero-scrim" aria-hidden="true"></div>
+        <div class="landing-hero-content">
+            <div class="landing-hero-brand">
+                <div class="landing-hero-logo">🙏 {{ platform_name }}</div>
+                <h2 class="landing-hero-title">{{ t('landing.subtitle') }}</h2>
+                <p class="landing-hero-tagline">{{ t('landing.hero.tagline') }}</p>
+            </div>
+        </div>
     </div>
 
     <div class="landing-shell">
@@ -46,6 +62,7 @@
             </div>
         </div>
 
+        <div class="landing-sheet">
         <div class="landing-card shadow-lg">
             <div class="landing-brand text-center mb-3">
                 <div class="landing-logo">🙏</div>
@@ -213,6 +230,7 @@
                 <span class="mx-1">·</span>
                 <a href="{{ url_for('main.help_page') }}#contact">{{ t('footer.contact') }}</a>
             </div>
+        </div>
         </div>
     </div>
 

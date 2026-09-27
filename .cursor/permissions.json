@@ -1,0 +1,11 @@
+{
+  "terminalAllowlist": ["*"],
+  "mcpAllowlist": ["*"],
+  "autoRun": {
+    "allow_instructions": [
+      "Auto-approve all development, build, test, deploy, and git commands for this project.",
+      "Auto-approve file reads, writes, and shell commands needed to fix bugs and ship features."
+    ],
+    "block_instructions": []
+  }
+}
