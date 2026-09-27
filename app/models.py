@@ -5,7 +5,9 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from app import db
 
-PLATFORM_NAME = "Festival Fund Manager"
+PLATFORM_NAME = "DanSetu"
+PLATFORM_DOMAIN = "dansetu.in"
+PLATFORM_TAGLINE = "Bridge for festival donations"
 FESTIVAL_NAME = "Indukuru Vinayaka Festival"
 DEVELOPER_NAME = "Sravan Kumar Reddy"
 

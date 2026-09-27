@@ -8,8 +8,8 @@
         <div class="card shadow border-0 auth-card">
             <div class="card-body p-4">
                 <div class="text-center mb-4">
-                    <div class="hero-icon-sm">🙏</div>
-                    <h3 class="fw-bold">{{ platform_name }}</h3>
+                    {% from "partials/brand_logo.html" import brand_lockup %}
+                    <div class="d-flex justify-content-center mb-2">{{ brand_lockup(36) }}</div>
                     <p class="text-muted mb-0">{{ t('login.subtitle') }}</p>
                 </div>
 

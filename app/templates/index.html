@@ -5,7 +5,8 @@
 {% block content %}
 <div class="hero-section text-center py-5">
     <div class="hero-icon mb-3">🙏</div>
-    <h1 class="display-4 fw-bold festival-title">{{ platform_name }}</h1>
+    {% from "partials/brand_logo.html" import brand_lockup %}
+    <div class="mb-3">{{ brand_lockup(40, name_class='display-6 fw-bold festival-title') }}</div>
     <h2 class="h4 text-muted mb-4">{{ t('landing.subtitle') }}</h2>
     <p class="lead col-lg-8 mx-auto mb-4">{{ t('landing.lead') }}</p>
     <div class="d-flex gap-3 justify-content-center flex-wrap">

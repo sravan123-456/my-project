@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="{{ t('meta.description') }}">
-    <meta name="theme-color" content="#880E4F">
+    <meta name="theme-color" content="#0F766E">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ platform_name }} - {{ t('landing.subtitle') }}</title>
     <link rel="icon" href="{{ url_for('static', filename='images/favicon.svg') }}" type="image/svg+xml">
@@ -36,7 +36,10 @@
         <div class="landing-hero-scrim" aria-hidden="true"></div>
         <div class="landing-hero-content">
             <div class="landing-hero-brand">
-                <div class="landing-hero-logo">🙏 {{ platform_name }}</div>
+                <div class="landing-hero-logo">
+                    <img src="{{ url_for('static', filename='images/dansetu-logo.svg') }}"
+                         alt="{{ platform_name }}" class="landing-hero-logo-img" width="200" height="48">
+                </div>
                 <h2 class="landing-hero-title">{{ t('landing.subtitle') }}</h2>
                 <p class="landing-hero-tagline">{{ t('landing.hero.tagline') }}</p>
             </div>
@@ -68,8 +71,9 @@
                 </button>
             </div>
             <div class="landing-brand text-center mb-3">
-                <div class="landing-logo">🙏</div>
-                <p class="landing-domain mb-0">{{ platform_name|lower|replace(' ', '') }}.in</p>
+                {% from "partials/brand_logo.html" import brand_lockup %}
+                <div class="d-flex justify-content-center mb-1">{{ brand_lockup(36) }}</div>
+                <p class="landing-domain mb-0">{{ platform_domain }}</p>
             </div>
 
             {% with messages = get_flashed_messages(with_categories=true) %}

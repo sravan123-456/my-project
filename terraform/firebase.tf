@@ -26,7 +26,7 @@ resource "google_firebase_project" "default" {
 resource "google_firebase_web_app" "default" {
   provider     = google-beta
   project      = var.project_id
-  display_name = "Festival Fund Manager Web"
+  display_name = "DanSetu Web"
 
   depends_on = [google_firebase_project.default]
 }

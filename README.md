@@ -1,6 +1,6 @@
-# Vinayaka Festival Fund Manager
+# DanSetu
 
-A Docker-based web application to manage Vinayaka Chaturthi festival donations, expenses, and fund balance with full transparency.
+**Bridge for festival donations** — a Docker-based web application for festival committees to manage donations, expenses, and fund balance with full transparency.
 
 ## Features
 

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="{{ t('meta.description') }}">
-    <meta name="theme-color" content="#880E4F">
+    <meta name="theme-color" content="#0F766E">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="robots" content="index, follow">
     <title>{% block title %}{{ festival_name }}{% endblock %}</title>
@@ -19,8 +19,10 @@
     <a href="#main-content" class="skip-link">{{ t('a11y.skip_to_content') }}</a>
     <nav class="navbar navbar-expand-lg navbar-dark festival-nav no-print">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="{{ url_for('main.index') }}">
-                <i class="bi bi-flower1"></i> {{ nav_title }}
+            <a class="navbar-brand fw-bold d-inline-flex align-items-center gap-2" href="{{ url_for('main.index') }}">
+                {% from "partials/brand_logo.html" import brand_icon %}
+                {{ brand_icon(28) }}
+                <span>{{ nav_title }}</span>
             </a>
             {% if current_user.is_authenticated %}
             <div class="d-flex d-lg-none align-items-center gap-1 ms-auto mobile-nav-utils">

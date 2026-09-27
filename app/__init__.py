@@ -108,7 +108,15 @@ def create_app():
     from app.i18n import SUPPORTED_LANGUAGES, get_language, translate
 
     init_firebase(app)
-    from app.models import DONOR_GROUP_LABELS, DEVELOPER_NAME, FESTIVAL_NAME, PLATFORM_NAME, User
+    from app.models import (
+        DONOR_GROUP_LABELS,
+        DEVELOPER_NAME,
+        FESTIVAL_NAME,
+        PLATFORM_DOMAIN,
+        PLATFORM_NAME,
+        PLATFORM_TAGLINE,
+        User,
+    )
     from app.whatsapp import donation_whatsapp_url, pledge_whatsapp_url
     from app.storage import get_image_url
 
@@ -201,6 +209,8 @@ def create_app():
             "organization_location": organization_location,
             "festival_year": festival_year,
             "platform_name": PLATFORM_NAME,
+            "platform_domain": PLATFORM_DOMAIN,
+            "platform_tagline": PLATFORM_TAGLINE,
             "nav_title": festival_name if current_user.is_authenticated and organization_name else PLATFORM_NAME,
             "developer_name": DEVELOPER_NAME,
             "app_version": "1.1.0",

@@ -2,8 +2,21 @@
     --festival-saffron: #FF6F00;
     --festival-saffron-dark: #E65100;
     --festival-gold: #FFB300;
-    --festival-maroon: #880E4F;
+    --festival-maroon: #0F766E;
     --festival-cream: #FFF8E1;
+    --brand-primary: #0F766E;
+    --brand-primary-dark: #115E59;
+    --brand-accent: #EA580C;
+}
+
+.brand-logo-icon {
+    flex-shrink: 0;
+    display: block;
+}
+
+.brand-lockup-name {
+    font-weight: 700;
+    letter-spacing: -0.02em;
 }
 
 body {

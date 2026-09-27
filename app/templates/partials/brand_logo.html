@@ -1,0 +1,16 @@
+{% macro brand_icon(size=28, class_name='') %}
+<img src="{{ url_for('static', filename='images/dansetu-icon.svg') }}"
+     alt=""
+     class="brand-logo-icon {{ class_name }}"
+     width="{{ size }}"
+     height="{{ size }}">
+{% endmacro %}
+
+{% macro brand_lockup(size=28, show_name=true, name_class='') %}
+<span class="brand-lockup d-inline-flex align-items-center gap-2">
+    {{ brand_icon(size) }}
+    {% if show_name %}
+    <span class="brand-lockup-name {{ name_class }}">{{ platform_name }}</span>
+    {% endif %}
+</span>
+{% endmacro %}
