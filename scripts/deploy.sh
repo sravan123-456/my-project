@@ -39,6 +39,12 @@ flock 9
 
 ensure_swap
 
+mkdir -p secrets
+if [ ! -f secrets/firebase-service-account.json ]; then
+  echo '{}' > secrets/firebase-service-account.json
+  chmod 600 secrets/firebase-service-account.json
+fi
+
 if [ ! -f .env ]; then
   if [ -f .env.example ]; then
     cp .env.example .env
@@ -55,6 +61,12 @@ if [ "${SKIP_GIT_PULL:-0}" != "1" ]; then
   git reset --hard "origin/$BRANCH"
 else
   echo "==> Using code already synced by deploy workflow."
+fi
+
+if [ -x scripts/sync-firebase-config.sh ] && command -v gcloud >/dev/null 2>&1; then
+  echo "==> Syncing Firebase configuration..."
+  APP_DIR="${APP_DIR}" GCP_PROJECT="${GCP_PROJECT:-business-account-506411}" \
+    bash scripts/sync-firebase-config.sh || echo "WARNING: Firebase sync skipped or failed."
 fi
 
 echo "==> Building and starting containers..."

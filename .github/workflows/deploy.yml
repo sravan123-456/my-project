@@ -37,6 +37,36 @@ jobs:
         with:
           project_id: ${{ env.GCP_PROJECT }}
 
+      - name: Sync Firebase secrets to VM
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          if ! gcloud secrets describe vinayaka-firebase-web-config --project="${GCP_PROJECT}" >/dev/null 2>&1; then
+            echo "Firebase secrets are not provisioned yet. Run the Terraform workflow first."
+            exit 0
+          fi
+          gcloud secrets versions access latest \
+            --secret=vinayaka-firebase-admin-sa \
+            --project="${GCP_PROJECT}" > /tmp/firebase-service-account.json
+          gcloud secrets versions access latest \
+            --secret=vinayaka-firebase-web-config \
+            --project="${GCP_PROJECT}" > /tmp/firebase-web-config.json
+          gcloud compute scp /tmp/firebase-service-account.json "${GCE_INSTANCE}:/tmp/firebase-service-account.json" \
+            --zone "${GCP_ZONE}" --project "${GCP_PROJECT}" --quiet
+          gcloud compute scp /tmp/firebase-web-config.json "${GCE_INSTANCE}:/tmp/firebase-web-config.json" \
+            --zone "${GCP_ZONE}" --project "${GCP_PROJECT}" --quiet
+          gcloud compute scp scripts/apply-firebase-env.py "${GCE_INSTANCE}:/tmp/apply-firebase-env.py" \
+            --zone "${GCP_ZONE}" --project "${GCP_PROJECT}" --quiet
+          gcloud compute ssh "${GCE_INSTANCE}" \
+            --zone "${GCP_ZONE}" \
+            --project "${GCP_PROJECT}" \
+            --quiet \
+            --command="set -e
+              mkdir -p '${APP_DIR}/secrets'
+              install -m 600 /tmp/firebase-service-account.json '${APP_DIR}/secrets/firebase-service-account.json'
+              python3 /tmp/apply-firebase-env.py /tmp/firebase-web-config.json '${APP_DIR}'
+              rm -f /tmp/firebase-service-account.json /tmp/firebase-web-config.json /tmp/apply-firebase-env.py"
+
       - name: Deploy latest code on VM
         run: |
           gcloud compute ssh "${GCE_INSTANCE}" \

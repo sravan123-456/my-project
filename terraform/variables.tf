@@ -67,3 +67,14 @@ variable "ssh_public_key" {
   description = "SSH public key for VM access (full openssh format)."
   type        = string
 }
+
+variable "firebase_support_email" {
+  description = "Support email for Firebase / OAuth brand (must be a Google account on the GCP project)."
+  type        = string
+}
+
+variable "cicd_service_account_email" {
+  description = "GitHub Actions service account that deploys the app."
+  type        = string
+  default     = "github-actions@business-account-506411.iam.gserviceaccount.com"
+}

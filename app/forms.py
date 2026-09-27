@@ -57,6 +57,11 @@ class JoinRegisterForm(FlaskForm):
         validators=[DataRequired(), Length(min=3, max=80)],
     )
     full_name = StringField("Full Name", validators=[DataRequired(), Length(max=120)])
+    phone = StringField(
+        "Phone Number",
+        validators=[Optional(), Length(min=10, max=15)],
+    )
+    email = StringField("Email", validators=[Optional(), Length(max=120)])
     username = StringField("Username", validators=[DataRequired(), Length(min=3, max=80)])
     password = PasswordField("Password", validators=[DataRequired(), Length(min=6)])
     confirm_password = PasswordField(

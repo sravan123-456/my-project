@@ -45,6 +45,16 @@ def create_app():
     app.config["GCS_PUBLIC_READ"] = os.getenv("GCS_PUBLIC_READ", "false").lower() in ("1", "true", "yes")
     app.config["GCS_SIGNED_URL_HOURS"] = os.getenv("GCS_SIGNED_URL_HOURS", "24")
     app.config["GCS_CACHE_CONTROL"] = os.getenv("GCS_CACHE_CONTROL", "public, max-age=86400")
+    app.config["FIREBASE_PROJECT_ID"] = os.getenv("FIREBASE_PROJECT_ID", "").strip()
+    app.config["FIREBASE_API_KEY"] = os.getenv("FIREBASE_API_KEY", "").strip()
+    app.config["FIREBASE_AUTH_DOMAIN"] = os.getenv("FIREBASE_AUTH_DOMAIN", "").strip()
+    app.config["FIREBASE_APP_ID"] = os.getenv("FIREBASE_APP_ID", "").strip()
+    app.config["FIREBASE_MESSAGING_SENDER_ID"] = os.getenv(
+        "FIREBASE_MESSAGING_SENDER_ID", ""
+    ).strip()
+    app.config["FIREBASE_SERVICE_ACCOUNT"] = os.getenv(
+        "FIREBASE_SERVICE_ACCOUNT", ""
+    ).strip()
 
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
     db_dir = os.path.dirname(app.config["SQLALCHEMY_DATABASE_URI"].replace("sqlite:///", ""))
@@ -90,7 +100,10 @@ def create_app():
         flash("Your account is pending admin approval.", "warning")
         return redirect(url_for("main.pending"))
 
+    from app.firebase_auth import firebase_enabled, init_firebase
     from app.i18n import SUPPORTED_LANGUAGES, get_language, translate
+
+    init_firebase(app)
     from app.models import DONOR_GROUP_LABELS, DEVELOPER_NAME, FESTIVAL_NAME, PLATFORM_NAME, User
     from app.whatsapp import donation_whatsapp_url, pledge_whatsapp_url
     from app.storage import get_image_url
@@ -205,6 +218,14 @@ def create_app():
             "committee_banner_url": committee_banner_url,
             "committee_payment_qr_url": committee_payment_qr_url,
             "nav_active": nav_active,
+            "firebase_enabled": firebase_enabled(),
+            "firebase_client_config": {
+                "apiKey": app.config["FIREBASE_API_KEY"],
+                "authDomain": app.config["FIREBASE_AUTH_DOMAIN"],
+                "projectId": app.config["FIREBASE_PROJECT_ID"],
+                "appId": app.config["FIREBASE_APP_ID"],
+                "messagingSenderId": app.config["FIREBASE_MESSAGING_SENDER_ID"],
+            },
         }
 
     @login_manager.user_loader

@@ -279,8 +279,33 @@ def migrate_expense_payment_columns():
     db.session.commit()
 
 
+def migrate_user_auth_fields():
+    inspector = inspect(db.engine)
+    if "users" not in inspector.get_table_names():
+        return
+
+    columns = {column["name"] for column in inspector.get_columns("users")}
+    statements = []
+    if "phone" not in columns:
+        statements.append("ALTER TABLE users ADD COLUMN phone VARCHAR(20)")
+    if "email" not in columns:
+        statements.append("ALTER TABLE users ADD COLUMN email VARCHAR(120)")
+    if "firebase_uid" not in columns:
+        statements.append("ALTER TABLE users ADD COLUMN firebase_uid VARCHAR(128)")
+    if "auth_provider" not in columns:
+        statements.append(
+            "ALTER TABLE users ADD COLUMN auth_provider VARCHAR(20) NOT NULL DEFAULT 'password'"
+        )
+
+    if statements:
+        with db.engine.begin() as conn:
+            for statement in statements:
+                conn.execute(text(statement))
+
+
 def run_migrations():
     migrate_gallery_and_profiles()
+    migrate_user_auth_fields()
     migrate_user_roles()
     migrate_split_write_permissions()
     migrate_donation_groups()

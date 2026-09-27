@@ -1,8 +1,9 @@
 import re
 from datetime import date, datetime
 
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
+from werkzeug.exceptions import BadRequest
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 
@@ -15,6 +16,12 @@ from app.forms import (
     LoginForm,
     RegisterForm,
     StartCommitteeForm,
+)
+from app.firebase_auth import (
+    firebase_enabled,
+    normalize_email,
+    normalize_phone,
+    verify_id_token,
 )
 from app.models import (
     ORG_STATUS_PENDING,
@@ -121,16 +128,65 @@ def _post_login_redirect(user, next_page):
     return redirect(url_for("main.dashboard"))
 
 
-@auth_bp.route("/login", methods=["GET", "POST"])
-def login():
-    if current_user.is_authenticated:
-        if current_user.is_approved:
-            return redirect(url_for("main.dashboard"))
-        return redirect(url_for("main.pending"))
+def _complete_login(user, username_attempt):
+    blocked = _org_login_blocked_message(user)
+    if blocked:
+        _record_login(user, username_attempt, False, user.organization_id)
+        db.session.commit()
+        return None, blocked
+    if not user.is_approved:
+        _record_login(user, username_attempt, False, user.organization_id)
+        db.session.commit()
+        return None, (
+            "Your join request is pending. Your committee admin must approve you before you can log in."
+        )
+    _record_login(user, username_attempt, True, user.organization_id)
+    db.session.commit()
+    login_user(user)
+    return user, None
 
-    login_form = LoginForm()
-    join_form = JoinRegisterForm()
-    start_form = StartCommitteeForm()
+
+def _find_user_for_firebase(decoded_token):
+    uid = decoded_token.get("uid")
+    phone = normalize_phone(decoded_token.get("phone_number"))
+    email = normalize_email(decoded_token.get("email"))
+
+    if uid:
+        user = User.query.filter_by(firebase_uid=uid).first()
+        if user:
+            return user
+
+    if phone:
+        user = User.query.filter_by(phone=phone).first()
+        if user:
+            return user
+
+    if email:
+        user = User.query.filter_by(email=email).first()
+        if user:
+            return user
+
+    return None
+
+
+def _link_firebase_identity(user, decoded_token):
+    uid = decoded_token.get("uid")
+    phone = normalize_phone(decoded_token.get("phone_number"))
+    email = normalize_email(decoded_token.get("email"))
+
+    if uid:
+        user.firebase_uid = uid
+    if phone and not user.phone:
+        user.phone = phone
+    if email and not user.email:
+        user.email = email
+    if phone:
+        user.auth_provider = "phone"
+    elif email and user.auth_provider == "password":
+        user.auth_provider = "google" if decoded_token.get("firebase", {}).get("sign_in_provider") == "google.com" else "email"
+
+
+def _handle_landing_post(login_form, join_form, start_form):
     active_tab = request.form.get("active_tab", "existing")
 
     if login_form.login_submit.data and login_form.validate_on_submit():
@@ -146,25 +202,13 @@ def login():
         else:
             user = User.query.filter_by(username=username, organization_id=org.id).first()
             if user and user.check_password(login_form.password.data):
-                blocked = _org_login_blocked_message(user)
-                if blocked:
-                    _record_login(user, username, False, org.id)
-                    db.session.commit()
-                    flash(blocked, "warning" if user.organization and user.organization.is_pending() else "danger")
-                elif not user.is_approved:
-                    _record_login(user, username, False, org.id)
-                    db.session.commit()
-                    flash(
-                        "Your join request is pending. Your committee admin must approve you before you can log in.",
-                        "warning",
-                    )
+                logged_in_user, error = _complete_login(user, username)
+                if error:
+                    flash(error, "warning" if user.organization and user.organization.is_pending() else "danger")
                 else:
-                    _record_login(user, username, True, org.id)
-                    db.session.commit()
-                    login_user(user)
                     next_page = request.args.get("next")
-                    flash(f"Welcome back, {user.full_name}!", "success")
-                    return _post_login_redirect(user, next_page)
+                    flash(f"Welcome back, {logged_in_user.full_name}!", "success")
+                    return _post_login_redirect(logged_in_user, next_page), active_tab
             else:
                 _record_login(user, username, False, org.id if org else None)
                 db.session.commit()
@@ -185,29 +229,52 @@ def login():
             if conflict_field:
                 _mark_join_form_error(join_form, conflict_field, conflict_message)
             else:
-                user = User(
-                    username=username,
-                    full_name=full_name,
-                    organization_id=org.id,
-                    is_admin=False,
-                    can_write=False,
-                    is_approved=False,
-                )
-                user.set_password(join_form.password.data)
-                db.session.add(user)
-                try:
-                    db.session.commit()
-                except IntegrityError:
-                    db.session.rollback()
-                    _mark_join_form_error(join_form, "username", USERNAME_IN_USE_MESSAGE)
-                else:
-                    flash(
-                        "Join request submitted. Your committee admin will approve your account. "
-                        "Then log in with your committee code, username, and password.",
-                        "success",
+                normalized_phone = normalize_phone(join_form.phone.data)
+                normalized_email = normalize_email(join_form.email.data)
+                if join_form.phone.data and not normalized_phone:
+                    _mark_join_form_error(
+                        join_form,
+                        "phone",
+                        "Enter a valid 10-digit Indian mobile number.",
                     )
-                    login_form.committee_code.data = committee_code
-                    join_form.committee_code.data = committee_code
+                elif normalized_phone and User.query.filter_by(phone=normalized_phone).first():
+                    _mark_join_form_error(
+                        join_form,
+                        "phone",
+                        "This phone number is already linked to another account.",
+                    )
+                elif normalized_email and User.query.filter_by(email=normalized_email).first():
+                    _mark_join_form_error(
+                        join_form,
+                        "email",
+                        "This email is already linked to another account.",
+                    )
+                else:
+                    user = User(
+                        username=username,
+                        full_name=full_name,
+                        phone=normalized_phone,
+                        email=normalized_email,
+                        organization_id=org.id,
+                        is_admin=False,
+                        can_write=False,
+                        is_approved=False,
+                    )
+                    user.set_password(join_form.password.data)
+                    db.session.add(user)
+                    try:
+                        db.session.commit()
+                    except IntegrityError:
+                        db.session.rollback()
+                        _mark_join_form_error(join_form, "username", USERNAME_IN_USE_MESSAGE)
+                    else:
+                        flash(
+                            "Join request submitted. Your committee admin will approve your account. "
+                            "Then log in with OTP, Google, or your committee password.",
+                            "success",
+                        )
+                        login_form.committee_code.data = committee_code
+                        join_form.committee_code.data = committee_code
 
     elif join_form.join_submit.data and request.method == "POST":
         active_tab = "existing"
@@ -252,22 +319,98 @@ def login():
                 db.session.commit()
                 flash(
                     "New committee registered. The site admin will approve it. "
-                    "After approval, log in using the Existing Committee tab with your committee code.",
+                    "After approval, log in using your committee code.",
                     "success",
                 )
                 login_form.committee_code.data = slug
                 active_tab = "existing"
 
+    return None, active_tab
+
+
+def render_landing_page():
+    login_form = LoginForm()
+    join_form = JoinRegisterForm()
+    start_form = StartCommitteeForm()
+    active_tab = request.form.get("active_tab", "existing")
+
+    if request.method == "POST":
+        redirect_response, active_tab = _handle_landing_post(
+            login_form, join_form, start_form
+        )
+        if redirect_response:
+            return redirect_response
+
     if not start_form.festival_year.data:
         start_form.festival_year.data = date.today().year
 
+    org_slug = request.args.get("org")
+    if org_slug and request.method == "GET":
+        login_form.committee_code.data = org_slug
+        join_form.committee_code.data = org_slug
+
     return render_template(
-        "auth/login.html",
+        "landing.html",
         login_form=login_form,
         join_form=join_form,
         start_form=start_form,
         active_tab=active_tab,
     )
+
+
+@auth_bp.route("/firebase/verify", methods=["POST"])
+def firebase_verify():
+    if not firebase_enabled():
+        return jsonify({"ok": False, "error": "Firebase login is not configured."}), 503
+
+    payload = request.get_json(silent=True) or {}
+    id_token = payload.get("idToken")
+    if not id_token:
+        raise BadRequest("Missing idToken.")
+
+    try:
+        decoded = verify_id_token(id_token)
+    except Exception:
+        return jsonify({"ok": False, "error": "Invalid or expired login. Try again."}), 401
+
+    user = _find_user_for_firebase(decoded)
+    if not user:
+        return jsonify(
+            {
+                "ok": False,
+                "error": "No account found for this phone or email. Join your committee first.",
+                "code": "account_not_found",
+            }
+        ), 404
+
+    _link_firebase_identity(user, decoded)
+    db.session.commit()
+
+    logged_in_user, error = _complete_login(user, user.username)
+    if error:
+        return jsonify({"ok": False, "error": error}), 403
+
+    redirect_url = url_for("main.dashboard")
+    if not logged_in_user.profile_photo_key:
+        redirect_url = url_for("profile.view_profile", welcome=1)
+
+    return jsonify(
+        {
+            "ok": True,
+            "redirect": redirect_url,
+            "name": logged_in_user.full_name,
+        }
+    )
+
+
+@auth_bp.route("/login", methods=["GET", "POST"])
+def login():
+    if current_user.is_authenticated:
+        if current_user.is_approved:
+            return redirect(url_for("main.dashboard"))
+        return redirect(url_for("main.pending"))
+
+    return render_landing_page()
 
 
 @auth_bp.route("/register", methods=["GET", "POST"])
@@ -347,7 +490,7 @@ def forgot_password():
                         "Password reset request sent. Your committee admin will set a new password for you.",
                         "success",
                     )
-                return redirect(url_for("auth.login", org=committee_code))
+                return redirect(url_for("main.index", org=committee_code, _anchor="committee"))
 
     return render_template("auth/forgot_password.html", form=form)
 
@@ -373,4 +516,4 @@ def change_password():
 def logout():
     logout_user()
     flash("You have been logged out.", "info")
-    return redirect(url_for("auth.login"))
+    return redirect(url_for("main.index"))

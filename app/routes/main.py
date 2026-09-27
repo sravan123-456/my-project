@@ -12,9 +12,16 @@ from app.org_scope import org_query
 main_bp = Blueprint("main", __name__)
 
 
-@main_bp.route("/")
+@main_bp.route("/", methods=["GET", "POST"])
 def index():
-    return render_template("index.html")
+    if current_user.is_authenticated:
+        if current_user.is_approved:
+            return redirect(url_for("main.dashboard"))
+        return redirect(url_for("main.pending"))
+
+    from app.routes.auth import render_landing_page
+
+    return render_landing_page()
 
 
 @main_bp.route("/pending")

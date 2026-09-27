@@ -2,6 +2,11 @@ name: Provision GCP VM (Terraform)
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "terraform/**"
+      - ".github/workflows/provision-vm.yml"
 
 concurrency:
   group: vinayaka-terraform
@@ -42,7 +47,12 @@ jobs:
         env:
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
           SSH_PUBLIC_KEY: ${{ secrets.SSH_PUBLIC_KEY }}
+          FIREBASE_SUPPORT_EMAIL: ${{ secrets.FIREBASE_SUPPORT_EMAIL }}
         run: |
+          if [ -z "${FIREBASE_SUPPORT_EMAIL}" ]; then
+            echo "Set repository secret FIREBASE_SUPPORT_EMAIL (Google account on the GCP project)." >&2
+            exit 1
+          fi
           cat > terraform.tfvars <<EOF
           project_id      = "${GCP_PROJECT}"
           region          = "us-central1"
@@ -56,6 +66,8 @@ jobs:
           github_repo_url = "https://github.com/sravan123-456/my-project.git"
           ssh_user        = "vandana"
           ssh_public_key  = "${SSH_PUBLIC_KEY}"
+          firebase_support_email = "${FIREBASE_SUPPORT_EMAIL}"
+          cicd_service_account_email = "github-actions@business-account-506411.iam.gserviceaccount.com"
           EOF
 
       - name: Terraform init
@@ -73,6 +85,10 @@ jobs:
           echo "- App URL: $(terraform output -raw app_url)" >> "$GITHUB_STEP_SUMMARY"
           echo "- Static IP (DNS A record): $(terraform output -raw dns_a_record_value)" >> "$GITHUB_STEP_SUMMARY"
           echo "- Domain: $(terraform output -raw domain_name)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Firebase auth domain: $(terraform output -raw firebase_auth_domain)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Firebase web app ID: $(terraform output -raw firebase_web_app_id)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Firebase admin secret: $(terraform output -raw firebase_admin_sa_secret)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Firebase web config secret: $(terraform output -raw firebase_web_config_secret)" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Reset VM to run startup script
         run: |
