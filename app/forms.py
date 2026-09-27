@@ -96,7 +96,7 @@ class StartCommitteeForm(FlaskForm):
         "Committee Code",
         validators=[DataRequired(), Length(min=3, max=80)],
     )
-    village = StringField("Village / Area", validators=[DataRequired(), Length(max=120)])
+    village = StringField("Town / City / Area", validators=[DataRequired(), Length(max=120)])
     festival_name = StringField("Festival Display Name", validators=[DataRequired(), Length(max=160)])
     festival_year = IntegerField("Festival Year", validators=[Optional()])
     full_name = StringField("Your Full Name", validators=[DataRequired(), Length(max=120)])
@@ -119,7 +119,7 @@ class CreateOrganizationForm(FlaskForm):
         "Committee Code (URL slug)",
         validators=[DataRequired(), Length(min=3, max=80)],
     )
-    village = StringField("Village / Area", validators=[Optional(), Length(max=120)])
+    village = StringField("Town / City / Area", validators=[Optional(), Length(max=120)])
     festival_name = StringField("Festival Display Name", validators=[DataRequired(), Length(max=160)])
     festival_year = IntegerField("Festival Year", validators=[Optional()])
     submit = SubmitField("Create Committee")

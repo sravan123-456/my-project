@@ -28,6 +28,10 @@
             <div class="landing-collage-item landing-collage-10"></div>
             <div class="landing-collage-item landing-collage-11"></div>
             <div class="landing-collage-item landing-collage-12"></div>
+            <div class="landing-collage-item landing-collage-13"></div>
+            <div class="landing-collage-item landing-collage-14"></div>
+            <div class="landing-collage-item landing-collage-15"></div>
+            <div class="landing-collage-item landing-collage-16"></div>
         </div>
         <div class="landing-hero-scrim" aria-hidden="true"></div>
         <div class="landing-hero-content">
@@ -80,7 +84,7 @@
             {% endwith %}
 
             <!-- Step 1: New or Existing Committee -->
-            <section id="landingChoiceStep" class="landing-step{% if landing_view == 'choice' %} active{% endif %}">
+            <section id="landingChoiceStep" class="landing-step landing-step-compact{% if landing_view == 'choice' %} active{% endif %}">
                 <h1 class="landing-step-title">{{ t('landing.choice.title') }}</h1>
                 <p class="landing-step-subtitle">{{ t('landing.choice.subtitle') }}</p>
 
@@ -223,7 +227,7 @@
                 </p>
             </section>
 
-            <div class="landing-footer text-center mt-4">
+            <div class="landing-footer text-center mt-3">
                 <a href="{{ url_for('main.help_page') }}">{{ t('footer.help') }}</a>
                 <span class="mx-1">·</span>
                 <a href="{{ url_for('main.help_page') }}#privacy">{{ t('footer.privacy') }}</a>
