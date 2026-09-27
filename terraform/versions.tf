@@ -13,7 +13,6 @@ terraform {
   }
 
   backend "gcs" {
-    bucket = "business-account-506411-vinayaka-tfstate"
-    prefix = "terraform/state"
+    # bucket and prefix are supplied at init time via -backend-config (see CI workflows).
   }
 }

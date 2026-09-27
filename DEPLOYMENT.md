@@ -10,6 +10,7 @@ App URL: `http://<VM_IP>:8080`
 
 | Workflow | When to run | What it does |
 |----------|-------------|--------------|
+| **Bootstrap New GCP Project (one-click)** | New GCP account / project | Enables APIs, Terraform, deploy — see [BOOTSTRAP.md](BOOTSTRAP.md) |
 | **Provision GCP VM (Terraform)** | First time + infra changes | Creates VM, static IP, firewall, installs Docker |
 | **Deploy Application to GCP VM** | Every code change | Pulls latest code and runs `docker compose up` |
 
@@ -102,7 +103,9 @@ cd terraform
 cp terraform.tfvars.example terraform.tfvars
 # Edit terraform.tfvars with your values
 
-terraform init
+terraform init \
+  -backend-config="bucket=business-account-506411-vinayaka-tfstate" \
+  -backend-config="prefix=terraform/state"
 terraform apply
 ```
 

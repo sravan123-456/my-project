@@ -1,0 +1,155 @@
+name: Deploy App (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      gcp_project_id:
+        description: GCP project ID
+        required: true
+        type: string
+      gcp_zone:
+        description: GCP zone
+        required: false
+        type: string
+        default: us-central1-a
+      vm_name:
+        description: VM instance name
+        required: false
+        type: string
+        default: vinayaka-festival
+      domain_name:
+        description: Public domain for the app
+        required: true
+        type: string
+      github_repo_url:
+        description: Git repo URL cloned on the VM
+        required: false
+        type: string
+        default: https://github.com/sravan123-456/my-project.git
+      app_dir:
+        description: App directory on the VM
+        required: false
+        type: string
+        default: /opt/vinayaka-festival
+    secrets:
+      GCP_SA_KEY:
+        required: true
+
+jobs:
+  deploy:
+    name: Deploy Docker App
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GCP_PROJECT: ${{ inputs.gcp_project_id }}
+      GCP_ZONE: ${{ inputs.gcp_zone }}
+      GCE_INSTANCE: ${{ inputs.vm_name }}
+      APP_DIR: ${{ inputs.app_dir }}
+      APP_DOMAIN: ${{ inputs.domain_name }}
+      GITHUB_REPO_URL: ${{ inputs.github_repo_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.GCP_PROJECT }}
+
+      - name: Wait for VM SSH
+        run: |
+          echo "Waiting for VM ${GCE_INSTANCE} to accept SSH..."
+          for i in $(seq 1 36); do
+            if gcloud compute ssh "${GCE_INSTANCE}" \
+              --zone "${GCP_ZONE}" \
+              --project "${GCP_PROJECT}" \
+              --quiet \
+              --command="echo ready" >/dev/null 2>&1; then
+              echo "VM is reachable."
+              exit 0
+            fi
+            echo "Attempt ${i}: VM not ready yet, retrying in 10s..."
+            sleep 10
+          done
+          echo "VM did not become SSH-ready in time." >&2
+          exit 1
+
+      - name: Sync Firebase secrets to VM
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          if ! gcloud secrets describe vinayaka-firebase-web-config --project="${GCP_PROJECT}" >/dev/null 2>&1; then
+            echo "Firebase secrets are not provisioned yet. Run Terraform first."
+            exit 0
+          fi
+          gcloud secrets versions access latest \
+            --secret=vinayaka-firebase-admin-sa \
+            --project="${GCP_PROJECT}" > /tmp/firebase-service-account.json
+          gcloud secrets versions access latest \
+            --secret=vinayaka-firebase-web-config \
+            --project="${GCP_PROJECT}" > /tmp/firebase-web-config.json
+          gcloud compute scp /tmp/firebase-service-account.json "${GCE_INSTANCE}:/tmp/firebase-service-account.json" \
+            --zone "${GCP_ZONE}" --project "${GCP_PROJECT}" --quiet
+          gcloud compute scp /tmp/firebase-web-config.json "${GCE_INSTANCE}:/tmp/firebase-web-config.json" \
+            --zone "${GCP_ZONE}" --project "${GCP_PROJECT}" --quiet
+          gcloud compute scp scripts/apply-firebase-env.py "${GCE_INSTANCE}:/tmp/apply-firebase-env.py" \
+            --zone "${GCP_ZONE}" --project "${GCP_PROJECT}" --quiet
+          gcloud compute ssh "${GCE_INSTANCE}" \
+            --zone "${GCP_ZONE}" \
+            --project "${GCP_PROJECT}" \
+            --quiet \
+            --command="set -e
+              mkdir -p '${APP_DIR}/secrets'
+              install -m 600 /tmp/firebase-service-account.json '${APP_DIR}/secrets/firebase-service-account.json'
+              python3 /tmp/apply-firebase-env.py /tmp/firebase-web-config.json '${APP_DIR}'
+              rm -f /tmp/firebase-service-account.json /tmp/firebase-web-config.json /tmp/apply-firebase-env.py"
+
+      - name: Deploy latest code on VM
+        run: |
+          gcloud compute ssh "${GCE_INSTANCE}" \
+            --zone "${GCP_ZONE}" \
+            --project "${GCP_PROJECT}" \
+            --quiet \
+            --ssh-flag=-oServerAliveInterval=30 \
+            --ssh-flag=-oServerAliveCountMax=60 \
+            --command="set -e
+              APP_DIR='${APP_DIR}'
+              REPO_URL='${GITHUB_REPO_URL}'
+              if [ ! -d \"\${APP_DIR}/.git\" ]; then
+                sudo mkdir -p \"\${APP_DIR}\"
+                sudo git clone \"\${REPO_URL}\" \"\${APP_DIR}\"
+              fi
+              sudo chown -R \$USER:\$USER \"\${APP_DIR}\"
+              sudo chmod -R u+rwX \"\${APP_DIR}/.git\" 2>/dev/null || true
+              git config --global --add safe.directory \"\${APP_DIR}\"
+              cd \"\${APP_DIR}\"
+              git fetch origin main
+              git reset --hard origin/main
+              chmod +x scripts/deploy.sh scripts/apply-nginx-domain-only.sh
+              SKIP_GIT_PULL=1 APP_DIR=\"\${APP_DIR}\" DOMAIN='${APP_DOMAIN}' ./scripts/deploy.sh"
+
+      - name: Show app URL
+        run: |
+          echo "## App deployed" >> "$GITHUB_STEP_SUMMARY"
+          echo "Open: https://${APP_DOMAIN}" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Health check
+        run: |
+          URL="https://${APP_DOMAIN}/health"
+          echo "Waiting for app at ${URL}..."
+          for attempt in $(seq 1 60); do
+            if curl -sSf -m 10 "${URL}" > /dev/null; then
+              echo "Health check passed on attempt ${attempt}"
+              exit 0
+            fi
+            echo "Attempt ${attempt} failed (app still starting), retrying in 5s..."
+            sleep 5
+          done
+          echo "Health check failed: app did not respond after 5 minutes"
+          exit 1

@@ -2,99 +2,45 @@ name: Provision GCP VM (Terraform)
 
 on:
   workflow_dispatch:
+    inputs:
+      gcp_project_id:
+        description: GCP project ID
+        required: false
+        type: string
+        default: business-account-506411
+      domain_name:
+        description: Public domain
+        required: false
+        type: string
+        default: indukuru.online
+      gcp_zone:
+        description: GCP zone
+        required: false
+        type: string
+        default: us-central1-a
+      vm_name:
+        description: VM name
+        required: false
+        type: string
+        default: vinayaka-festival
   push:
     branches: [main]
     paths:
       - "terraform/**"
       - ".github/workflows/provision-vm.yml"
+      - ".github/workflows/terraform-provision.yml"
 
 concurrency:
   group: vinayaka-terraform
   cancel-in-progress: false
 
-env:
-  GCP_PROJECT: business-account-506411
-  GCP_ZONE: us-central1-a
-  GCE_INSTANCE: vinayaka-festival
-  TF_DIR: terraform
-
 jobs:
   provision:
-    name: Terraform Apply
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-
-      - name: Set up gcloud
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ env.GCP_PROJECT }}
-
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.9.8
-          terraform_wrapper: false
-
-      - name: Write terraform.tfvars
-        working-directory: ${{ env.TF_DIR }}
-        env:
-          TF_VAR_secret_key: ${{ secrets.SECRET_KEY }}
-          TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
-        run: |
-          cat > terraform.tfvars <<EOF
-          project_id      = "${GCP_PROJECT}"
-          region          = "us-central1"
-          zone            = "${GCP_ZONE}"
-          vm_name         = "${GCE_INSTANCE}"
-          machine_type    = "e2-micro"
-          boot_disk_size_gb = 10
-          app_port        = 8080
-          domain_name     = "indukuru.online"
-          github_repo_url = "https://github.com/sravan123-456/my-project.git"
-          ssh_user        = "vandana"
-          cicd_service_account_email = "github-actions@business-account-506411.iam.gserviceaccount.com"
-          EOF
-
-      - name: Terraform init
-        working-directory: ${{ env.TF_DIR }}
-        run: terraform init -input=false
-
-      - name: Terraform apply
-        working-directory: ${{ env.TF_DIR }}
-        env:
-          TF_VAR_secret_key: ${{ secrets.SECRET_KEY }}
-          TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
-        run: terraform apply -auto-approve -input=false
-
-      - name: Show outputs
-        working-directory: ${{ env.TF_DIR }}
-        run: |
-          echo "## Deployment URLs" >> "$GITHUB_STEP_SUMMARY"
-          echo "- App URL: $(terraform output -raw app_url)" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Static IP (DNS A record): $(terraform output -raw dns_a_record_value)" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Domain: $(terraform output -raw domain_name)" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Firebase auth domain: $(terraform output -raw firebase_auth_domain)" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Firebase web app ID: $(terraform output -raw firebase_web_app_id)" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Firebase admin secret: $(terraform output -raw firebase_admin_sa_secret)" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Firebase web config secret: $(terraform output -raw firebase_web_config_secret)" >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Wait for app
-        run: |
-          echo "Polling https://indukuru.online for up to 2 min..."
-          for i in $(seq 1 24); do
-            if curl -sSf -m 5 "https://indukuru.online/health" > /dev/null; then
-              echo "App is up at https://indukuru.online"
-              exit 0
-            fi
-            sleep 5
-          done
-          echo "App did not respond in time. Check VM logs: sudo tail -f /var/log/vinayaka-startup.log" >&2
-          exit 1
+    uses: ./.github/workflows/terraform-provision.yml
+    with:
+      gcp_project_id: ${{ github.event.inputs.gcp_project_id || 'business-account-506411' }}
+      gcp_zone: ${{ github.event.inputs.gcp_zone || 'us-central1-a' }}
+      vm_name: ${{ github.event.inputs.vm_name || 'vinayaka-festival' }}
+      domain_name: ${{ github.event.inputs.domain_name || 'indukuru.online' }}
+      skip_health_check: false
+    secrets: inherit

@@ -1,0 +1,119 @@
+name: Bootstrap New GCP Project (one-click)
+
+on:
+  workflow_dispatch:
+    inputs:
+      gcp_project_id:
+        description: GCP project ID (new billing account / project)
+        required: true
+        type: string
+      domain_name:
+        description: Domain for the app (DNS A record will point to VM IP)
+        required: true
+        type: string
+      gcp_region:
+        description: GCP region
+        required: false
+        type: string
+        default: us-central1
+      gcp_zone:
+        description: GCP zone
+        required: false
+        type: string
+        default: us-central1-a
+      vm_name:
+        description: VM instance name
+        required: false
+        type: string
+        default: vinayaka-festival
+      github_repo_url:
+        description: Git repository URL deployed on the VM
+        required: false
+        type: string
+        default: https://github.com/sravan123-456/my-project.git
+      ssh_user:
+        description: Linux SSH user on the VM
+        required: false
+        type: string
+        default: vandana
+
+concurrency:
+  group: bootstrap-${{ inputs.gcp_project_id }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Enable APIs & create prerequisites
+    runs-on: ubuntu-latest
+    env:
+      GCP_PROJECT: ${{ inputs.gcp_project_id }}
+      GCP_REGION: ${{ inputs.gcp_region }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.GCP_PROJECT }}
+
+      - name: Bootstrap project
+        run: |
+          chmod +x scripts/bootstrap-gcp-project.sh
+          ./scripts/bootstrap-gcp-project.sh "${GCP_PROJECT}" "${GCP_REGION}"
+
+      - name: Summary
+        run: |
+          echo "## Bootstrap complete" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Project:** ${{ inputs.gcp_project_id }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Domain:** ${{ inputs.domain_name }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **TF state:** gs://${{ inputs.gcp_project_id }}-vinayaka-tfstate" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Next jobs will run Terraform and deploy the application." >> "$GITHUB_STEP_SUMMARY"
+
+  provision:
+    name: Provision infrastructure (Terraform)
+    needs: prepare
+    uses: ./.github/workflows/terraform-provision.yml
+    with:
+      gcp_project_id: ${{ inputs.gcp_project_id }}
+      gcp_region: ${{ inputs.gcp_region }}
+      gcp_zone: ${{ inputs.gcp_zone }}
+      vm_name: ${{ inputs.vm_name }}
+      domain_name: ${{ inputs.domain_name }}
+      github_repo_url: ${{ inputs.github_repo_url }}
+      ssh_user: ${{ inputs.ssh_user }}
+      skip_health_check: true
+    secrets: inherit
+
+  deploy:
+    name: Deploy application
+    needs: provision
+    uses: ./.github/workflows/deploy-app.yml
+    with:
+      gcp_project_id: ${{ inputs.gcp_project_id }}
+      gcp_zone: ${{ inputs.gcp_zone }}
+      vm_name: ${{ inputs.vm_name }}
+      domain_name: ${{ inputs.domain_name }}
+      github_repo_url: ${{ inputs.github_repo_url }}
+    secrets: inherit
+
+  finish:
+    name: Final summary
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Done
+        run: |
+          echo "## One-click bootstrap finished" >> "$GITHUB_STEP_SUMMARY"
+          echo "1. Point **${{ inputs.domain_name }}** A record to the static IP from the Terraform job." >> "$GITHUB_STEP_SUMMARY"
+          echo "2. Open https://${{ inputs.domain_name }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "3. Update GitHub repository **Variables** (optional) so push-to-deploy uses the new project:" >> "$GITHUB_STEP_SUMMARY"
+          echo "   - \`GCP_PROJECT\`, \`GCP_ZONE\`, \`GCE_INSTANCE\`, \`APP_DOMAIN\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "4. Ensure secret **GCP_SA_KEY** is the JSON key for \`github-actions@${{ inputs.gcp_project_id }}.iam.gserviceaccount.com\`." >> "$GITHUB_STEP_SUMMARY"
