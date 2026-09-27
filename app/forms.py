@@ -29,7 +29,7 @@ class ForgotPasswordForm(FlaskForm):
         validators=[DataRequired(), Length(min=3, max=80)],
     )
     username = StringField("Username", validators=[DataRequired(), Length(min=3, max=80)])
-    submit = SubmitField("Request Password Reset")
+    submit = SubmitField("Send OTP to My Phone")
 
 
 class AdminResetPasswordForm(FlaskForm):
@@ -59,7 +59,7 @@ class JoinRegisterForm(FlaskForm):
     full_name = StringField("Full Name", validators=[DataRequired(), Length(max=120)])
     phone = StringField(
         "Phone Number",
-        validators=[Optional(), Length(min=10, max=15)],
+        validators=[DataRequired(), Length(min=10, max=15)],
     )
     email = StringField("Email", validators=[Optional(), Length(max=120)])
     username = StringField("Username", validators=[DataRequired(), Length(min=3, max=80)])
@@ -100,6 +100,10 @@ class StartCommitteeForm(FlaskForm):
     festival_name = StringField("Festival Display Name", validators=[DataRequired(), Length(max=160)])
     festival_year = IntegerField("Festival Year", validators=[Optional()])
     full_name = StringField("Your Full Name", validators=[DataRequired(), Length(max=120)])
+    phone = StringField(
+        "Phone Number",
+        validators=[DataRequired(), Length(min=10, max=15)],
+    )
     username = StringField("Choose Username", validators=[DataRequired(), Length(min=3, max=80)])
     password = PasswordField("Password", validators=[DataRequired(), Length(min=6)])
     confirm_password = PasswordField(

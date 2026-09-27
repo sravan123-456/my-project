@@ -1,14 +1,13 @@
 import re
 from datetime import date, datetime
 
-from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, session, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.exceptions import BadRequest
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 
 from app import db
-from app.activity import log_activity
 from app.forms import (
     ChangePasswordForm,
     ForgotPasswordForm,
@@ -27,7 +26,6 @@ from app.models import (
     ORG_STATUS_PENDING,
     LoginEvent,
     Organization,
-    PasswordResetRequest,
     User,
 )
 
@@ -146,46 +144,6 @@ def _complete_login(user, username_attempt):
     return user, None
 
 
-def _find_user_for_firebase(decoded_token):
-    uid = decoded_token.get("uid")
-    phone = normalize_phone(decoded_token.get("phone_number"))
-    email = normalize_email(decoded_token.get("email"))
-
-    if uid:
-        user = User.query.filter_by(firebase_uid=uid).first()
-        if user:
-            return user
-
-    if phone:
-        user = User.query.filter_by(phone=phone).first()
-        if user:
-            return user
-
-    if email:
-        user = User.query.filter_by(email=email).first()
-        if user:
-            return user
-
-    return None
-
-
-def _link_firebase_identity(user, decoded_token):
-    uid = decoded_token.get("uid")
-    phone = normalize_phone(decoded_token.get("phone_number"))
-    email = normalize_email(decoded_token.get("email"))
-
-    if uid:
-        user.firebase_uid = uid
-    if phone and not user.phone:
-        user.phone = phone
-    if email and not user.email:
-        user.email = email
-    if phone:
-        user.auth_provider = "phone"
-    elif email and user.auth_provider == "password":
-        user.auth_provider = "google" if decoded_token.get("firebase", {}).get("sign_in_provider") == "google.com" else "email"
-
-
 def _handle_landing_post(login_form, join_form, start_form):
     active_tab = request.form.get("active_tab", "existing")
 
@@ -231,13 +189,13 @@ def _handle_landing_post(login_form, join_form, start_form):
             else:
                 normalized_phone = normalize_phone(join_form.phone.data)
                 normalized_email = normalize_email(join_form.email.data)
-                if join_form.phone.data and not normalized_phone:
+                if not normalized_phone:
                     _mark_join_form_error(
                         join_form,
                         "phone",
                         "Enter a valid 10-digit Indian mobile number.",
                     )
-                elif normalized_phone and User.query.filter_by(phone=normalized_phone).first():
+                elif User.query.filter_by(phone=normalized_phone).first():
                     _mark_join_form_error(
                         join_form,
                         "phone",
@@ -270,7 +228,7 @@ def _handle_landing_post(login_form, join_form, start_form):
                     else:
                         flash(
                             "Join request submitted. Your committee admin will approve your account. "
-                            "Then log in with OTP, Google, or your committee password.",
+                            "Then log in with your committee code, username, and password.",
                             "success",
                         )
                         login_form.committee_code.data = committee_code
@@ -289,7 +247,21 @@ def _handle_landing_post(login_form, join_form, start_form):
             flash("That committee code is already taken. Choose another.", "warning")
         else:
             username = start_form.username.data.strip().lower()
-            if User.query.filter_by(username=username).first():
+            normalized_phone = normalize_phone(start_form.phone.data)
+            if not normalized_phone:
+                start_form.phone.errors.append(
+                    "Enter a valid 10-digit Indian mobile number."
+                )
+                flash("Enter a valid 10-digit Indian mobile number.", "danger")
+            elif User.query.filter_by(phone=normalized_phone).first():
+                start_form.phone.errors.append(
+                    "This phone number is already linked to another account."
+                )
+                flash(
+                    "This phone number is already linked to another account.",
+                    "danger",
+                )
+            elif User.query.filter_by(username=username).first():
                 start_form.username.errors.append(USERNAME_IN_USE_MESSAGE)
                 flash(USERNAME_IN_USE_MESSAGE, "danger")
             else:
@@ -307,6 +279,7 @@ def _handle_landing_post(login_form, join_form, start_form):
                 admin = User(
                     username=username,
                     full_name=start_form.full_name.data.strip(),
+                    phone=normalized_phone,
                     organization_id=org.id,
                     is_admin=True,
                     can_write=True,
@@ -344,6 +317,10 @@ def _landing_view(login_form, join_form, start_form, active_tab):
 
 
 def render_landing_page():
+    login_flash = session.pop("login_flash", None)
+    if login_flash:
+        flash(login_flash, "success")
+
     login_form = LoginForm()
     join_form = JoinRegisterForm()
     start_form = StartCommitteeForm()
@@ -378,47 +355,88 @@ def render_landing_page():
     )
 
 
-@auth_bp.route("/firebase/verify", methods=["POST"])
-def firebase_verify():
+def _mask_phone(phone):
+    if not phone or len(phone) < 4:
+        return "****"
+    return f"{'*' * (len(phone) - 4)}{phone[-4:]}"
+
+
+def _clear_password_reset_session():
+    session.pop("pwd_reset_user_id", None)
+    session.pop("pwd_reset_phone", None)
+
+
+@auth_bp.route("/forgot-password/otp")
+def forgot_password_otp():
+    if current_user.is_authenticated:
+        return redirect(url_for("main.dashboard"))
+
+    user_id = session.get("pwd_reset_user_id")
+    phone = session.get("pwd_reset_phone")
+    if not user_id or not phone:
+        flash("Start again by entering your committee code and username.", "warning")
+        return redirect(url_for("auth.forgot_password"))
+
+    user = User.query.get(user_id)
+    if not user or user.phone != phone:
+        _clear_password_reset_session()
+        flash("Password reset session expired. Please try again.", "warning")
+        return redirect(url_for("auth.forgot_password"))
+
     if not firebase_enabled():
-        return jsonify({"ok": False, "error": "Firebase login is not configured."}), 503
+        flash("Phone OTP reset is not configured yet. Contact your committee admin.", "warning")
+        return redirect(url_for("auth.forgot_password"))
+
+    return render_template(
+        "auth/forgot_password_otp.html",
+        masked_phone=_mask_phone(phone),
+        reset_phone=phone,
+    )
+
+
+@auth_bp.route("/forgot-password/complete", methods=["POST"])
+def forgot_password_complete():
+    if not firebase_enabled():
+        return jsonify({"ok": False, "error": "Phone OTP reset is not configured."}), 503
+
+    user_id = session.get("pwd_reset_user_id")
+    phone = session.get("pwd_reset_phone")
+    if not user_id or not phone:
+        return jsonify({"ok": False, "error": "Session expired. Start again."}), 400
+
+    user = User.query.get(user_id)
+    if not user or user.phone != phone:
+        _clear_password_reset_session()
+        return jsonify({"ok": False, "error": "Session expired. Start again."}), 400
 
     payload = request.get_json(silent=True) or {}
     id_token = payload.get("idToken")
+    password = (payload.get("password") or "").strip()
     if not id_token:
         raise BadRequest("Missing idToken.")
+    if len(password) < 6:
+        return jsonify({"ok": False, "error": "Password must be at least 6 characters."}), 400
 
     try:
         decoded = verify_id_token(id_token)
     except Exception:
-        return jsonify({"ok": False, "error": "Invalid or expired login. Try again."}), 401
+        return jsonify({"ok": False, "error": "Invalid or expired OTP. Try again."}), 401
 
-    user = _find_user_for_firebase(decoded)
-    if not user:
-        return jsonify(
-            {
-                "ok": False,
-                "error": "No account found for this phone or email. Join your committee first.",
-                "code": "account_not_found",
-            }
-        ), 404
+    token_phone = normalize_phone(decoded.get("phone_number"))
+    if token_phone != phone:
+        return jsonify({"ok": False, "error": "Phone verification failed."}), 403
 
-    _link_firebase_identity(user, decoded)
+    user.set_password(password)
+    if decoded.get("uid"):
+        user.firebase_uid = decoded.get("uid")
     db.session.commit()
-
-    logged_in_user, error = _complete_login(user, user.username)
-    if error:
-        return jsonify({"ok": False, "error": error}), 403
-
-    redirect_url = url_for("main.dashboard")
-    if not logged_in_user.profile_photo_key:
-        redirect_url = url_for("profile.view_profile", welcome=1)
+    _clear_password_reset_session()
+    session["login_flash"] = "Password updated. Log in with your new password."
 
     return jsonify(
         {
             "ok": True,
-            "redirect": redirect_url,
-            "name": logged_in_user.full_name,
+            "redirect": url_for("auth.login", _anchor="login"),
         }
     )
 
@@ -462,55 +480,38 @@ def forgot_password():
         form.committee_code.data = org_slug
 
     if form.validate_on_submit():
-        committee_code = _normalize_slug(form.committee_code.data)
-        username = form.username.data.strip().lower()
-        org, org_error = _get_active_org(committee_code)
-
-        if org_error:
-            flash(org_error, "danger")
+        if not firebase_enabled():
+            flash(
+                "Phone OTP reset is not configured yet. Contact your committee admin.",
+                "warning",
+            )
         else:
-            user = User.query.filter_by(username=username, organization_id=org.id).first()
-            if not user:
-                flash(
-                    "If this account exists, your committee admin will be notified.",
-                    "info",
-                )
-            elif not user.is_approved:
-                flash(
-                    "Your account is not approved yet. Contact your committee admin.",
-                    "warning",
-                )
+            committee_code = _normalize_slug(form.committee_code.data)
+            username = form.username.data.strip().lower()
+            org, org_error = _get_active_org(committee_code)
+
+            if org_error:
+                flash(org_error, "danger")
             else:
-                existing = PasswordResetRequest.query.filter_by(
-                    user_id=user.id,
-                    status=PasswordResetRequest.STATUS_PENDING,
+                user = User.query.filter_by(
+                    username=username, organization_id=org.id
                 ).first()
-                if existing:
+                if not user:
+                    flash("No account found with that committee code and username.", "danger")
+                elif not user.is_approved:
                     flash(
-                        "A password reset request is already pending. "
-                        "Please ask your committee admin to set a new password.",
-                        "info",
+                        "Your account is not approved yet. Contact your committee admin.",
+                        "warning",
+                    )
+                elif not user.phone:
+                    flash(
+                        "No phone number is saved on your account. Contact your committee admin.",
+                        "warning",
                     )
                 else:
-                    db.session.add(
-                        PasswordResetRequest(
-                            organization_id=org.id,
-                            user_id=user.id,
-                        )
-                    )
-                    log_activity(
-                        user,
-                        "requested",
-                        "password_reset",
-                        f"{user.full_name} ({user.username}) requested a password reset",
-                        user.id,
-                    )
-                    db.session.commit()
-                    flash(
-                        "Password reset request sent. Your committee admin will set a new password for you.",
-                        "success",
-                    )
-                return redirect(url_for("main.index", org=committee_code, _anchor="committee"))
+                    session["pwd_reset_user_id"] = user.id
+                    session["pwd_reset_phone"] = user.phone
+                    return redirect(url_for("auth.forgot_password_otp"))
 
     return render_template("auth/forgot_password.html", form=form)
 

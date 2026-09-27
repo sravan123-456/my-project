@@ -60,9 +60,6 @@
                 {% endif %}
             {% endwith %}
 
-            <div id="landingAuthError" class="alert alert-danger py-2 d-none" role="alert"></div>
-            <div id="landingAuthInfo" class="alert alert-info py-2 d-none" role="status"></div>
-
             <!-- Step 1: New or Existing Committee -->
             <section id="landingChoiceStep" class="landing-step{% if landing_view == 'choice' %} active{% endif %}">
                 <h1 class="landing-step-title">{{ t('landing.choice.title') }}</h1>
@@ -123,6 +120,12 @@
                         {% for error in start_form.full_name.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
                     </div>
                     <div class="mb-2">
+                        {{ start_form.phone.label(class="form-label landing-label") }}
+                        {{ start_form.phone(class="form-control landing-input" + (" is-invalid" if start_form.phone.errors else ""), placeholder="10-digit mobile", inputmode="numeric", maxlength="10") }}
+                        <div class="form-text">{{ t('landing.auth.phone_required_hint') }}</div>
+                        {% for error in start_form.phone.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="mb-2">
                         {{ start_form.username.label(class="form-label landing-label") }}
                         {{ start_form.username(class="form-control landing-input" + (" is-invalid" if start_form.username.errors else "")) }}
                         {% for error in start_form.username.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
@@ -176,8 +179,9 @@
                         {% for error in join_form.email.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
                     </div>
                     <div class="mb-2">
-                        {{ join_form.phone.label(class="form-label landing-label") }} <span class="text-muted small">(optional)</span>
-                        {{ join_form.phone(class="form-control landing-input" + (" is-invalid" if join_form.phone.errors else ""), placeholder="10-digit mobile") }}
+                        {{ join_form.phone.label(class="form-label landing-label") }}
+                        {{ join_form.phone(class="form-control landing-input" + (" is-invalid" if join_form.phone.errors else ""), placeholder="10-digit mobile", inputmode="numeric", maxlength="10") }}
+                        <div class="form-text">{{ t('landing.auth.phone_required_hint') }}</div>
                         {% for error in join_form.phone.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
                     </div>
                     <div class="mb-2">
@@ -247,46 +251,6 @@
                     {{ login_form.login_submit(class="btn w-100 landing-btn-cta", value=t('landing.join.login_link'), **{"data-loading-text": t('common.loading')}) }}
                 </form>
 
-                {% if firebase_enabled %}
-                <div class="landing-divider my-3"></div>
-                <p class="text-center text-muted small mb-2">or sign in with</p>
-
-                <div id="phoneLoginStep">
-                    <label class="form-label landing-label" for="landingPhone">{{ t('landing.auth.phone_label') }}</label>
-                    <div class="landing-phone-row mb-2">
-                        <div class="landing-country-code">🇮🇳 +91</div>
-                        <input type="tel" id="landingPhone" class="form-control landing-input"
-                               inputmode="numeric" maxlength="10" pattern="[6-9][0-9]{9}"
-                               placeholder="{{ t('landing.auth.phone_placeholder') }}" autocomplete="tel-national">
-                    </div>
-                    <button type="button" id="sendOtpBtn" class="btn w-100 landing-btn-outline mb-2" disabled>
-                        {{ t('landing.auth.send_otp') }}
-                    </button>
-                    <div id="firebase-recaptcha"></div>
-                </div>
-
-                <div id="otpLoginStep" class="d-none">
-                    <label class="form-label landing-label" for="landingOtp">{{ t('landing.auth.otp_label') }}</label>
-                    <input type="text" id="landingOtp" class="form-control landing-input mb-2"
-                           inputmode="numeric" maxlength="6" placeholder="6-digit OTP" autocomplete="one-time-code">
-                    <button type="button" id="verifyOtpBtn" class="btn w-100 landing-btn-cta mb-2">
-                        {{ t('landing.auth.verify_otp') }}
-                    </button>
-                    <button type="button" id="changePhoneBtn" class="btn btn-link w-100 landing-link-btn">
-                        {{ t('landing.auth.change_phone') }}
-                    </button>
-                </div>
-
-                <button type="button" id="googleSignInBtn" class="btn w-100 landing-btn-google mt-2">
-                    <span class="landing-google-icon" aria-hidden="true">G</span>
-                    {{ t('landing.auth.google') }}
-                </button>
-                {% else %}
-                <div class="alert alert-warning py-2 small mb-0">
-                    {{ t('landing.auth.firebase_setup_hint') }}
-                </div>
-                {% endif %}
-
                 <p class="landing-switch text-center mt-4 mb-0">
                     New to your committee?
                     <button type="button" class="btn btn-link p-0 landing-switch-link" data-landing-go="existing-join">
@@ -307,15 +271,6 @@
 
     <script src="{{ url_for('static', filename='vendor/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
-    {% if firebase_enabled %}
-    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
-    <script>
-      window.firebaseClientConfig = {{ firebase_client_config|tojson }};
-      window.firebaseVerifyUrl = {{ url_for('auth.firebase_verify')|tojson }};
-    </script>
-    <script src="{{ url_for('static', filename='js/firebase-auth.js') }}"></script>
-    {% endif %}
     <script src="{{ url_for('static', filename='js/landing.js') }}"></script>
 </body>
 </html>
