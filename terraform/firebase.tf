@@ -63,31 +63,8 @@ resource "google_identity_platform_config" "default" {
   ]
 }
 
-resource "google_iap_brand" "firebase_brand" {
-  provider          = google-beta
-  project           = var.project_id
-  support_email     = var.firebase_support_email
-  application_title = "Festival Fund Manager"
-
-  depends_on = [google_identity_platform_config.default]
-}
-
-resource "google_iap_client" "firebase_web_client" {
-  provider     = google-beta
-  display_name = "Firebase Web Login Client"
-  brand        = google_iap_brand.firebase_brand.name
-}
-
-resource "google_identity_platform_default_supported_idp_config" "google" {
-  provider      = google-beta
-  project       = var.project_id
-  enabled       = true
-  idp_id        = "google.com"
-  client_id     = google_iap_client.firebase_web_client.client_id
-  client_secret = google_iap_client.firebase_web_client.secret
-
-  depends_on = [google_identity_platform_config.default]
-}
+# Google Sign-In: personal GCP projects (no org) cannot use google_iap_brand.
+# Enable Google provider in Firebase Console → Authentication → Sign-in method → Google.
 
 resource "google_service_account" "firebase_admin" {
   account_id   = "vinayaka-firebase-admin"
