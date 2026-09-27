@@ -41,12 +41,13 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.9.8
+          terraform_wrapper: false
 
       - name: Write terraform.tfvars
         working-directory: ${{ env.TF_DIR }}
         env:
-          SECRET_KEY: ${{ secrets.SECRET_KEY }}
-          SSH_PUBLIC_KEY: ${{ secrets.SSH_PUBLIC_KEY }}
+          TF_VAR_secret_key: ${{ secrets.SECRET_KEY }}
+          TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
         run: |
           cat > terraform.tfvars <<EOF
           project_id      = "${GCP_PROJECT}"
@@ -57,10 +58,8 @@ jobs:
           boot_disk_size_gb = 10
           app_port        = 8080
           domain_name     = "indukuru.online"
-          secret_key      = "${SECRET_KEY}"
           github_repo_url = "https://github.com/sravan123-456/my-project.git"
           ssh_user        = "vandana"
-          ssh_public_key  = "${SSH_PUBLIC_KEY}"
           cicd_service_account_email = "github-actions@business-account-506411.iam.gserviceaccount.com"
           EOF
 
@@ -70,6 +69,9 @@ jobs:
 
       - name: Terraform apply
         working-directory: ${{ env.TF_DIR }}
+        env:
+          TF_VAR_secret_key: ${{ secrets.SECRET_KEY }}
+          TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
         run: terraform apply -auto-approve -input=false
 
       - name: Show outputs
@@ -84,16 +86,10 @@ jobs:
           echo "- Firebase admin secret: $(terraform output -raw firebase_admin_sa_secret)" >> "$GITHUB_STEP_SUMMARY"
           echo "- Firebase web config secret: $(terraform output -raw firebase_web_config_secret)" >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Reset VM to run startup script
-        run: |
-          gcloud compute instances reset "${GCE_INSTANCE}" \
-            --zone "${GCP_ZONE}" \
-            --project "${GCP_PROJECT}"
-
       - name: Wait for app
         run: |
-          echo "Polling https://indukuru.online for up to 8 min..."
-          for i in $(seq 1 96); do
+          echo "Polling https://indukuru.online for up to 2 min..."
+          for i in $(seq 1 24); do
             if curl -sSf -m 5 "https://indukuru.online/health" > /dev/null; then
               echo "App is up at https://indukuru.online"
               exit 0
