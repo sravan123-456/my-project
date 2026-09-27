@@ -1,19 +1,61 @@
 (function () {
   "use strict";
 
-  var toggleBtn = document.getElementById("toggleCommitteeLogin");
-  var panel = document.getElementById("committeeLoginPanel");
-  if (!toggleBtn || !panel) return;
+  var steps = {
+    choice: document.getElementById("landingChoiceStep"),
+    new: document.getElementById("landingNewCommitteeStep"),
+    "existing-join": document.getElementById("landingExistingJoinStep"),
+    "existing-login": document.getElementById("landingExistingLoginStep"),
+  };
+  var backBtn = document.getElementById("landingBackBtn");
+  var hash = (window.location.hash || "").replace("#", "");
+  var initialView = document.body.getAttribute("data-landing-view") || "choice";
+  if (hash === "existing-committee" || hash === "join") {
+    initialView = "existing-join";
+  } else if (hash === "login" || hash === "committee") {
+    initialView = "existing-login";
+  } else if (hash === "new-committee" || hash === "new") {
+    initialView = "new";
+  }
 
-  var showLabel = toggleBtn.dataset.showLabel || toggleBtn.textContent;
-  var hideLabel = toggleBtn.dataset.hideLabel || "Hide committee login";
+  function showStep(view) {
+    Object.keys(steps).forEach(function (key) {
+      if (!steps[key]) return;
+      steps[key].classList.toggle("active", key === view);
+    });
+    if (backBtn) {
+      backBtn.classList.toggle("d-none", view === "choice");
+    }
+    document.body.setAttribute("data-landing-view", view);
+  }
 
-  toggleBtn.addEventListener("click", function () {
-    panel.classList.toggle("show");
-    toggleBtn.textContent = panel.classList.contains("show") ? hideLabel : showLabel;
+  document.querySelectorAll("[data-landing-go]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      showStep(btn.getAttribute("data-landing-go"));
+    });
   });
 
-  if (window.location.hash === "#committee" || panel.classList.contains("show")) {
-    panel.classList.add("show");
+  if (backBtn) {
+    backBtn.addEventListener("click", function () {
+      var current = document.body.getAttribute("data-landing-view");
+      if (current === "existing-login") {
+        showStep("existing-join");
+      } else {
+        showStep("choice");
+      }
+    });
   }
+
+  var joinForm = document.getElementById("joinAccountForm");
+  if (joinForm) {
+    joinForm.addEventListener("submit", function () {
+      var password = document.getElementById("joinPassword");
+      var confirm = document.getElementById("joinConfirmPassword");
+      if (password && confirm) {
+        confirm.value = password.value;
+      }
+    });
+  }
+
+  showStep(initialView);
 })();

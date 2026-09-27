@@ -328,6 +328,21 @@ def _handle_landing_post(login_form, join_form, start_form):
     return None, active_tab
 
 
+def _landing_view(login_form, join_form, start_form, active_tab):
+    if request.method == "POST":
+        if start_form.start_submit.data or (
+            active_tab == "new" and start_form.errors
+        ):
+            return "new"
+        if join_form.join_submit.data or join_form.errors:
+            return "existing-join"
+        if login_form.login_submit.data or login_form.errors:
+            return "existing-login"
+    if active_tab == "new":
+        return "new"
+    return "choice"
+
+
 def render_landing_page():
     login_form = LoginForm()
     join_form = JoinRegisterForm()
@@ -349,12 +364,17 @@ def render_landing_page():
         login_form.committee_code.data = org_slug
         join_form.committee_code.data = org_slug
 
+    landing_view = _landing_view(login_form, join_form, start_form, active_tab)
+    if org_slug and request.method == "GET" and landing_view == "choice":
+        landing_view = "existing-join"
+
     return render_template(
         "landing.html",
         login_form=login_form,
         join_form=join_form,
         start_form=start_form,
         active_tab=active_tab,
+        landing_view=landing_view,
     )
 
 

@@ -13,7 +13,7 @@
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/landing.css') }}" rel="stylesheet">
 </head>
-<body class="landing-page">
+<body class="landing-page" data-landing-view="{{ landing_view }}">
     <div class="landing-collage" aria-hidden="true">
         <div class="landing-collage-item landing-collage-1"></div>
         <div class="landing-collage-item landing-collage-2"></div>
@@ -25,7 +25,10 @@
 
     <div class="landing-shell">
         <div class="landing-topbar">
-            <div class="dropdown">
+            <button type="button" id="landingBackBtn" class="btn btn-sm landing-back-btn d-none" aria-label="{{ t('landing.back') }}">
+                <i class="bi bi-arrow-left"></i> {{ t('landing.back') }}
+            </button>
+            <div class="dropdown ms-auto">
                 <button class="btn btn-sm landing-lang-btn dropdown-toggle" type="button"
                         data-bs-toggle="dropdown" aria-expanded="false">
                     {{ current_lang|upper }}
@@ -42,11 +45,9 @@
         </div>
 
         <div class="landing-card shadow-lg">
-            <div class="landing-brand text-center mb-4">
+            <div class="landing-brand text-center mb-3">
                 <div class="landing-logo">🙏</div>
-                <h1 class="landing-title">{{ platform_name }}</h1>
-                <p class="landing-tagline mb-1">{{ t('landing.auth.tagline') }}</p>
-                <p class="landing-subtagline">{{ t('landing.auth.growth_line') }}</p>
+                <p class="landing-domain mb-0">{{ platform_name|lower|replace(' ', '') }}.in</p>
             </div>
 
             {% with messages = get_flashed_messages(with_categories=true) %}
@@ -62,64 +63,173 @@
             <div id="landingAuthError" class="alert alert-danger py-2 d-none" role="alert"></div>
             <div id="landingAuthInfo" class="alert alert-info py-2 d-none" role="status"></div>
 
-            {% if firebase_enabled %}
-            <div id="phoneLoginStep">
-                <label class="form-label landing-label" for="landingPhone">{{ t('landing.auth.phone_label') }}</label>
-                <div class="landing-phone-row mb-3">
-                    <div class="landing-country-code">🇮🇳 +91</div>
-                    <input type="tel" id="landingPhone" class="form-control form-control-lg landing-input"
-                           inputmode="numeric" maxlength="10" pattern="[6-9][0-9]{9}"
-                           placeholder="{{ t('landing.auth.phone_placeholder') }}" autocomplete="tel-national">
-                </div>
-                <button type="button" id="sendOtpBtn" class="btn btn-lg w-100 landing-btn-primary" disabled>
-                    {{ t('landing.auth.send_otp') }}
+            <!-- Step 1: New or Existing Committee -->
+            <section id="landingChoiceStep" class="landing-step{% if landing_view == 'choice' %} active{% endif %}">
+                <h1 class="landing-step-title">{{ t('landing.choice.title') }}</h1>
+                <p class="landing-step-subtitle">{{ t('landing.choice.subtitle') }}</p>
+
+                <button type="button" class="landing-choice-card" data-landing-go="new">
+                    <span class="landing-choice-icon"><i class="bi bi-building-add"></i></span>
+                    <span class="landing-choice-text">
+                        <strong>{{ t('landing.choice.new') }}</strong>
+                        <small>{{ t('landing.choice.new_desc') }}</small>
+                    </span>
+                    <i class="bi bi-chevron-right landing-choice-arrow"></i>
                 </button>
-                <div id="firebase-recaptcha" class="mt-2"></div>
-            </div>
 
-            <div id="otpLoginStep" class="d-none">
-                <label class="form-label landing-label" for="landingOtp">{{ t('landing.auth.otp_label') }}</label>
-                <input type="text" id="landingOtp" class="form-control form-control-lg landing-input mb-3"
-                       inputmode="numeric" maxlength="6" placeholder="6-digit OTP" autocomplete="one-time-code">
-                <button type="button" id="verifyOtpBtn" class="btn btn-lg w-100 landing-btn-primary mb-2">
-                    {{ t('landing.auth.verify_otp') }}
+                <button type="button" class="landing-choice-card" data-landing-go="existing-join">
+                    <span class="landing-choice-icon"><i class="bi bi-people"></i></span>
+                    <span class="landing-choice-text">
+                        <strong>{{ t('landing.choice.existing') }}</strong>
+                        <small>{{ t('landing.choice.existing_desc') }}</small>
+                    </span>
+                    <i class="bi bi-chevron-right landing-choice-arrow"></i>
                 </button>
-                <button type="button" id="changePhoneBtn" class="btn btn-link w-100 landing-link-btn">
-                    {{ t('landing.auth.change_phone') }}
-                </button>
-            </div>
+            </section>
 
-            <div class="landing-divider my-4"></div>
+            <!-- Step 2a: New Committee registration -->
+            <section id="landingNewCommitteeStep" class="landing-step{% if landing_view == 'new' %} active{% endif %}">
+                <h1 class="landing-step-title">{{ t('landing.new.title') }}</h1>
+                <p class="landing-step-subtitle">{{ t('landing.new.subtitle') }}</p>
 
-            <button type="button" id="googleSignInBtn" class="btn btn-lg w-100 landing-btn-google mb-3">
-                <span class="landing-google-icon" aria-hidden="true">G</span>
-                {{ t('landing.auth.google') }}
-            </button>
-            {% endif %}
-
-            <button type="button" id="toggleCommitteeLogin" class="btn btn-link w-100 landing-link-btn"
-                    data-show-label="{{ t('landing.auth.committee_login') }}"
-                    data-hide-label="{{ t('landing.auth.hide_committee_login') }}">
-                {{ t('landing.auth.committee_login') }}
-            </button>
-
-            <div id="committeeLoginPanel" class="landing-committee-panel {% if not firebase_enabled or active_tab == 'existing' and login_form.errors %}show{% endif %}">
-                <form method="POST" novalidate class="mb-4">
-                    {{ login_form.hidden_tag() }}
-                    <input type="hidden" name="active_tab" value="existing">
-                    <div class="mb-3">
-                        {{ login_form.committee_code.label(class="form-label landing-label") }}
-                        {{ login_form.committee_code(class="form-control landing-input" + (" is-invalid" if login_form.committee_code.errors else ""), placeholder="e.g. indukuru") }}
-                        {% for error in login_form.committee_code.errors %}
-                        <div class="invalid-feedback d-block">{{ error }}</div>
-                        {% endfor %}
+                <form method="POST" novalidate>
+                    {{ start_form.hidden_tag() }}
+                    <input type="hidden" name="active_tab" value="new">
+                    <div class="mb-2">
+                        {{ start_form.name.label(class="form-label landing-label") }}
+                        {{ start_form.name(class="form-control landing-input" + (" is-invalid" if start_form.name.errors else "")) }}
+                        {% for error in start_form.name.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            {{ start_form.slug.label(class="form-label landing-label") }}
+                            {{ start_form.slug(class="form-control landing-input" + (" is-invalid" if start_form.slug.errors else "")) }}
+                            {% for error in start_form.slug.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="col-6">
+                            {{ start_form.village.label(class="form-label landing-label") }}
+                            {{ start_form.village(class="form-control landing-input" + (" is-invalid" if start_form.village.errors else "")) }}
+                            {% for error in start_form.village.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        {{ start_form.festival_name.label(class="form-label landing-label") }}
+                        {{ start_form.festival_name(class="form-control landing-input" + (" is-invalid" if start_form.festival_name.errors else "")) }}
+                        {% for error in start_form.festival_name.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="mb-2">
+                        {{ start_form.full_name.label(class="form-label landing-label") }}
+                        {{ start_form.full_name(class="form-control landing-input" + (" is-invalid" if start_form.full_name.errors else "")) }}
+                        {% for error in start_form.full_name.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="mb-2">
+                        {{ start_form.username.label(class="form-label landing-label") }}
+                        {{ start_form.username(class="form-control landing-input" + (" is-invalid" if start_form.username.errors else "")) }}
+                        {% for error in start_form.username.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="mb-2">
+                        {{ start_form.password.label(class="form-label landing-label") }}
+                        <div class="password-toggle-wrap">
+                            {{ start_form.password(class="form-control landing-input" + (" is-invalid" if start_form.password.errors else ""), id="newCommitteePassword") }}
+                            <button type="button" class="password-toggle-btn" data-password-toggle="newCommitteePassword" aria-label="Show password">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        {% for error in start_form.password.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
                     </div>
                     <div class="mb-3">
+                        {{ start_form.confirm_password.label(class="form-label landing-label") }}
+                        {{ start_form.confirm_password(class="form-control landing-input" + (" is-invalid" if start_form.confirm_password.errors else "")) }}
+                        {% for error in start_form.confirm_password.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                    </div>
+                    {{ start_form.start_submit(class="btn w-100 landing-btn-cta", value=t('landing.join.create')) }}
+                </form>
+            </section>
+
+            <!-- Step 2b: Existing Committee — create account (join) -->
+            <section id="landingExistingJoinStep" class="landing-step{% if landing_view == 'existing-join' %} active{% endif %}">
+                <h1 class="landing-step-title">{{ t('landing.join.title') }}</h1>
+                <p class="landing-step-subtitle">{{ t('landing.join.subtitle') }}</p>
+
+                <ul class="landing-benefits list-unstyled mb-4">
+                    <li><i class="bi bi-check-circle-fill"></i> {{ t('landing.join.benefit_free') }}</li>
+                    <li><i class="bi bi-check-circle-fill"></i> {{ t('landing.join.benefit_lang') }}</li>
+                    <li><i class="bi bi-check-circle-fill"></i> {{ t('landing.join.benefit_data') }}</li>
+                </ul>
+
+                <form method="POST" novalidate id="joinAccountForm">
+                    {{ join_form.hidden_tag() }}
+                    <input type="hidden" name="active_tab" value="existing">
+                    <div class="mb-2">
+                        {{ join_form.committee_code.label(class="form-label landing-label") }}
+                        {{ join_form.committee_code(class="form-control landing-input" + (" is-invalid" if join_form.committee_code.errors else ""), placeholder="e.g. indukuru") }}
+                        {% for error in join_form.committee_code.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="mb-2">
+                        {{ join_form.full_name.label(class="form-label landing-label") }}
+                        {{ join_form.full_name(class="form-control landing-input" + (" is-invalid" if join_form.full_name.errors else ""), placeholder="Your name") }}
+                        {% for error in join_form.full_name.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="mb-2">
+                        {{ join_form.email.label(class="form-label landing-label") }}
+                        {{ join_form.email(class="form-control landing-input" + (" is-invalid" if join_form.email.errors else ""), placeholder="Email address", type="email") }}
+                        {% for error in join_form.email.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="mb-2">
+                        {{ join_form.phone.label(class="form-label landing-label") }} <span class="text-muted small">(optional)</span>
+                        {{ join_form.phone(class="form-control landing-input" + (" is-invalid" if join_form.phone.errors else ""), placeholder="10-digit mobile") }}
+                        {% for error in join_form.phone.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="mb-2">
+                        {{ join_form.username.label(class="form-label landing-label") }}
+                        {{ join_form.username(class="form-control landing-input" + (" is-invalid" if join_form.username.errors else ""), placeholder="Choose a username") }}
+                        {% for error in join_form.username.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="mb-3">
+                        {{ join_form.password.label(class="form-label landing-label") }}
+                        <div class="password-toggle-wrap">
+                            {{ join_form.password(class="form-control landing-input" + (" is-invalid" if join_form.password.errors else ""), id="joinPassword") }}
+                            <button type="button" class="password-toggle-btn" data-password-toggle="joinPassword" aria-label="Show password">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        {% for error in join_form.password.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                        {{ join_form.confirm_password(class="d-none", id="joinConfirmPassword") }}
+                    </div>
+                    {{ join_form.join_submit(class="btn w-100 landing-btn-cta", value=t('landing.join.create')) }}
+                </form>
+
+                <p class="landing-legal text-center mt-3 mb-2">
+                    {{ t('landing.join.terms') }}
+                    <a href="{{ url_for('main.help_page') }}">{{ t('landing.join.terms_link') }}</a>
+                    and
+                    <a href="{{ url_for('main.help_page') }}#privacy">{{ t('landing.join.privacy_link') }}</a>.
+                </p>
+                <p class="landing-switch text-center mb-0">
+                    {{ t('landing.join.have_account') }}
+                    <button type="button" class="btn btn-link p-0 landing-switch-link" data-landing-go="existing-login">
+                        {{ t('landing.join.login_link') }}
+                    </button>
+                </p>
+            </section>
+
+            <!-- Step 3b: Existing Committee — login -->
+            <section id="landingExistingLoginStep" class="landing-step{% if landing_view == 'existing-login' %} active{% endif %}">
+                <h1 class="landing-step-title">{{ t('landing.login.title') }}</h1>
+                <p class="landing-step-subtitle">{{ t('landing.login.subtitle') }}</p>
+
+                <form method="POST" novalidate class="mb-3">
+                    {{ login_form.hidden_tag() }}
+                    <input type="hidden" name="active_tab" value="existing">
+                    <div class="mb-2">
+                        {{ login_form.committee_code.label(class="form-label landing-label") }}
+                        {{ login_form.committee_code(class="form-control landing-input" + (" is-invalid" if login_form.committee_code.errors else ""), placeholder="e.g. indukuru") }}
+                        {% for error in login_form.committee_code.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="mb-2">
                         {{ login_form.username.label(class="form-label landing-label") }}
                         {{ login_form.username(class="form-control landing-input" + (" is-invalid" if login_form.username.errors else "")) }}
-                        {% for error in login_form.username.errors %}
-                        <div class="invalid-feedback d-block">{{ error }}</div>
-                        {% endfor %}
+                        {% for error in login_form.username.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
                     </div>
                     <div class="mb-3">
                         {{ login_form.password.label(class="form-label landing-label") }}
@@ -129,105 +239,61 @@
                                 <i class="bi bi-eye"></i>
                             </button>
                         </div>
-                        {% for error in login_form.password.errors %}
-                        <div class="invalid-feedback d-block">{{ error }}</div>
-                        {% endfor %}
+                        {% for error in login_form.password.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
                         <div class="text-end mt-1">
-                            <a href="{{ url_for('auth.forgot_password') }}" class="small">{{ t('login.forgot_password') }}</a>
+                            <a href="{{ url_for('auth.forgot_password') }}" class="small landing-switch-link">{{ t('login.forgot_password') }}</a>
                         </div>
                     </div>
-                    {{ login_form.login_submit(class="btn w-100 landing-btn-primary", **{"data-loading-text": t('common.loading')}) }}
+                    {{ login_form.login_submit(class="btn w-100 landing-btn-cta", value=t('landing.join.login_link'), **{"data-loading-text": t('common.loading')}) }}
                 </form>
 
-                <details class="landing-details mb-3">
-                    <summary>{{ t('login.join_title') }}</summary>
-                    <form method="POST" novalidate class="mt-3">
-                        {{ join_form.hidden_tag() }}
-                        <input type="hidden" name="active_tab" value="existing">
-                        <div class="mb-2">
-                            {{ join_form.committee_code.label(class="form-label landing-label") }}
-                            {{ join_form.committee_code(class="form-control landing-input") }}
-                        </div>
-                        <div class="mb-2">
-                            {{ join_form.full_name.label(class="form-label landing-label") }}
-                            {{ join_form.full_name(class="form-control landing-input") }}
-                        </div>
-                        <div class="mb-2">
-                            {{ join_form.phone.label(class="form-label landing-label") }}
-                            {{ join_form.phone(class="form-control landing-input", placeholder="10-digit mobile for OTP login") }}
-                            <div class="form-text">{{ t('landing.auth.phone_join_hint') }}</div>
-                        </div>
-                        <div class="mb-2">
-                            {{ join_form.email.label(class="form-label landing-label") }}
-                            {{ join_form.email(class="form-control landing-input", placeholder="For Google sign-in") }}
-                        </div>
-                        <div class="mb-2">
-                            {{ join_form.username.label(class="form-label landing-label") }}
-                            {{ join_form.username(class="form-control landing-input") }}
-                        </div>
-                        <div class="mb-2">
-                            {{ join_form.password.label(class="form-label landing-label") }}
-                            {{ join_form.password(class="form-control landing-input") }}
-                        </div>
-                        <div class="mb-3">
-                            {{ join_form.confirm_password.label(class="form-label landing-label") }}
-                            {{ join_form.confirm_password(class="form-control landing-input") }}
-                        </div>
-                        {{ join_form.join_submit(class="btn w-100 landing-btn-outline") }}
-                    </form>
-                </details>
+                {% if firebase_enabled %}
+                <div class="landing-divider my-3"></div>
+                <p class="text-center text-muted small mb-2">or sign in with</p>
 
-                <details class="landing-details">
-                    <summary>{{ t('login.tab_new') }}</summary>
-                    <form method="POST" novalidate class="mt-3">
-                        {{ start_form.hidden_tag() }}
-                        <input type="hidden" name="active_tab" value="new">
-                        <div class="row g-2">
-                            <div class="col-12">
-                                {{ start_form.name.label(class="form-label landing-label") }}
-                                {{ start_form.name(class="form-control landing-input") }}
-                            </div>
-                            <div class="col-md-6">
-                                {{ start_form.slug.label(class="form-label landing-label") }}
-                                {{ start_form.slug(class="form-control landing-input") }}
-                            </div>
-                            <div class="col-md-6">
-                                {{ start_form.village.label(class="form-label landing-label") }}
-                                {{ start_form.village(class="form-control landing-input") }}
-                            </div>
-                            <div class="col-12">
-                                {{ start_form.festival_name.label(class="form-label landing-label") }}
-                                {{ start_form.festival_name(class="form-control landing-input") }}
-                            </div>
-                            <div class="col-md-6">
-                                {{ start_form.full_name.label(class="form-label landing-label") }}
-                                {{ start_form.full_name(class="form-control landing-input") }}
-                            </div>
-                            <div class="col-md-6">
-                                {{ start_form.username.label(class="form-label landing-label") }}
-                                {{ start_form.username(class="form-control landing-input") }}
-                            </div>
-                            <div class="col-md-6">
-                                {{ start_form.password.label(class="form-label landing-label") }}
-                                {{ start_form.password(class="form-control landing-input") }}
-                            </div>
-                            <div class="col-md-6">
-                                {{ start_form.confirm_password.label(class="form-label landing-label") }}
-                                {{ start_form.confirm_password(class="form-control landing-input") }}
-                            </div>
-                        </div>
-                        <div class="mt-3">
-                            {{ start_form.start_submit(class="btn w-100 landing-btn-outline") }}
-                        </div>
-                    </form>
-                </details>
-            </div>
+                <div id="phoneLoginStep">
+                    <label class="form-label landing-label" for="landingPhone">{{ t('landing.auth.phone_label') }}</label>
+                    <div class="landing-phone-row mb-2">
+                        <div class="landing-country-code">🇮🇳 +91</div>
+                        <input type="tel" id="landingPhone" class="form-control landing-input"
+                               inputmode="numeric" maxlength="10" pattern="[6-9][0-9]{9}"
+                               placeholder="{{ t('landing.auth.phone_placeholder') }}" autocomplete="tel-national">
+                    </div>
+                    <button type="button" id="sendOtpBtn" class="btn w-100 landing-btn-outline mb-2" disabled>
+                        {{ t('landing.auth.send_otp') }}
+                    </button>
+                    <div id="firebase-recaptcha"></div>
+                </div>
 
-            {% if not firebase_enabled %}
-            <div class="alert alert-warning py-2 small mb-0">
-                {{ t('landing.auth.firebase_setup_hint') }}
-            </div>
-            {% endif %}
+                <div id="otpLoginStep" class="d-none">
+                    <label class="form-label landing-label" for="landingOtp">{{ t('landing.auth.otp_label') }}</label>
+                    <input type="text" id="landingOtp" class="form-control landing-input mb-2"
+                           inputmode="numeric" maxlength="6" placeholder="6-digit OTP" autocomplete="one-time-code">
+                    <button type="button" id="verifyOtpBtn" class="btn w-100 landing-btn-cta mb-2">
+                        {{ t('landing.auth.verify_otp') }}
+                    </button>
+                    <button type="button" id="changePhoneBtn" class="btn btn-link w-100 landing-link-btn">
+                        {{ t('landing.auth.change_phone') }}
+                    </button>
+                </div>
+
+                <button type="button" id="googleSignInBtn" class="btn w-100 landing-btn-google mt-2">
+                    <span class="landing-google-icon" aria-hidden="true">G</span>
+                    {{ t('landing.auth.google') }}
+                </button>
+                {% else %}
+                <div class="alert alert-warning py-2 small mb-0">
+                    {{ t('landing.auth.firebase_setup_hint') }}
+                </div>
+                {% endif %}
+
+                <p class="landing-switch text-center mt-4 mb-0">
+                    New to your committee?
+                    <button type="button" class="btn btn-link p-0 landing-switch-link" data-landing-go="existing-join">
+                        {{ t('landing.join.create') }}
+                    </button>
+                </p>
+            </section>
 
             <div class="landing-footer text-center mt-4">
                 <a href="{{ url_for('main.help_page') }}">{{ t('footer.help') }}</a>
