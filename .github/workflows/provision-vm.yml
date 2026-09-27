@@ -49,8 +49,12 @@ jobs:
           SSH_PUBLIC_KEY: ${{ secrets.SSH_PUBLIC_KEY }}
           FIREBASE_SUPPORT_EMAIL: ${{ secrets.FIREBASE_SUPPORT_EMAIL }}
         run: |
-          if [ -z "${FIREBASE_SUPPORT_EMAIL}" ]; then
-            echo "Set repository secret FIREBASE_SUPPORT_EMAIL (Google account on the GCP project)." >&2
+          EMAIL="${FIREBASE_SUPPORT_EMAIL}"
+          if [ -z "${EMAIL}" ]; then
+            EMAIL="$(gcloud auth list --filter=status:ACTIVE --format='value(account)' | head -n 1)"
+          fi
+          if [ -z "${EMAIL}" ]; then
+            echo "Set repository secret FIREBASE_SUPPORT_EMAIL or authenticate gcloud with a Google account." >&2
             exit 1
           fi
           cat > terraform.tfvars <<EOF
@@ -66,7 +70,7 @@ jobs:
           github_repo_url = "https://github.com/sravan123-456/my-project.git"
           ssh_user        = "vandana"
           ssh_public_key  = "${SSH_PUBLIC_KEY}"
-          firebase_support_email = "${FIREBASE_SUPPORT_EMAIL}"
+          firebase_support_email = "${EMAIL}"
           cicd_service_account_email = "github-actions@business-account-506411.iam.gserviceaccount.com"
           EOF
 
