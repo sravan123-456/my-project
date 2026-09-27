@@ -18,6 +18,8 @@
     return;
   }
 
+  var landingCard = document.querySelector(".landing-card");
+
   function showStep(view) {
     Object.keys(steps).forEach(function (key) {
       if (!steps[key]) return;
@@ -27,6 +29,9 @@
       backBtn.classList.toggle("d-none", view === "choice");
     }
     document.body.setAttribute("data-landing-view", view);
+    if (landingCard) {
+      landingCard.scrollTop = 0;
+    }
   }
 
   document.querySelectorAll("[data-landing-go]").forEach(function (btn) {

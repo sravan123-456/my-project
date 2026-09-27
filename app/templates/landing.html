@@ -41,33 +41,32 @@
                 <p class="landing-hero-tagline">{{ t('landing.hero.tagline') }}</p>
             </div>
         </div>
+        <div class="landing-hero-lang dropdown">
+            <button class="btn btn-sm landing-lang-btn dropdown-toggle" type="button"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                {{ current_lang|upper }}
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow">
+                {% for code, label in languages.items() %}
+                <li>
+                    <a class="dropdown-item {% if code == current_lang %}active{% endif %}"
+                       href="{{ url_for('main.set_language_route', lang=code) }}">{{ label }}</a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
     </div>
 
     <div class="landing-shell">
-        <div class="landing-topbar">
-            <button type="button" id="landingBackBtn"
-                    class="btn btn-sm landing-back-btn{% if landing_view == 'choice' %} d-none{% endif %}"
-                    aria-label="{{ t('landing.back_home') }}">
-                <i class="bi bi-arrow-left"></i> {{ t('landing.back_home') }}
-            </button>
-            <div class="dropdown ms-auto">
-                <button class="btn btn-sm landing-lang-btn dropdown-toggle" type="button"
-                        data-bs-toggle="dropdown" aria-expanded="false">
-                    {{ current_lang|upper }}
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end shadow">
-                    {% for code, label in languages.items() %}
-                    <li>
-                        <a class="dropdown-item {% if code == current_lang %}active{% endif %}"
-                           href="{{ url_for('main.set_language_route', lang=code) }}">{{ label }}</a>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
-
         <div class="landing-sheet">
         <div class="landing-card shadow-lg">
+            <div class="landing-card-nav">
+                <button type="button" id="landingBackBtn"
+                        class="btn btn-sm landing-back-btn{% if landing_view == 'choice' %} d-none{% endif %}"
+                        aria-label="{{ t('landing.back_home') }}">
+                    <i class="bi bi-arrow-left"></i> {{ t('landing.back_home') }}
+                </button>
+            </div>
             <div class="landing-brand text-center mb-3">
                 <div class="landing-logo">🙏</div>
                 <p class="landing-domain mb-0">{{ platform_name|lower|replace(' ', '') }}.in</p>
