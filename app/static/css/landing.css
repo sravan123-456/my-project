@@ -318,10 +318,20 @@
 
 /* Mobile: Scalio-style fixed bottom sheet */
 @media (max-width: 767.98px) {
-    .landing-page {
-        height: 100dvh;
-        min-height: 100dvh;
-        overflow: hidden;
+    html {
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior-y: auto;
+    }
+
+    body.landing-page {
+        min-height: calc(100dvh + 1px);
+        height: auto;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior-y: auto;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-y;
     }
 
     .landing-hero {
@@ -400,7 +410,7 @@
         border-radius: 1.5rem 1.5rem 0 0;
         padding: 1.25rem 1.15rem calc(0.85rem + env(safe-area-inset-bottom, 0px));
         overflow-y: visible;
-        overscroll-behavior: contain;
+        overscroll-behavior-y: auto;
         -webkit-overflow-scrolling: touch;
     }
 
@@ -485,6 +495,7 @@
         min-height: 0;
         max-height: 100%;
         overflow-y: auto;
+        overscroll-behavior-y: auto;
         padding-top: 1rem;
     }
 }
