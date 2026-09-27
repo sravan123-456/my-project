@@ -57,6 +57,12 @@ resource "google_identity_platform_config" "default" {
     }
   }
 
+  sms_region_config {
+    allowlist_only {
+      allowed_regions = ["IN"]
+    }
+  }
+
   depends_on = [
     google_project_service.identitytoolkit,
     google_firebase_project.default,
