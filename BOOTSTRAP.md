@@ -7,7 +7,7 @@ Use this when your current GCP subscription ends and you create a **new GCP acco
 **GitHub Actions → Bootstrap New GCP Project (one-click)** runs three stages:
 
 1. **Prepare** — enables APIs, creates Terraform state bucket, creates `github-actions` service account + IAM roles
-2. **Provision** — runs Terraform (VM, static IP, firewall, Firebase, Secret Manager)
+2. **Provision** — runs Terraform (VM, static IP, firewall, Secret Manager)
 3. **Deploy** — deploys the Docker app on the VM and runs a health check
 
 It reuses the same Terraform and deploy logic as the existing `Provision GCP VM` and `Deploy Application` workflows.
@@ -95,5 +95,5 @@ Then run **Provision GCP VM** and **Deploy Application** workflows with the same
 ## APIs enabled automatically
 
 - Compute Engine, Cloud Storage, Secret Manager
-- Firebase, Identity Platform
+- Secret Manager (MSG91 OTP config)
 - IAM, Service Usage, Cloud Resource Manager

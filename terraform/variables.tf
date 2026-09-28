@@ -73,3 +73,10 @@ variable "cicd_service_account_email" {
   type        = string
   default     = "github-actions@business-account-506411.iam.gserviceaccount.com"
 }
+
+variable "msg91_auth_key" {
+  description = "MSG91 API auth key for OTP SMS."
+  type        = string
+  sensitive   = true
+  default     = ""
+}

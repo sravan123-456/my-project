@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Merge Firebase web config JSON into the app .env file."""
+"""Merge Secret Manager JSON config into the app .env file."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from pathlib import Path
 
 def main() -> int:
     if len(sys.argv) < 3:
-        print("Usage: apply-firebase-env.py <config.json> <app_dir>", file=sys.stderr)
+        print("Usage: apply-secret-env.py <config.json> <app_dir>", file=sys.stderr)
         return 1
 
     config_path = Path(sys.argv[1])

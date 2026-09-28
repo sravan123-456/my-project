@@ -128,7 +128,7 @@ jobs:
           echo "- **Static IP (DNS A record):** ${IP}" >> "$GITHUB_STEP_SUMMARY"
           echo "- **Domain:** ${DOMAIN_NAME}" >> "$GITHUB_STEP_SUMMARY"
           echo "- **App URL:** https://${DOMAIN_NAME}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- **Firebase auth domain:** $(terraform output -raw firebase_auth_domain)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **MSG91 secret:** $(terraform output -raw msg91_config_secret)" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "Point your domain **${DOMAIN_NAME}** A record to **${IP}** if not already done." >> "$GITHUB_STEP_SUMMARY"
 

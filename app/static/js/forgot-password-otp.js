@@ -1,16 +1,11 @@
 (function () {
   "use strict";
 
-  if (!window.firebase || !window.firebaseClientConfig || !window.passwordResetConfig) {
+  if (!window.passwordResetConfig) {
     return;
   }
 
-  var config = window.firebaseClientConfig;
   var resetConfig = window.passwordResetConfig;
-  var auth = null;
-  var recaptchaVerifier = null;
-  var confirmationResult = null;
-
   var sendBtn = document.getElementById("sendResetOtpBtn");
   var resendBtn = document.getElementById("resendResetOtpBtn");
   var completeBtn = document.getElementById("completeResetBtn");
@@ -57,35 +52,30 @@
     }
   }
 
-  function initRecaptcha() {
-    if (recaptchaVerifier) {
-      return recaptchaVerifier;
-    }
-    recaptchaVerifier = new firebase.auth.RecaptchaVerifier("firebase-recaptcha", {
-      size: "invisible",
-      callback: function () {},
+  function postJson(url, payload) {
+    return fetch(url, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrfToken(),
+      },
+      body: JSON.stringify(payload),
+    }).then(function (response) {
+      return response.json().then(function (data) {
+        if (!response.ok) {
+          throw new Error(data.error || "Request failed.");
+        }
+        return data;
+      });
     });
-    return recaptchaVerifier;
-  }
-
-  function initFirebase() {
-    if (!firebase.apps.length) {
-      firebase.initializeApp(config);
-    }
-    auth = firebase.auth();
-    auth.useDeviceLanguage();
   }
 
   function sendOtp(button) {
     clearError();
     setLoading(button, true, "Sending OTP…");
-    initRecaptcha()
-      .verify()
+    postJson(resetConfig.sendUrl, {})
       .then(function () {
-        return auth.signInWithPhoneNumber(resetConfig.phone, recaptchaVerifier);
-      })
-      .then(function (result) {
-        confirmationResult = result;
         sendStep.classList.add("d-none");
         verifyStep.classList.remove("d-none");
         showInfo("OTP sent to your registered mobile number.");
@@ -93,10 +83,6 @@
       })
       .catch(function (error) {
         showError(error.message || "Could not send OTP.");
-        if (recaptchaVerifier) {
-          recaptchaVerifier.clear();
-          recaptchaVerifier = null;
-        }
       })
       .finally(function () {
         setLoading(button, false);
@@ -105,15 +91,11 @@
 
   function completeReset() {
     clearError();
-    if (!confirmationResult) {
-      showError("Please request an OTP first.");
-      return;
-    }
     var code = (otpInput.value || "").trim();
     var password = (passwordInput.value || "").trim();
     var confirm = (confirmInput.value || "").trim();
-    if (code.length < 6) {
-      showError("Enter the 6-digit OTP.");
+    if (code.length < 4) {
+      showError("Enter the OTP from your SMS.");
       return;
     }
     if (password.length < 6) {
@@ -126,29 +108,7 @@
     }
 
     setLoading(completeBtn, true, "Updating…");
-    confirmationResult
-      .confirm(code)
-      .then(function (result) {
-        return result.user.getIdToken();
-      })
-      .then(function (idToken) {
-        return fetch(resetConfig.completeUrl, {
-          method: "POST",
-          credentials: "same-origin",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": csrfToken(),
-          },
-          body: JSON.stringify({ idToken: idToken, password: password }),
-        }).then(function (response) {
-          return response.json().then(function (data) {
-            if (!response.ok) {
-              throw new Error(data.error || "Could not reset password.");
-            }
-            return data;
-          });
-        });
-      })
+    postJson(resetConfig.completeUrl, { otp: code, password: password })
       .then(function (data) {
         window.location.href = data.redirect || "/login";
       })
@@ -160,8 +120,6 @@
       });
   }
 
-  initFirebase();
-
   if (sendBtn) {
     sendBtn.addEventListener("click", function () {
       sendOtp(sendBtn);
@@ -172,7 +130,6 @@
     resendBtn.addEventListener("click", function () {
       verifyStep.classList.add("d-none");
       sendStep.classList.remove("d-none");
-      confirmationResult = null;
       if (otpInput) otpInput.value = "";
       clearError();
       sendOtp(resendBtn);

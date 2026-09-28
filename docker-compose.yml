@@ -10,7 +10,6 @@ services:
       - festival_data:/app/data
       - festival_uploads:/app/uploads
       - ./secrets/gcs-key.json:/app/secrets/gcs-key.json:ro
-      - ./secrets/firebase-service-account.json:/app/secrets/firebase-service-account.json:ro
     restart: unless-stopped
     healthcheck:
       test:

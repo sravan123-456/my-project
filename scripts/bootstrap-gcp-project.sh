@@ -20,8 +20,6 @@ APIS=(
   storage.googleapis.com
   storage-api.googleapis.com
   secretmanager.googleapis.com
-  firebase.googleapis.com
-  identitytoolkit.googleapis.com
 )
 
 echo "==> Enabling required APIs..."

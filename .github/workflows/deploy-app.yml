@@ -80,35 +80,28 @@ jobs:
           echo "VM did not become SSH-ready in time." >&2
           exit 1
 
-      - name: Sync Firebase secrets to VM
+      - name: Sync MSG91 secrets to VM
         continue-on-error: true
         run: |
           set -euo pipefail
-          if ! gcloud secrets describe vinayaka-firebase-web-config --project="${GCP_PROJECT}" >/dev/null 2>&1; then
-            echo "Firebase secrets are not provisioned yet. Run Terraform first."
+          if ! gcloud secrets describe vinayaka-msg91-config --project="${GCP_PROJECT}" >/dev/null 2>&1; then
+            echo "MSG91 secret is not provisioned yet. Run Terraform or create vinayaka-msg91-config."
             exit 0
           fi
           gcloud secrets versions access latest \
-            --secret=vinayaka-firebase-admin-sa \
-            --project="${GCP_PROJECT}" > /tmp/firebase-service-account.json
-          gcloud secrets versions access latest \
-            --secret=vinayaka-firebase-web-config \
-            --project="${GCP_PROJECT}" > /tmp/firebase-web-config.json
-          gcloud compute scp /tmp/firebase-service-account.json "${GCE_INSTANCE}:/tmp/firebase-service-account.json" \
+            --secret=vinayaka-msg91-config \
+            --project="${GCP_PROJECT}" > /tmp/msg91-config.json
+          gcloud compute scp /tmp/msg91-config.json "${GCE_INSTANCE}:/tmp/msg91-config.json" \
             --zone "${GCP_ZONE}" --project "${GCP_PROJECT}" --quiet
-          gcloud compute scp /tmp/firebase-web-config.json "${GCE_INSTANCE}:/tmp/firebase-web-config.json" \
-            --zone "${GCP_ZONE}" --project "${GCP_PROJECT}" --quiet
-          gcloud compute scp scripts/apply-firebase-env.py "${GCE_INSTANCE}:/tmp/apply-firebase-env.py" \
+          gcloud compute scp scripts/apply-secret-env.py "${GCE_INSTANCE}:/tmp/apply-secret-env.py" \
             --zone "${GCP_ZONE}" --project "${GCP_PROJECT}" --quiet
           gcloud compute ssh "${GCE_INSTANCE}" \
             --zone "${GCP_ZONE}" \
             --project "${GCP_PROJECT}" \
             --quiet \
             --command="set -e
-              mkdir -p '${APP_DIR}/secrets'
-              install -m 600 /tmp/firebase-service-account.json '${APP_DIR}/secrets/firebase-service-account.json'
-              python3 /tmp/apply-firebase-env.py /tmp/firebase-web-config.json '${APP_DIR}'
-              rm -f /tmp/firebase-service-account.json /tmp/firebase-web-config.json /tmp/apply-firebase-env.py"
+              sudo python3 /tmp/apply-secret-env.py /tmp/msg91-config.json '${APP_DIR}'
+              rm -f /tmp/msg91-config.json /tmp/apply-secret-env.py"
 
       - name: Deploy latest code on VM
         run: |

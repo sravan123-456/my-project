@@ -53,28 +53,7 @@ output "project_id" {
   value       = var.project_id
 }
 
-output "firebase_web_app_id" {
-  description = "Firebase web app ID."
-  value       = google_firebase_web_app.default.app_id
-}
-
-output "firebase_auth_domain" {
-  description = "Firebase auth domain for client SDK."
-  value       = data.google_firebase_web_app_config.default.auth_domain
-}
-
-output "firebase_api_key" {
-  description = "Firebase web API key (also stored in Secret Manager)."
-  value       = data.google_firebase_web_app_config.default.api_key
-  sensitive   = true
-}
-
-output "firebase_admin_sa_secret" {
-  description = "Secret Manager name for Firebase admin service account JSON."
-  value       = google_secret_manager_secret.firebase_admin_sa.secret_id
-}
-
-output "firebase_web_config_secret" {
-  description = "Secret Manager name for Firebase web client env JSON."
-  value       = google_secret_manager_secret.firebase_web_config.secret_id
+output "msg91_config_secret" {
+  description = "Secret Manager name for MSG91 OTP configuration."
+  value       = google_secret_manager_secret.msg91_config.secret_id
 }

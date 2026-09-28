@@ -8,7 +8,7 @@ from app import db
 from app.forms import StartCommitteeForm
 from app.models import ORG_STATUS_PENDING, Organization, User
 from app.pricing_plans import get_plan, list_plans
-from app.firebase_auth import normalize_phone
+from app.phone_utils import normalize_phone
 from app.routes.auth import SLUG_PATTERN, USERNAME_IN_USE_MESSAGE, _normalize_slug
 
 pricing_bp = Blueprint("pricing", __name__)

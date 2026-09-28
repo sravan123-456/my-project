@@ -15,12 +15,8 @@ from app.forms import (
     LoginForm,
     RegisterForm,
 )
-from app.firebase_auth import (
-    firebase_enabled,
-    normalize_email,
-    normalize_phone,
-    verify_id_token,
-)
+from app.msg91 import msg91_enabled, send_otp, verify_otp
+from app.phone_utils import normalize_email, normalize_phone
 from app.models import (
     ORG_STATUS_PENDING,
     LoginEvent,
@@ -309,20 +305,41 @@ def forgot_password_otp():
         flash("Password reset session expired. Please try again.", "warning")
         return redirect(url_for("auth.forgot_password"))
 
-    if not firebase_enabled():
+    if not msg91_enabled():
         flash("Phone OTP reset is not configured yet. Contact your committee admin.", "warning")
         return redirect(url_for("auth.forgot_password"))
 
     return render_template(
         "auth/forgot_password_otp.html",
         masked_phone=_mask_phone(phone),
-        reset_phone=phone,
     )
+
+
+@auth_bp.route("/forgot-password/otp/send", methods=["POST"])
+def forgot_password_otp_send():
+    if not msg91_enabled():
+        return jsonify({"ok": False, "error": "Phone OTP reset is not configured."}), 503
+
+    user_id = session.get("pwd_reset_user_id")
+    phone = session.get("pwd_reset_phone")
+    if not user_id or not phone:
+        return jsonify({"ok": False, "error": "Session expired. Start again."}), 400
+
+    user = User.query.get(user_id)
+    if not user or user.phone != phone:
+        _clear_password_reset_session()
+        return jsonify({"ok": False, "error": "Session expired. Start again."}), 400
+
+    ok, error = send_otp(phone)
+    if not ok:
+        return jsonify({"ok": False, "error": error or "Could not send OTP."}), 502
+
+    return jsonify({"ok": True})
 
 
 @auth_bp.route("/forgot-password/complete", methods=["POST"])
 def forgot_password_complete():
-    if not firebase_enabled():
+    if not msg91_enabled():
         return jsonify({"ok": False, "error": "Phone OTP reset is not configured."}), 503
 
     user_id = session.get("pwd_reset_user_id")
@@ -336,25 +353,18 @@ def forgot_password_complete():
         return jsonify({"ok": False, "error": "Session expired. Start again."}), 400
 
     payload = request.get_json(silent=True) or {}
-    id_token = payload.get("idToken")
+    otp = (payload.get("otp") or "").strip()
     password = (payload.get("password") or "").strip()
-    if not id_token:
-        raise BadRequest("Missing idToken.")
+    if not otp:
+        raise BadRequest("Missing otp.")
     if len(password) < 6:
         return jsonify({"ok": False, "error": "Password must be at least 6 characters."}), 400
 
-    try:
-        decoded = verify_id_token(id_token)
-    except Exception:
-        return jsonify({"ok": False, "error": "Invalid or expired OTP. Try again."}), 401
-
-    token_phone = normalize_phone(decoded.get("phone_number"))
-    if token_phone != phone:
-        return jsonify({"ok": False, "error": "Phone verification failed."}), 403
+    ok, error = verify_otp(phone, otp)
+    if not ok:
+        return jsonify({"ok": False, "error": error or "Invalid or expired OTP. Try again."}), 401
 
     user.set_password(password)
-    if decoded.get("uid"):
-        user.firebase_uid = decoded.get("uid")
     db.session.commit()
     _clear_password_reset_session()
     session["login_flash"] = "Password updated. Log in with your new password."
@@ -406,7 +416,7 @@ def forgot_password():
         form.committee_code.data = org_slug
 
     if form.validate_on_submit():
-        if not firebase_enabled():
+        if not msg91_enabled():
             flash(
                 "Phone OTP reset is not configured yet. Contact your committee admin.",
                 "warning",
