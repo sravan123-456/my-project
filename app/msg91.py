@@ -52,6 +52,13 @@ def _request(method, url, payload=None):
         return {"type": "error", "message": body}
 
 
+def _parse_msg91_error(result):
+    message = result.get("message")
+    if isinstance(message, dict):
+        return message.get("message") or str(message)
+    return message or "Could not complete MSG91 request."
+
+
 def send_otp(phone):
     if not msg91_enabled():
         return False, "Phone OTP reset is not configured."
@@ -60,17 +67,22 @@ def send_otp(phone):
     if not mobile:
         return False, "Invalid phone number."
 
-    params = urllib.parse.urlencode(
-        {
-            "mobile": mobile,
-            "otp_length": _otp_length,
-            "otp_expiry": _otp_expiry,
-        }
-    )
-    result = _request("GET", f"{_API_BASE}/otp?{params}")
+    payload = {
+        "mobile": mobile,
+        "otp_length": _otp_length,
+        "otp_expiry": _otp_expiry,
+    }
+    result = _request("POST", f"{_API_BASE}/otp", payload)
+    if result.get("type") != "success":
+        params = urllib.parse.urlencode(payload)
+        result = _request("GET", f"{_API_BASE}/otp?{params}")
+
     if result.get("type") == "success":
+        logger.info("MSG91 OTP sent to %s request_id=%s", mobile, result.get("request_id"))
         return True, None
-    return False, result.get("message") or "Could not send OTP."
+    error = _parse_msg91_error(result)
+    logger.warning("MSG91 OTP send failed for %s: %s", mobile, error)
+    return False, error
 
 
 def verify_otp(phone, otp):
@@ -90,6 +102,10 @@ def verify_otp(phone, otp):
         f"{_API_BASE}/otp/verify",
         {"mobile": mobile, "otp": code},
     )
+    if result.get("type") != "success":
+        params = urllib.parse.urlencode({"mobile": mobile, "otp": code})
+        result = _request("GET", f"{_API_BASE}/otp/verify?{params}")
+
     if result.get("type") == "success":
         return True, None
-    return False, result.get("message") or "Invalid or expired OTP. Try again."
+    return False, _parse_msg91_error(result) or "Invalid or expired OTP. Try again."

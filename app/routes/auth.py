@@ -1,4 +1,5 @@
 import re
+import time
 from datetime import datetime
 
 from flask import Blueprint, flash, jsonify, redirect, render_template, request, session, url_for
@@ -286,6 +287,19 @@ def _mask_phone(phone):
 def _clear_password_reset_session():
     session.pop("pwd_reset_user_id", None)
     session.pop("pwd_reset_phone", None)
+    session.pop("pwd_reset_otp_sent_at", None)
+
+
+def _send_reset_otp(phone, force=False):
+    now = time.time()
+    last_sent = session.get("pwd_reset_otp_sent_at")
+    if not force and last_sent and now - last_sent < 60:
+        return True, None
+
+    ok, error = send_otp(phone)
+    if ok:
+        session["pwd_reset_otp_sent_at"] = now
+    return ok, error
 
 
 @auth_bp.route("/forgot-password/otp")
@@ -309,9 +323,14 @@ def forgot_password_otp():
         flash("Phone OTP reset is not configured yet. Contact your committee admin.", "warning")
         return redirect(url_for("auth.forgot_password"))
 
+    force_resend = request.args.get("resend") == "1"
+    otp_sent, otp_error = _send_reset_otp(phone, force=force_resend)
+
     return render_template(
         "auth/forgot_password_otp.html",
         masked_phone=_mask_phone(phone),
+        otp_sent=otp_sent,
+        otp_error=otp_error,
     )
 
 
@@ -330,7 +349,7 @@ def forgot_password_otp_send():
         _clear_password_reset_session()
         return jsonify({"ok": False, "error": "Session expired. Start again."}), 400
 
-    ok, error = send_otp(phone)
+    ok, error = _send_reset_otp(phone, force=True)
     if not ok:
         return jsonify({"ok": False, "error": error or "Could not send OTP."}), 502
 

@@ -62,7 +62,17 @@
       },
       body: JSON.stringify(payload),
     }).then(function (response) {
-      return response.json().then(function (data) {
+      return response.text().then(function (text) {
+        var data = {};
+        if (text) {
+          try {
+            data = JSON.parse(text);
+          } catch (err) {
+            if (!response.ok) {
+              throw new Error("Request failed. Please refresh and try again.");
+            }
+          }
+        }
         if (!response.ok) {
           throw new Error(data.error || "Request failed.");
         }
@@ -118,6 +128,10 @@
       .finally(function () {
         setLoading(completeBtn, false);
       });
+  }
+
+  if (resetConfig.otpAlreadySent && otpInput) {
+    otpInput.focus();
   }
 
   if (sendBtn) {
