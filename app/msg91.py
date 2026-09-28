@@ -72,7 +72,7 @@ def check_msg91_ready():
     return True, None
 
 
-def send_otp(phone, otp=None):
+def send_otp(phone):
     ready, error = check_msg91_ready()
     if not ready:
         return False, error
@@ -86,22 +86,42 @@ def send_otp(phone, otp=None):
         "otp_length": _otp_length,
         "otp_expiry": _otp_expiry,
     }
-    if otp:
-        payload["otp"] = otp
 
-    # Use a single API call only. A POST+GET fallback triggers MSG91 error 311
-    # (duplicate SMS to the same number within 10 seconds).
+    # Let MSG91 generate and deliver the OTP. Do not pass a custom otp value.
     result = _request("POST", f"{_API_BASE}/otp", payload)
 
     if result.get("type") == "success":
         logger.info(
-            "MSG91 OTP sent to %s request_id=%s custom_otp=%s",
+            "MSG91 OTP sent to %s request_id=%s",
             mobile,
             result.get("request_id"),
-            bool(otp),
         )
         return True, None
 
     error = _parse_msg91_error(result)
     logger.warning("MSG91 OTP send failed for %s: %s", mobile, error)
     return False, error
+
+
+def verify_otp(phone, otp):
+    ready, error = check_msg91_ready()
+    if not ready:
+        return False, error
+
+    mobile = phone_to_msg91_mobile(phone)
+    if not mobile:
+        return False, "Invalid phone number."
+
+    code = (otp or "").strip()
+    if not code.isdigit():
+        return False, "Enter a valid OTP."
+
+    result = _request(
+        "POST",
+        f"{_API_BASE}/otp/verify",
+        {"mobile": mobile, "otp": code},
+    )
+
+    if result.get("type") == "success":
+        return True, None
+    return False, _parse_msg91_error(result) or "Invalid or expired OTP. Try again."
