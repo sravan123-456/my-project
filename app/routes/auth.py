@@ -18,7 +18,7 @@ from app.forms import (
     LoginForm,
     RegisterForm,
 )
-from app.msg91 import check_msg91_ready, msg91_enabled, send_otp
+from app.msg91 import msg91_enabled, send_otp
 from app.phone_utils import normalize_email, normalize_phone
 from app.models import (
     ORG_STATUS_PENDING,
@@ -320,10 +320,6 @@ def _send_reset_otp(phone, force=False):
     last_sent = session.get("pwd_reset_otp_sent_at")
     if not force and last_sent and now - last_sent < 60:
         return True, None
-
-    ready, error = check_msg91_ready()
-    if not ready:
-        return False, error
 
     otp = f"{secrets.randbelow(10**6):06d}"
     ok, error = send_otp(phone, otp=otp)

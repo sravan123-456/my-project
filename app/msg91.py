@@ -59,40 +59,10 @@ def _request(method, url, payload=None):
         return {"type": "error", "message": body}
 
 
-def get_otp_balance():
-    """Return OTP route SMS balance, or None if it cannot be read."""
-    if not msg91_enabled():
-        return None
-
-    params = urllib.parse.urlencode({"authkey": _auth_key, "type": 4})
-    url = f"https://control.msg91.com/api/balance.php?{params}"
-    request = urllib.request.Request(url, headers={"authkey": _auth_key}, method="GET")
-    try:
-        with urllib.request.urlopen(request, timeout=15) as response:
-            body = response.read().decode("utf-8").strip()
-    except (urllib.error.HTTPError, urllib.error.URLError) as exc:
-        logger.warning("MSG91 balance check failed: %s", exc)
-        return None
-
-    try:
-        return float(body)
-    except ValueError:
-        logger.warning("MSG91 balance response was not numeric: %s", body)
-        return None
-
-
 def check_msg91_ready():
-    """Ensure MSG91 is configured and has credits before sending OTP."""
+    """Ensure MSG91 is configured. Wallet balance is managed in MSG91 dashboard."""
     if not msg91_enabled():
         return False, "Phone OTP reset is not configured."
-
-    balance = get_otp_balance()
-    if balance is not None and balance <= 0:
-        return (
-            False,
-            "SMS credits are exhausted on the DanSetu MSG91 account. "
-            "Please contact the site administrator to recharge MSG91.",
-        )
     return True, None
 
 
