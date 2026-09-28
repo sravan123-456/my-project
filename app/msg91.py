@@ -28,8 +28,14 @@ def msg91_enabled():
 def _parse_msg91_error(result):
     message = result.get("message")
     if isinstance(message, dict):
-        return message.get("message") or str(message)
-    return message or "Could not complete MSG91 request."
+        message = message.get("message") or str(message)
+    text = str(message or "Could not complete MSG91 request.")
+    if "311" in text:
+        return (
+            "OTP was already sent to this number. "
+            "Please wait 30 seconds and check your SMS before resending."
+        )
+    return text
 
 
 def _request(method, url, payload=None):
@@ -83,10 +89,9 @@ def send_otp(phone, otp=None):
     if otp:
         payload["otp"] = otp
 
+    # Use a single API call only. A POST+GET fallback triggers MSG91 error 311
+    # (duplicate SMS to the same number within 10 seconds).
     result = _request("POST", f"{_API_BASE}/otp", payload)
-    if result.get("type") != "success":
-        params = urllib.parse.urlencode(payload)
-        result = _request("GET", f"{_API_BASE}/otp?{params}")
 
     if result.get("type") == "success":
         logger.info(

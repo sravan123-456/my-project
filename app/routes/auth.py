@@ -315,10 +315,19 @@ def _verify_reset_otp(otp):
     return True, None
 
 
+MSG91_RESEND_GAP_SECONDS = 30
+
+
 def _send_reset_otp(phone, force=False):
     now = time.time()
     last_sent = session.get("pwd_reset_otp_sent_at")
-    if not force and last_sent and now - last_sent < 60:
+    if last_sent and now - last_sent < MSG91_RESEND_GAP_SECONDS:
+        if force:
+            wait = int(MSG91_RESEND_GAP_SECONDS - (now - last_sent)) + 1
+            return (
+                False,
+                f"Please wait {wait} seconds before requesting another OTP.",
+            )
         return True, None
 
     otp = f"{secrets.randbelow(10**6):06d}"
