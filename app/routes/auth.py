@@ -288,6 +288,8 @@ def _clear_password_reset_session():
     session.pop("pwd_reset_user_id", None)
     session.pop("pwd_reset_phone", None)
     session.pop("pwd_reset_otp_sent_at", None)
+
+
 MSG91_RESEND_GAP_SECONDS = 30
 
 
@@ -303,11 +305,9 @@ def _send_reset_otp(phone, force=False):
             )
         return True, None
 
-    otp = f"{secrets.randbelow(10**6):06d}"
-    ok, error = send_otp(phone, otp=otp)
+    ok, error = send_otp(phone)
     if ok:
         session["pwd_reset_otp_sent_at"] = now
-        _store_reset_otp(otp)
     return ok, error
 
 
@@ -388,7 +388,7 @@ def forgot_password_complete():
     if len(password) < 6:
         return jsonify({"ok": False, "error": "Password must be at least 6 characters."}), 400
 
-    ok, error = _verify_reset_otp(otp)
+    ok, error = verify_otp(phone, otp)
     if not ok:
         return jsonify({"ok": False, "error": error or "Invalid or expired OTP. Try again."}), 401
 
