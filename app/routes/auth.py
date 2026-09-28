@@ -1,4 +1,6 @@
+import hashlib
 import re
+import secrets
 import time
 from datetime import datetime
 
@@ -16,7 +18,7 @@ from app.forms import (
     LoginForm,
     RegisterForm,
 )
-from app.msg91 import msg91_enabled, send_otp, verify_otp
+from app.msg91 import check_msg91_ready, msg91_enabled, send_otp
 from app.phone_utils import normalize_email, normalize_phone
 from app.models import (
     ORG_STATUS_PENDING,
@@ -288,6 +290,29 @@ def _clear_password_reset_session():
     session.pop("pwd_reset_user_id", None)
     session.pop("pwd_reset_phone", None)
     session.pop("pwd_reset_otp_sent_at", None)
+    session.pop("pwd_reset_otp_hash", None)
+    session.pop("pwd_reset_otp_expires", None)
+
+
+def _hash_reset_otp(otp):
+    return hashlib.sha256(otp.encode("utf-8")).hexdigest()
+
+
+def _store_reset_otp(otp):
+    session["pwd_reset_otp_hash"] = _hash_reset_otp(otp)
+    session["pwd_reset_otp_expires"] = time.time() + 300
+
+
+def _verify_reset_otp(otp):
+    expires = session.get("pwd_reset_otp_expires")
+    expected = session.get("pwd_reset_otp_hash")
+    if not expires or not expected:
+        return False, "Please request a new OTP."
+    if time.time() > expires:
+        return False, "OTP expired. Please resend and try again."
+    if _hash_reset_otp(otp) != expected:
+        return False, "Invalid OTP. Please check the SMS and try again."
+    return True, None
 
 
 def _send_reset_otp(phone, force=False):
@@ -296,9 +321,15 @@ def _send_reset_otp(phone, force=False):
     if not force and last_sent and now - last_sent < 60:
         return True, None
 
-    ok, error = send_otp(phone)
+    ready, error = check_msg91_ready()
+    if not ready:
+        return False, error
+
+    otp = f"{secrets.randbelow(10**6):06d}"
+    ok, error = send_otp(phone, otp=otp)
     if ok:
         session["pwd_reset_otp_sent_at"] = now
+        _store_reset_otp(otp)
     return ok, error
 
 
@@ -379,7 +410,7 @@ def forgot_password_complete():
     if len(password) < 6:
         return jsonify({"ok": False, "error": "Password must be at least 6 characters."}), 400
 
-    ok, error = verify_otp(phone, otp)
+    ok, error = _verify_reset_otp(otp)
     if not ok:
         return jsonify({"ok": False, "error": error or "Invalid or expired OTP. Try again."}), 401
 
