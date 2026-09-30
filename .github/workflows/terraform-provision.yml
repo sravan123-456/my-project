@@ -53,6 +53,12 @@ on:
         required: true
       SSH_PUBLIC_KEY:
         required: true
+      MSG91_AUTH_KEY:
+        required: false
+      MSG91_WIDGET_ID:
+        required: false
+      MSG91_WIDGET_TOKEN:
+        required: false
 
 jobs:
   provision:
@@ -116,6 +122,9 @@ jobs:
         env:
           TF_VAR_secret_key: ${{ secrets.SECRET_KEY }}
           TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
+          TF_VAR_msg91_auth_key: ${{ secrets.MSG91_AUTH_KEY }}
+          TF_VAR_msg91_widget_id: ${{ secrets.MSG91_WIDGET_ID }}
+          TF_VAR_msg91_widget_token: ${{ secrets.MSG91_WIDGET_TOKEN }}
         run: terraform apply -auto-approve -input=false
 
       - name: Show outputs

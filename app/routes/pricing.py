@@ -8,6 +8,7 @@ from app import db
 from app.forms import StartCommitteeForm
 from app.models import ORG_STATUS_PENDING, Organization, User
 from app.pricing_plans import get_plan, list_plans
+from app.msg91 import msg91_enabled, verify_access_token, widget_config
 from app.phone_utils import normalize_phone
 from app.routes.auth import SLUG_PATTERN, USERNAME_IN_USE_MESSAGE, _normalize_slug
 
@@ -15,6 +16,20 @@ pricing_bp = Blueprint("pricing", __name__)
 
 
 def _handle_register(start_form, plan):
+    if msg91_enabled():
+        phone_access_token = (request.form.get("phone_access_token") or "").strip()
+        if not phone_access_token:
+            start_form.phone.errors.append(
+                "Verify your phone number with OTP before registering."
+            )
+            flash("Verify your phone number with OTP before registering.", "danger")
+            return None
+        ok, error = verify_access_token(phone_access_token)
+        if not ok:
+            start_form.phone.errors.append(error or "Phone verification failed. Try again.")
+            flash(error or "Phone verification failed. Try again.", "danger")
+            return None
+
     slug = _normalize_slug(start_form.slug.data)
     if not SLUG_PATTERN.match(slug):
         flash("Committee code may only use lowercase letters, numbers, and hyphens.", "warning")
@@ -123,4 +138,9 @@ def register(plan_id):
     if not form.festival_year.data:
         form.festival_year.data = date.today().year
 
-    return render_template("pricing/register.html", form=form, plan=plan)
+    return render_template(
+        "pricing/register.html",
+        form=form,
+        plan=plan,
+        msg91_widget=widget_config(),
+    )

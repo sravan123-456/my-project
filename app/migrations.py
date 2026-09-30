@@ -318,6 +318,15 @@ def migrate_subscription_plan():
             )
 
 
+def migrate_upgrade_leads():
+    inspector = inspect(db.engine)
+    if "upgrade_leads" in inspector.get_table_names():
+        return
+    from app.models import UpgradeLead
+
+    UpgradeLead.__table__.create(bind=db.engine)
+
+
 def run_migrations():
     migrate_gallery_and_profiles()
     migrate_user_auth_fields()
@@ -329,6 +338,7 @@ def run_migrations():
     migrate_organization_banner()
     migrate_organization_payment_qr()
     migrate_subscription_plan()
+    migrate_upgrade_leads()
     migrate_organizations()
     migrate_pledges()
     migrate_expense_payment_columns()

@@ -117,3 +117,5 @@ jobs:
           echo "3. Update GitHub repository **Variables** (optional) so push-to-deploy uses the new project:" >> "$GITHUB_STEP_SUMMARY"
           echo "   - \`GCP_PROJECT\`, \`GCP_ZONE\`, \`GCE_INSTANCE\`, \`APP_DOMAIN\`" >> "$GITHUB_STEP_SUMMARY"
           echo "4. Ensure secret **GCP_SA_KEY** is the JSON key for \`github-actions@${{ inputs.gcp_project_id }}.iam.gserviceaccount.com\`." >> "$GITHUB_STEP_SUMMARY"
+          echo "5. Add GitHub secrets **MSG91_AUTH_KEY**, **MSG91_WIDGET_ID**, **MSG91_WIDGET_TOKEN** (optional but needed for phone OTP)." >> "$GITHUB_STEP_SUMMARY"
+          echo "6. Re-run **Deploy Application** or push to \`main\` after DNS propagates." >> "$GITHUB_STEP_SUMMARY"

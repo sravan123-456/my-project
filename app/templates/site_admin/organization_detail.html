@@ -77,6 +77,7 @@
                     <tr>
                         <th>Name</th>
                         <th>Username</th>
+                        <th>Phone</th>
                         <th>Access</th>
                         <th>Approved</th>
                         <th>Logins</th>
@@ -88,6 +89,15 @@
                     <tr>
                         <td>{{ user.full_name }}</td>
                         <td>{{ user.username }}</td>
+                        <td>
+                            {% if user.phone %}
+                            {{ user.phone }}
+                            {% set wa_url = outreach_whatsapp_url(user.phone) %}
+                            {% if wa_url %}
+                            <div><a href="{{ wa_url }}" target="_blank" rel="noopener" class="small">{{ t('admin.whatsapp') }}</a></div>
+                            {% endif %}
+                            {% else %}-{% endif %}
+                        </td>
                         <td>{{ user.access_label() }}</td>
                         <td>{% if user.is_approved %}Yes{% else %}Pending{% endif %}</td>
                         <td>{{ user.login_count or 0 }}</td>

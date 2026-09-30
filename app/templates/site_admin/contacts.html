@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('site_admin.contacts') }} - {{ platform_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="fw-bold mb-0"><i class="bi bi-telephone"></i> {{ t('site_admin.contacts') }}</h2>
+        <small class="text-muted">Phone numbers for outreach and WhatsApp updates</small>
+    </div>
+    <a href="{{ url_for('site_admin.dashboard') }}" class="btn btn-outline-secondary">Back to Site Admin</a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Name</th>
+                        <th>Username</th>
+                        <th>Committee</th>
+                        <th>Phone</th>
+                        <th>Plan</th>
+                        <th>Approved</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ user.full_name }}</td>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.organization.display_name() if user.organization else '-' }}</td>
+                        <td>{{ user.phone }}</td>
+                        <td>{{ user.organization.subscription_plan if user.organization else '-' }}</td>
+                        <td>{% if user.is_approved %}Yes{% else %}Pending{% endif %}</td>
+                        <td class="text-end">
+                            {% set wa_url = outreach_whatsapp_url(user.phone) %}
+                            {% if wa_url %}
+                            <a href="{{ wa_url }}" target="_blank" rel="noopener" class="btn btn-sm btn-success">
+                                <i class="bi bi-whatsapp"></i> {{ t('admin.whatsapp') }}
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">No phone numbers saved yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

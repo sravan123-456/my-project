@@ -1,7 +1,6 @@
 import json
 import logging
 import urllib.error
-import urllib.parse
 import urllib.request
 
 from app.phone_utils import phone_to_msg91_mobile
@@ -10,19 +9,36 @@ logger = logging.getLogger(__name__)
 
 _API_BASE = "https://control.msg91.com/api/v5"
 _auth_key = ""
+_widget_id = ""
+_widget_token = ""
 _otp_length = 6
 _otp_expiry = 5
 
 
 def init_msg91(app):
-    global _auth_key, _otp_length, _otp_expiry
+    global _auth_key, _widget_id, _widget_token, _otp_length, _otp_expiry
     _auth_key = app.config.get("MSG91_AUTH_KEY", "").strip()
+    _widget_id = app.config.get("MSG91_WIDGET_ID", "").strip()
+    _widget_token = app.config.get("MSG91_WIDGET_TOKEN", "").strip()
     _otp_length = int(app.config.get("MSG91_OTP_LENGTH", 6))
     _otp_expiry = int(app.config.get("MSG91_OTP_EXPIRY", 5))
 
 
+def msg91_widget_enabled():
+    return bool(_auth_key and _widget_id and _widget_token)
+
+
 def msg91_enabled():
-    return bool(_auth_key)
+    return msg91_widget_enabled()
+
+
+def widget_config():
+    if not msg91_widget_enabled():
+        return None
+    return {
+        "widget_id": _widget_id,
+        "widget_token": _widget_token,
+    }
 
 
 def _parse_msg91_error(result):
@@ -65,63 +81,28 @@ def _request(method, url, payload=None):
         return {"type": "error", "message": body}
 
 
-def check_msg91_ready():
-    """Ensure MSG91 is configured. Wallet balance is managed in MSG91 dashboard."""
-    if not msg91_enabled():
+def verify_access_token(access_token):
+    if not msg91_widget_enabled():
         return False, "Phone OTP reset is not configured."
-    return True, None
 
-
-def send_otp(phone):
-    ready, error = check_msg91_ready()
-    if not ready:
-        return False, error
-
-    mobile = phone_to_msg91_mobile(phone)
-    if not mobile:
-        return False, "Invalid phone number."
-
-    payload = {
-        "mobile": mobile,
-        "otp_length": _otp_length,
-        "otp_expiry": _otp_expiry,
-    }
-
-    # Let MSG91 generate and deliver the OTP. Do not pass a custom otp value.
-    result = _request("POST", f"{_API_BASE}/otp", payload)
-
-    if result.get("type") == "success":
-        logger.info(
-            "MSG91 OTP sent to %s request_id=%s",
-            mobile,
-            result.get("request_id"),
-        )
-        return True, None
-
-    error = _parse_msg91_error(result)
-    logger.warning("MSG91 OTP send failed for %s: %s", mobile, error)
-    return False, error
-
-
-def verify_otp(phone, otp):
-    ready, error = check_msg91_ready()
-    if not ready:
-        return False, error
-
-    mobile = phone_to_msg91_mobile(phone)
-    if not mobile:
-        return False, "Invalid phone number."
-
-    code = (otp or "").strip()
-    if not code.isdigit():
-        return False, "Enter a valid OTP."
+    token = (access_token or "").strip()
+    if not token:
+        return False, "Missing OTP verification token."
 
     result = _request(
         "POST",
-        f"{_API_BASE}/otp/verify",
-        {"mobile": mobile, "otp": code},
+        f"{_API_BASE}/widget/verifyAccessToken",
+        {
+            "authkey": _auth_key,
+            "access-token": token,
+        },
     )
 
     if result.get("type") == "success":
         return True, None
-    return False, _parse_msg91_error(result) or "Invalid or expired OTP. Try again."
+
+    return False, _parse_msg91_error(result) or "OTP verification failed. Try again."
+
+
+def phone_to_widget_identifier(phone):
+    return phone_to_msg91_mobile(phone)

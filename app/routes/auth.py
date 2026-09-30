@@ -1,5 +1,4 @@
 import re
-import time
 from datetime import datetime
 
 from flask import Blueprint, flash, jsonify, redirect, render_template, request, session, url_for
@@ -16,7 +15,13 @@ from app.forms import (
     LoginForm,
     RegisterForm,
 )
-from app.msg91 import msg91_enabled, send_otp, verify_otp
+from app.msg91 import (
+    msg91_enabled,
+    phone_to_widget_identifier,
+    verify_access_token,
+    widget_config,
+)
+from app.services.upgrade_leads import maybe_create_upgrade_lead
 from app.phone_utils import normalize_email, normalize_phone
 from app.models import (
     ORG_STATUS_PENDING,
@@ -52,6 +57,7 @@ def _record_login(user, username_attempt, success, organization_id=None):
     if success and user:
         user.login_count = (user.login_count or 0) + 1
         user.last_login_at = datetime.utcnow()
+        maybe_create_upgrade_lead(user)
 
 
 def _normalize_slug(slug):
@@ -113,6 +119,84 @@ def _mark_join_form_error(join_form, field_name, message):
     flash(message, "danger")
 
 
+def _process_join_registration(join_form, org, login_form, committee_code):
+    if msg91_enabled():
+        phone_access_token = (request.form.get("phone_access_token") or "").strip()
+        if not phone_access_token:
+            _mark_join_form_error(
+                join_form,
+                "phone",
+                "Verify your phone number with OTP before creating an account.",
+            )
+            return
+        ok, error = verify_access_token(phone_access_token)
+        if not ok:
+            _mark_join_form_error(
+                join_form,
+                "phone",
+                error or "Phone verification failed. Try again.",
+            )
+            return
+
+    username = join_form.username.data.strip().lower()
+    full_name = join_form.full_name.data.strip()
+    conflict_field, conflict_message = _join_registration_conflicts(org.id, username, full_name)
+    if conflict_field:
+        _mark_join_form_error(join_form, conflict_field, conflict_message)
+        return
+
+    normalized_phone = normalize_phone(join_form.phone.data)
+    normalized_email = normalize_email(join_form.email.data)
+    if not normalized_phone:
+        _mark_join_form_error(
+            join_form,
+            "phone",
+            "Enter a valid 10-digit Indian mobile number.",
+        )
+        return
+    if User.query.filter_by(phone=normalized_phone).first():
+        _mark_join_form_error(
+            join_form,
+            "phone",
+            "This phone number is already linked to another account.",
+        )
+        return
+    if normalized_email and User.query.filter_by(email=normalized_email).first():
+        _mark_join_form_error(
+            join_form,
+            "email",
+            "This email is already linked to another account.",
+        )
+        return
+
+    user = User(
+        username=username,
+        full_name=full_name,
+        phone=normalized_phone,
+        email=normalized_email,
+        organization_id=org.id,
+        is_admin=False,
+        can_write=False,
+        is_approved=False,
+    )
+    user.set_password(join_form.password.data)
+    db.session.add(user)
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        _mark_join_form_error(join_form, "username", USERNAME_IN_USE_MESSAGE)
+        return
+
+    flash(
+        "Join request submitted. Your committee admin will approve your account. "
+        "Then log in with your committee code, username, and password.",
+        "success",
+    )
+    login_form.committee_code.data = committee_code
+    join_form.committee_code.data = committee_code
+
+
 def _post_login_redirect(user, next_page):
     if next_page:
         return redirect(next_page)
@@ -168,69 +252,16 @@ def _handle_landing_post(login_form, join_form):
                 db.session.commit()
                 flash("Invalid committee code, username, or password.", "danger")
 
-    elif join_form.join_submit.data and join_form.validate_on_submit():
+    elif request.form.get("join_submit") and join_form.validate_on_submit():
         active_tab = "existing"
         committee_code = _normalize_slug(join_form.committee_code.data)
         org, org_error = _get_active_org(committee_code)
         if org_error:
             flash(org_error, "danger")
         else:
-            username = join_form.username.data.strip().lower()
-            full_name = join_form.full_name.data.strip()
-            conflict_field, conflict_message = _join_registration_conflicts(
-                org.id, username, full_name
-            )
-            if conflict_field:
-                _mark_join_form_error(join_form, conflict_field, conflict_message)
-            else:
-                normalized_phone = normalize_phone(join_form.phone.data)
-                normalized_email = normalize_email(join_form.email.data)
-                if not normalized_phone:
-                    _mark_join_form_error(
-                        join_form,
-                        "phone",
-                        "Enter a valid 10-digit Indian mobile number.",
-                    )
-                elif User.query.filter_by(phone=normalized_phone).first():
-                    _mark_join_form_error(
-                        join_form,
-                        "phone",
-                        "This phone number is already linked to another account.",
-                    )
-                elif normalized_email and User.query.filter_by(email=normalized_email).first():
-                    _mark_join_form_error(
-                        join_form,
-                        "email",
-                        "This email is already linked to another account.",
-                    )
-                else:
-                    user = User(
-                        username=username,
-                        full_name=full_name,
-                        phone=normalized_phone,
-                        email=normalized_email,
-                        organization_id=org.id,
-                        is_admin=False,
-                        can_write=False,
-                        is_approved=False,
-                    )
-                    user.set_password(join_form.password.data)
-                    db.session.add(user)
-                    try:
-                        db.session.commit()
-                    except IntegrityError:
-                        db.session.rollback()
-                        _mark_join_form_error(join_form, "username", USERNAME_IN_USE_MESSAGE)
-                    else:
-                        flash(
-                            "Join request submitted. Your committee admin will approve your account. "
-                            "Then log in with your committee code, username, and password.",
-                            "success",
-                        )
-                        login_form.committee_code.data = committee_code
-                        join_form.committee_code.data = committee_code
+            _process_join_registration(join_form, org, login_form, committee_code)
 
-    elif join_form.join_submit.data and request.method == "POST":
+    elif request.form.get("join_submit") and request.method == "POST":
         active_tab = "existing"
         flash("Please correct the errors in the join request form below.", "danger")
 
@@ -275,6 +306,7 @@ def render_landing_page():
         join_form=join_form,
         active_tab=active_tab,
         landing_view=landing_view,
+        msg91_widget=widget_config(),
     )
 
 
@@ -287,28 +319,6 @@ def _mask_phone(phone):
 def _clear_password_reset_session():
     session.pop("pwd_reset_user_id", None)
     session.pop("pwd_reset_phone", None)
-    session.pop("pwd_reset_otp_sent_at", None)
-
-
-MSG91_RESEND_GAP_SECONDS = 30
-
-
-def _send_reset_otp(phone, force=False):
-    now = time.time()
-    last_sent = session.get("pwd_reset_otp_sent_at")
-    if last_sent and now - last_sent < MSG91_RESEND_GAP_SECONDS:
-        if force:
-            wait = int(MSG91_RESEND_GAP_SECONDS - (now - last_sent)) + 1
-            return (
-                False,
-                f"Please wait {wait} seconds before requesting another OTP.",
-            )
-        return True, None
-
-    ok, error = send_otp(phone)
-    if ok:
-        session["pwd_reset_otp_sent_at"] = now
-    return ok, error
 
 
 @auth_bp.route("/forgot-password/otp")
@@ -332,37 +342,17 @@ def forgot_password_otp():
         flash("Phone OTP reset is not configured yet. Contact your committee admin.", "warning")
         return redirect(url_for("auth.forgot_password"))
 
-    force_resend = request.args.get("resend") == "1"
-    otp_sent, otp_error = _send_reset_otp(phone, force=force_resend)
+    widget_identifier = phone_to_widget_identifier(phone)
+    if not widget_identifier:
+        flash("The phone number on this account is invalid. Contact your committee admin.", "warning")
+        return redirect(url_for("auth.forgot_password"))
 
     return render_template(
         "auth/forgot_password_otp.html",
         masked_phone=_mask_phone(phone),
-        otp_sent=otp_sent,
-        otp_error=otp_error,
+        widget_identifier=widget_identifier,
+        msg91_widget=widget_config(),
     )
-
-
-@auth_bp.route("/forgot-password/otp/send", methods=["POST"])
-def forgot_password_otp_send():
-    if not msg91_enabled():
-        return jsonify({"ok": False, "error": "Phone OTP reset is not configured."}), 503
-
-    user_id = session.get("pwd_reset_user_id")
-    phone = session.get("pwd_reset_phone")
-    if not user_id or not phone:
-        return jsonify({"ok": False, "error": "Session expired. Start again."}), 400
-
-    user = User.query.get(user_id)
-    if not user or user.phone != phone:
-        _clear_password_reset_session()
-        return jsonify({"ok": False, "error": "Session expired. Start again."}), 400
-
-    ok, error = _send_reset_otp(phone, force=True)
-    if not ok:
-        return jsonify({"ok": False, "error": error or "Could not send OTP."}), 502
-
-    return jsonify({"ok": True})
 
 
 @auth_bp.route("/forgot-password/complete", methods=["POST"])
@@ -381,14 +371,14 @@ def forgot_password_complete():
         return jsonify({"ok": False, "error": "Session expired. Start again."}), 400
 
     payload = request.get_json(silent=True) or {}
-    otp = (payload.get("otp") or "").strip()
+    access_token = (payload.get("access_token") or "").strip()
     password = (payload.get("password") or "").strip()
-    if not otp:
-        raise BadRequest("Missing otp.")
+    if not access_token:
+        raise BadRequest("Missing access_token.")
     if len(password) < 6:
         return jsonify({"ok": False, "error": "Password must be at least 6 characters."}), 400
 
-    ok, error = verify_otp(phone, otp)
+    ok, error = verify_access_token(access_token)
     if not ok:
         return jsonify({"ok": False, "error": error or "Invalid or expired OTP. Try again."}), 401
 

@@ -77,6 +77,9 @@ Go to: **https://github.com/sravan123-456/my-project/settings/secrets/actions**
 | `GCP_SA_KEY` | Full contents of `gcp-sa-key.json` |
 | `SECRET_KEY` | Long random string for Flask (e.g. 64 chars) |
 | `SSH_PUBLIC_KEY` | Full contents of `vinayaka_vm_key.pub` |
+| `MSG91_AUTH_KEY` | MSG91 auth key (server-side OTP verification) |
+| `MSG91_WIDGET_ID` | MSG91 OTP widget ID |
+| `MSG91_WIDGET_TOKEN` | MSG91 OTP widget token |
 
 ---
 

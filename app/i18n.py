@@ -4,6 +4,7 @@ SUPPORTED_LANGUAGES = {
     "en": "English",
     "te": "తెలుగు",
     "hi": "हिन्दी",
+    "kn": "ಕನ್ನಡ",
 }
 
 MESSAGES = {
@@ -354,9 +355,20 @@ MESSAGES = {
         "landing.join.title": "Create your account",
         "landing.join.subtitle": "Join your committee in minutes. Free to start.",
         "landing.join.benefit_free": "Free to start",
-        "landing.join.benefit_lang": "8 Indian languages",
+        "landing.join.benefit_lang": "4 Indian languages",
         "landing.join.benefit_data": "Your books stay yours",
         "landing.join.create": "Create account",
+        "landing.auth.verify_phone": "Verify phone & create account",
+        "landing.auth.otp_sent": "OTP sent to your phone.",
+        "landing.auth.enter_otp": "Enter OTP",
+        "landing.auth.resend_otp": "Resend OTP",
+        "form.required": "Required",
+        "admin.phone": "Phone",
+        "admin.whatsapp": "WhatsApp",
+        "site_admin.contacts": "Contacts",
+        "site_admin.upgrade_leads": "Free plan users to contact",
+        "site_admin.upgrade_leads_hint": "These users logged in on the free plan. Reach out about upgrading.",
+        "site_admin.mark_contacted": "Mark contacted",
         "landing.join.terms": "By creating an account you agree to our",
         "landing.join.terms_link": "Terms of Service",
         "landing.join.privacy_link": "Privacy Policy",
@@ -765,7 +777,7 @@ MESSAGES = {
         "landing.join.title": "మీ ఖాతా సృష్టించండి",
         "landing.join.subtitle": "నిమిషాల్లో మీ కమిటీలో చేరండి. ప్రారంభించడం ఉచితం.",
         "landing.join.benefit_free": "ప్రారంభించడం ఉచితం",
-        "landing.join.benefit_lang": "8 భారతీయ భాషలు",
+        "landing.join.benefit_lang": "4 భారతీయ భాషలు",
         "landing.join.benefit_data": "మీ డేటా మీదే ఉంటుంది",
         "landing.join.create": "ఖాతా సృష్టించండి",
         "landing.join.terms": "ఖాతా సృష్టించడం ద్వారా మీరు మా",
@@ -1162,7 +1174,7 @@ MESSAGES = {
         "landing.join.title": "अपना खाता बनाएं",
         "landing.join.subtitle": "मिनटों में अपनी समिति में शामिल हों। शुरू करना मुफ्त है।",
         "landing.join.benefit_free": "शुरू करना मुफ्त",
-        "landing.join.benefit_lang": "8 भारतीय भाषाएं",
+        "landing.join.benefit_lang": "4 भारतीय भाषाएं",
         "landing.join.benefit_data": "आपका डेटा आपका रहेगा",
         "landing.join.create": "खाता बनाएं",
         "landing.join.terms": "खाता बनाकर आप हमारी",
@@ -1221,6 +1233,43 @@ MESSAGES = {
         "error.try_again": "पुनः प्रयास करें",
     },
 }
+
+MESSAGES["kn"] = dict(MESSAGES["en"])
+MESSAGES["kn"].update(
+    {
+        "nav.dashboard": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
+        "nav.donations": "ದಾನಗಳು",
+        "nav.expenses": "ಖರ್ಚುಗಳು",
+        "nav.reports": "ವರದಿಗಳು",
+        "nav.activity": "ಚಟುವಟಿಕೆ",
+        "nav.gallery": "ಗ್ಯಾಲರಿ",
+        "nav.admin": "ನಿರ್ವಾಹಕ",
+        "nav.profile": "ಪ್ರೊಫೈಲ್",
+        "nav.logout": "ಲಾಗ್ ಔಟ್",
+        "landing.join.title": "ನಿಮ್ಮ ಖಾತೆಯನ್ನು ರಚಿಸಿ",
+        "landing.join.subtitle": "ನಿಮ್ಮ ಸಮಿತಿಗೆ ಸೇರಿ. ಪ್ರಾರಂಭಿಸಲು ಉಚಿತ.",
+        "landing.join.benefit_free": "ಉಚಿತವಾಗಿ ಪ್ರಾರಂಭಿಸಿ",
+        "landing.join.benefit_lang": "4 ಭಾರತೀಯ ಭಾಷೆಗಳು",
+        "landing.join.benefit_data": "ನಿಮ್ಮ ದಾಖಲೆಗಳು ನಿಮ್ಮದೇ",
+        "landing.join.create": "ಖಾತೆ ರಚಿಸಿ",
+        "landing.join.have_account": "ಈಗಾಗಲೇ ಖಾತೆ ಇದೆಯೇ?",
+        "landing.join.login_link": "ಲಾಗ್ ಇನ್",
+        "landing.login.title": "ಲಾಗ್ ಇನ್",
+        "landing.auth.phone_required_hint": "OTP ಪರಿಶೀಲನೆಗಾಗಿ 10 ಅಂಕಿಯ ಮೊಬೈಲ್ ಸಂಖ್ಯೆ ಅಗತ್ಯ.",
+        "landing.auth.verify_phone": "ಫೋನ್ ಪರಿಶೀಲಿಸಿ ಮತ್ತು ಖಾತೆ ರಚಿಸಿ",
+        "landing.auth.otp_sent": "ನಿಮ್ಮ ಫೋನ್‌ಗೆ OTP ಕಳುಹಿಸಲಾಗಿದೆ.",
+        "landing.auth.enter_otp": "OTP ನಮೂದಿಸಿ",
+        "landing.auth.resend_otp": "OTP ಮರುಕಳುಹಿಸಿ",
+        "form.required": "ಅಗತ್ಯ",
+        "admin.phone": "ಫೋನ್",
+        "admin.whatsapp": "WhatsApp",
+        "site_admin.contacts": "ಸಂಪರ್ಕಗಳು",
+        "site_admin.upgrade_leads": "ಉಚಿತ ಯೋಜನೆ ಬಳಕೆದಾರರು",
+        "site_admin.upgrade_leads_hint": "ಈ ಬಳಕೆದಾರರು ಉಚಿತ ಯೋಜನೆಯಲ್ಲಿ ಲಾಗ್ ಇನ್ ಮಾಡಿದ್ದಾರೆ. ಅಪ್‌ಗ್ರೇಡ್ ಬಗ್ಗೆ ಸಂಪರ್ಕಿಸಿ.",
+        "site_admin.mark_contacted": "ಸಂಪರ್ಕಿಸಲಾಗಿದೆ ಎಂದು ಗುರುತಿಸಿ",
+        "pricing.register_submit": "ಫೋನ್ ಪರಿಶೀಲಿಸಿ ಮತ್ತು ಸಮಿತಿ ನೋಂದಣಿ",
+    }
+)
 
 
 def get_language():

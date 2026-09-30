@@ -151,6 +151,7 @@
                     <tr>
                         <th>{{ t('activity.person') }}</th>
                         <th>Username</th>
+                        <th>{{ t('admin.phone') }}</th>
                         <th>{{ t('admin.requested') }}</th>
                         <th class="text-center">{{ t('common.actions') }}</th>
                     </tr>
@@ -165,6 +166,17 @@
                             </div>
                         </td>
                         <td>{{ user.username }}</td>
+                        <td>
+                            {% if user.phone %}
+                            <div>{{ user.phone }}</div>
+                            {% set wa_url = outreach_whatsapp_url(user.phone) %}
+                            {% if wa_url %}
+                            <a href="{{ wa_url }}" target="_blank" rel="noopener" class="small">{{ t('admin.whatsapp') }}</a>
+                            {% endif %}
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
                         <td><small>{{ user.created_at.strftime('%d %b %Y, %I:%M %p') }}</small></td>
                         <td class="text-center">
                             <form method="POST" action="{{ url_for('admin.approve_user', user_id=user.id) }}" class="d-inline">
@@ -203,6 +215,7 @@
                         <th>#</th>
                         <th>{{ t('activity.person') }}</th>
                         <th>Username</th>
+                        <th>{{ t('admin.phone') }}</th>
                         <th>{{ t('admin.registered') }}</th>
                         <th>{{ t('admin.access') }}</th>
                         <th class="text-center">{{ t('common.actions') }}</th>
@@ -224,6 +237,17 @@
                             </div>
                         </td>
                         <td>{{ user.username }}</td>
+                        <td>
+                            {% if user.phone %}
+                            <div>{{ user.phone }}</div>
+                            {% set wa_url = outreach_whatsapp_url(user.phone) %}
+                            {% if wa_url %}
+                            <a href="{{ wa_url }}" target="_blank" rel="noopener" class="small">{{ t('admin.whatsapp') }}</a>
+                            {% endif %}
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
                         <td><small>{{ user.created_at.strftime('%d %b %Y') }}</small></td>
                         <td>
                             {% if user.is_admin %}

@@ -15,6 +15,7 @@ from app.models import (
     Expense,
     LoginEvent,
     Organization,
+    UpgradeLead,
     User,
 )
 from app.permissions import site_admin_required
@@ -78,6 +79,12 @@ def dashboard():
         .limit(36)
         .all()
     )
+    upgrade_leads = (
+        UpgradeLead.query.filter_by(contacted=False)
+        .order_by(UpgradeLead.created_at.desc())
+        .limit(20)
+        .all()
+    )
 
     return render_template(
         "site_admin/dashboard.html",
@@ -86,7 +93,32 @@ def dashboard():
         organizations=organizations,
         pending_organizations=pending_organizations,
         users_with_photos=users_with_photos,
+        upgrade_leads=upgrade_leads,
     )
+
+
+@site_admin_bp.route("/contacts")
+@site_admin_required
+def contacts():
+    users = (
+        User.query.filter(User.phone.isnot(None), User.phone != "")
+        .order_by(User.created_at.desc())
+        .all()
+    )
+    return render_template("site_admin/contacts.html", users=users)
+
+
+@site_admin_bp.route("/upgrade-leads/<int:lead_id>/contacted", methods=["POST"])
+@site_admin_required
+def mark_upgrade_lead_contacted(lead_id):
+    lead = db.session.get(UpgradeLead, lead_id)
+    if not lead:
+        flash("Lead not found.", "danger")
+        return redirect(url_for("site_admin.dashboard"))
+    lead.contacted = True
+    db.session.commit()
+    flash(f"Marked {lead.full_name} as contacted.", "success")
+    return redirect(url_for("site_admin.dashboard"))
 
 
 @site_admin_bp.route("/organizations")

@@ -121,37 +121,43 @@
                     <li><i class="bi bi-check-circle-fill"></i> {{ t('landing.join.benefit_data') }}</li>
                 </ul>
 
+                {% from "partials/required_label.html" import required_label %}
+                <div id="joinAuthError" class="alert alert-danger py-2 d-none" role="alert"></div>
+                <div id="joinAuthInfo" class="alert alert-info py-2 d-none" role="status"></div>
+                <div id="msg91Captcha" class="mb-2"></div>
                 <form method="POST" novalidate id="joinAccountForm">
                     {{ join_form.hidden_tag() }}
                     <input type="hidden" name="active_tab" value="existing">
+                    <input type="hidden" name="join_submit" value="Submit Join Request">
+                    <input type="hidden" name="phone_access_token" id="joinPhoneAccessToken" value="">
                     <div class="mb-2">
-                        {{ join_form.committee_code.label(class="form-label landing-label") }}
+                        {{ required_label(join_form.committee_code) }}
                         {{ join_form.committee_code(class="form-control landing-input" + (" is-invalid" if join_form.committee_code.errors else ""), placeholder="e.g. indukuru") }}
                         {% for error in join_form.committee_code.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
                     </div>
                     <div class="mb-2">
-                        {{ join_form.full_name.label(class="form-label landing-label") }}
+                        {{ required_label(join_form.full_name) }}
                         {{ join_form.full_name(class="form-control landing-input" + (" is-invalid" if join_form.full_name.errors else ""), placeholder="Your name") }}
                         {% for error in join_form.full_name.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
                     </div>
                     <div class="mb-2">
                         {{ join_form.email.label(class="form-label landing-label") }}
-                        {{ join_form.email(class="form-control landing-input" + (" is-invalid" if join_form.email.errors else ""), placeholder="Email address", type="email") }}
+                        {{ join_form.email(class="form-control landing-input" + (" is-invalid" if join_form.email.errors else ""), placeholder="Email address (optional)", type="email") }}
                         {% for error in join_form.email.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
                     </div>
                     <div class="mb-2">
-                        {{ join_form.phone.label(class="form-label landing-label") }}
-                        {{ join_form.phone(class="form-control landing-input" + (" is-invalid" if join_form.phone.errors else ""), placeholder="10-digit mobile", inputmode="numeric", maxlength="10") }}
+                        {{ required_label(join_form.phone) }}
+                        {{ join_form.phone(class="form-control landing-input" + (" is-invalid" if join_form.phone.errors else ""), id="joinPhone", placeholder="10-digit mobile", inputmode="numeric", maxlength="10") }}
                         <div class="form-text">{{ t('landing.auth.phone_required_hint') }}</div>
                         {% for error in join_form.phone.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
                     </div>
                     <div class="mb-2">
-                        {{ join_form.username.label(class="form-label landing-label") }}
+                        {{ required_label(join_form.username) }}
                         {{ join_form.username(class="form-control landing-input" + (" is-invalid" if join_form.username.errors else ""), placeholder="Choose a username") }}
                         {% for error in join_form.username.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
                     </div>
-                    <div class="mb-3">
-                        {{ join_form.password.label(class="form-label landing-label") }}
+                    <div class="mb-2">
+                        {{ required_label(join_form.password) }}
                         <div class="password-toggle-wrap">
                             {{ join_form.password(class="form-control landing-input" + (" is-invalid" if join_form.password.errors else ""), id="joinPassword") }}
                             <button type="button" class="password-toggle-btn" data-password-toggle="joinPassword" aria-label="Show password">
@@ -161,7 +167,14 @@
                         {% for error in join_form.password.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
                         {{ join_form.confirm_password(class="d-none", id="joinConfirmPassword") }}
                     </div>
-                    {{ join_form.join_submit(class="btn w-100 landing-btn-cta", value=t('landing.join.create')) }}
+                    <div id="joinOtpSection" class="mb-3 d-none">
+                        <label class="form-label landing-label" for="joinOtpInput">{{ t('landing.auth.enter_otp') }}<span class="text-danger ms-1">*</span></label>
+                        <input type="text" id="joinOtpInput" class="form-control landing-input" inputmode="numeric" maxlength="6" placeholder="6-digit OTP" autocomplete="one-time-code">
+                        <button type="button" id="joinResendOtpBtn" class="btn btn-link px-0 mt-1">{{ t('landing.auth.resend_otp') }}</button>
+                    </div>
+                    <button type="button" id="joinSubmitBtn" class="btn w-100 landing-btn-cta" disabled>
+                        {{ t('landing.auth.verify_phone') if msg91_widget else t('landing.join.create') }}
+                    </button>
                 </form>
 
                 <p class="landing-legal text-center mt-3 mb-2">
@@ -244,5 +257,26 @@
     <script src="{{ url_for('static', filename='vendor/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
     <script src="{{ url_for('static', filename='js/landing.js') }}"></script>
+    {% if msg91_widget %}
+    <script>
+      window.joinRegistrationConfig = {
+        widgetId: {{ msg91_widget.widget_id|tojson }},
+        widgetToken: {{ msg91_widget.widget_token|tojson }},
+        captchaId: "msg91Captcha",
+        submitLabel: {{ t('landing.join.create')|tojson }},
+        verifyLabel: {{ t('landing.auth.verify_phone')|tojson }},
+        otpSentLabel: {{ t('landing.auth.otp_sent')|tojson }}
+      };
+    </script>
+    <script src="{{ url_for('static', filename='js/msg91-registration.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/join-registration.js') }}"></script>
+    {% else %}
+    <script>
+      document.getElementById("joinSubmitBtn").disabled = false;
+      document.getElementById("joinSubmitBtn").addEventListener("click", function () {
+        document.getElementById("joinAccountForm").submit();
+      });
+    </script>
+    {% endif %}
 </body>
 </html>

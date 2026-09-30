@@ -95,3 +95,22 @@ def pledge_whatsapp_url(pledge):
     if not pledge.phone or pledge.status != "pending":
         return None
     return build_whatsapp_url(pledge.phone, pledge_reminder_message(pledge))
+
+
+def outreach_whatsapp_url(phone, message=None):
+    default_message = (
+        "Hello from DanSetu! Thank you for using our festival committee platform. "
+        "We would love to help you get the most from your account."
+    )
+    return build_whatsapp_url(phone, message or default_message)
+
+
+def upgrade_outreach_whatsapp_url(phone, full_name, committee_name):
+    message = (
+        f"Hello {full_name},\n\n"
+        f"Thank you for using DanSetu for {committee_name}. "
+        "We would love to walk you through the platform and share upgrade options "
+        "that help your committee collect more donations and manage expenses easily.\n\n"
+        "Reply here when you have a few minutes to talk."
+    )
+    return build_whatsapp_url(phone, message)

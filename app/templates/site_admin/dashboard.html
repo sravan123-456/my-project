@@ -9,9 +9,14 @@
         <h2 class="fw-bold mb-0"><i class="bi bi-globe"></i> Site Admin</h2>
         <small class="text-muted">Platform overview and committee management</small>
     </div>
-    <a href="{{ url_for('site_admin.create_organization') }}" class="btn btn-festival">
-        <i class="bi bi-plus-circle"></i> New Committee
-    </a>
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="{{ url_for('site_admin.contacts') }}" class="btn btn-outline-primary">
+            <i class="bi bi-telephone"></i> {{ t('site_admin.contacts') }}
+        </a>
+        <a href="{{ url_for('site_admin.create_organization') }}" class="btn btn-festival">
+            <i class="bi bi-plus-circle"></i> New Committee
+        </a>
+    </div>
 </div>
 
 <div class="row g-3 mb-4">
@@ -40,6 +45,54 @@
         </div>
     </div>
 </div>
+
+{% if upgrade_leads %}
+<div class="card border-0 shadow-sm mb-4 border-start border-info border-4">
+    <div class="card-header bg-white border-0 py-3">
+        <h5 class="mb-0"><i class="bi bi-bell"></i> {{ t('site_admin.upgrade_leads') }}</h5>
+        <small class="text-muted">{{ t('site_admin.upgrade_leads_hint') }}</small>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Name</th>
+                        <th>Committee</th>
+                        <th>Phone</th>
+                        <th>First login</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for lead in upgrade_leads %}
+                    <tr>
+                        <td>{{ lead.full_name }}</td>
+                        <td>{{ lead.committee_name or '-' }}</td>
+                        <td>
+                            {% if lead.phone %}
+                            {{ lead.phone }}
+                            {% set wa_url = upgrade_outreach_whatsapp_url(lead.phone, lead.full_name, lead.committee_name or 'your committee') %}
+                            {% if wa_url %}
+                            <div><a href="{{ wa_url }}" target="_blank" rel="noopener" class="small">{{ t('admin.whatsapp') }}</a></div>
+                            {% endif %}
+                            {% else %}-{% endif %}
+                        </td>
+                        <td><small>{{ lead.first_login_at.strftime('%d %b %Y, %I:%M %p') if lead.first_login_at else '-' }}</small></td>
+                        <td class="text-end">
+                            <form method="POST" action="{{ url_for('site_admin.mark_upgrade_lead_contacted', lead_id=lead.id) }}" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">{{ t('site_admin.mark_contacted') }}</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 {% if pending_organizations %}
 <div class="card border-0 shadow-sm mb-4 border-start border-warning border-4">

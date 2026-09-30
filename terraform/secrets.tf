@@ -17,9 +17,11 @@ resource "google_secret_manager_secret" "msg91_config" {
 resource "google_secret_manager_secret_version" "msg91_config" {
   secret = google_secret_manager_secret.msg91_config.id
   secret_data = jsonencode({
-    MSG91_AUTH_KEY   = var.msg91_auth_key
-    MSG91_OTP_LENGTH = "6"
-    MSG91_OTP_EXPIRY = "5"
+    MSG91_AUTH_KEY      = var.msg91_auth_key
+    MSG91_WIDGET_ID     = var.msg91_widget_id
+    MSG91_WIDGET_TOKEN  = var.msg91_widget_token
+    MSG91_OTP_LENGTH    = "6"
+    MSG91_OTP_EXPIRY    = "5"
   })
 }
 

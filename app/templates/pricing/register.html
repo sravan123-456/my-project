@@ -72,49 +72,56 @@
         <h1 class="pricing-hero-title text-start fs-3 mb-1">{{ t('pricing.register_title') }}</h1>
         <p class="pricing-hero-subtitle text-start mb-4">{{ t('pricing.register_subtitle') }}</p>
 
+        {% from "partials/required_label.html" import required_label %}
+        <div id="committeeAuthError" class="alert alert-danger py-2 d-none" role="alert"></div>
+        <div id="committeeAuthInfo" class="alert alert-info py-2 d-none" role="status"></div>
+        <div id="msg91Captcha" class="mb-2"></div>
+
         <form method="POST" novalidate class="pricing-register-form">
             {{ form.hidden_tag() }}
             <input type="hidden" name="subscription_plan" value="{{ plan.id }}">
+            <input type="hidden" name="start_submit" value="Register Committee">
+            <input type="hidden" name="phone_access_token" id="committeePhoneAccessToken" value="">
             <div class="mb-2">
-                {{ form.name.label(class="form-label") }}
+                {{ required_label(form.name, 'form-label', 'form-label') }}
                 {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else "")) }}
                 {% for error in form.name.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
             </div>
             <div class="row g-2 mb-2">
                 <div class="col-6">
-                    {{ form.slug.label(class="form-label") }}
+                    {{ required_label(form.slug, 'form-label', 'form-label') }}
                     {{ form.slug(class="form-control" + (" is-invalid" if form.slug.errors else "")) }}
                     {% for error in form.slug.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
                 </div>
                 <div class="col-6">
-                    {{ form.village.label(class="form-label") }}
+                    {{ required_label(form.village, 'form-label', 'form-label') }}
                     {{ form.village(class="form-control" + (" is-invalid" if form.village.errors else "")) }}
                     {% for error in form.village.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
                 </div>
             </div>
             <div class="mb-2">
-                {{ form.festival_name.label(class="form-label") }}
+                {{ required_label(form.festival_name, 'form-label', 'form-label') }}
                 {{ form.festival_name(class="form-control" + (" is-invalid" if form.festival_name.errors else "")) }}
                 {% for error in form.festival_name.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
             </div>
             <div class="mb-2">
-                {{ form.full_name.label(class="form-label") }}
+                {{ required_label(form.full_name, 'form-label', 'form-label') }}
                 {{ form.full_name(class="form-control" + (" is-invalid" if form.full_name.errors else "")) }}
                 {% for error in form.full_name.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
             </div>
             <div class="mb-2">
-                {{ form.phone.label(class="form-label") }}
-                {{ form.phone(class="form-control" + (" is-invalid" if form.phone.errors else ""), placeholder="10-digit mobile", inputmode="numeric", maxlength="10") }}
+                {{ required_label(form.phone, 'form-label', 'form-label') }}
+                {{ form.phone(class="form-control" + (" is-invalid" if form.phone.errors else ""), id="committeePhone", placeholder="10-digit mobile", inputmode="numeric", maxlength="10") }}
                 <div class="form-text">{{ t('landing.auth.phone_required_hint') }}</div>
                 {% for error in form.phone.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
             </div>
             <div class="mb-2">
-                {{ form.username.label(class="form-label") }}
+                {{ required_label(form.username, 'form-label', 'form-label') }}
                 {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else "")) }}
                 {% for error in form.username.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
             </div>
             <div class="mb-2">
-                {{ form.password.label(class="form-label") }}
+                {{ required_label(form.password, 'form-label', 'form-label') }}
                 <div class="password-toggle-wrap">
                     {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), id="registerPassword") }}
                     <button type="button" class="password-toggle-btn" data-password-toggle="registerPassword" aria-label="Show password">
@@ -123,16 +130,42 @@
                 </div>
                 {% for error in form.password.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
             </div>
-            <div class="mb-3">
-                {{ form.confirm_password.label(class="form-label") }}
+            <div class="mb-2">
+                {{ required_label(form.confirm_password, 'form-label', 'form-label') }}
                 {{ form.confirm_password(class="form-control" + (" is-invalid" if form.confirm_password.errors else "")) }}
                 {% for error in form.confirm_password.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
             </div>
-            {{ form.start_submit(class="btn pricing-submit-btn", value=t('pricing.register_submit')) }}
+            <div id="committeeOtpSection" class="mb-3 d-none">
+                <label class="form-label" for="committeeOtpInput">{{ t('landing.auth.enter_otp') }}<span class="text-danger ms-1">*</span></label>
+                <input type="text" id="committeeOtpInput" class="form-control" inputmode="numeric" maxlength="6" placeholder="6-digit OTP" autocomplete="one-time-code">
+                <button type="button" id="committeeResendOtpBtn" class="btn btn-link px-0 mt-1">{{ t('landing.auth.resend_otp') }}</button>
+            </div>
+            <button type="button" id="committeeSubmitBtn" class="btn pricing-submit-btn" {% if msg91_widget %}disabled{% endif %}>
+                {{ t('landing.auth.verify_phone') if msg91_widget else t('pricing.register_submit') }}
+            </button>
         </form>
     </main>
 
     <script src="{{ url_for('static', filename='vendor/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    {% if msg91_widget %}
+    <script>
+      window.committeeRegistrationConfig = {
+        widgetId: {{ msg91_widget.widget_id|tojson }},
+        widgetToken: {{ msg91_widget.widget_token|tojson }},
+        captchaId: "msg91Captcha",
+        verifyLabel: {{ t('landing.auth.verify_phone')|tojson }},
+        otpSentLabel: {{ t('landing.auth.otp_sent')|tojson }}
+      };
+    </script>
+    <script src="{{ url_for('static', filename='js/msg91-registration.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/committee-registration.js') }}"></script>
+    {% else %}
+    <script>
+      document.getElementById("committeeSubmitBtn").addEventListener("click", function () {
+        document.querySelector(".pricing-register-form").submit();
+      });
+    </script>
+    {% endif %}
 </body>
 </html>

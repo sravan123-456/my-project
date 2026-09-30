@@ -311,6 +311,24 @@ class LoginEvent(db.Model):
     organization = db.relationship("Organization", backref="login_events", lazy=True)
 
 
+class UpgradeLead(db.Model):
+    __tablename__ = "upgrade_leads"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), unique=True, nullable=False, index=True)
+    organization_id = db.Column(db.Integer, db.ForeignKey("organizations.id"), nullable=False, index=True)
+    full_name = db.Column(db.String(120), nullable=False)
+    phone = db.Column(db.String(20))
+    committee_name = db.Column(db.String(160))
+    subscription_plan = db.Column(db.String(20), nullable=False, default="free")
+    first_login_at = db.Column(db.DateTime, default=datetime.utcnow)
+    contacted = db.Column(db.Boolean, nullable=False, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    user = db.relationship("User", backref="upgrade_lead", lazy=True)
+    organization = db.relationship("Organization", backref="upgrade_leads", lazy=True)
+
+
 class PasswordResetRequest(db.Model):
     __tablename__ = "password_reset_requests"
 

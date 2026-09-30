@@ -46,6 +46,8 @@ def create_app():
     app.config["GCS_SIGNED_URL_HOURS"] = os.getenv("GCS_SIGNED_URL_HOURS", "24")
     app.config["GCS_CACHE_CONTROL"] = os.getenv("GCS_CACHE_CONTROL", "public, max-age=86400")
     app.config["MSG91_AUTH_KEY"] = os.getenv("MSG91_AUTH_KEY", "").strip()
+    app.config["MSG91_WIDGET_ID"] = os.getenv("MSG91_WIDGET_ID", "").strip()
+    app.config["MSG91_WIDGET_TOKEN"] = os.getenv("MSG91_WIDGET_TOKEN", "").strip()
     app.config["MSG91_OTP_LENGTH"] = os.getenv("MSG91_OTP_LENGTH", "6").strip()
     app.config["MSG91_OTP_EXPIRY"] = os.getenv("MSG91_OTP_EXPIRY", "5").strip()
 
@@ -72,7 +74,6 @@ def create_app():
             "auth.start_committee",
             "auth.forgot_password",
             "auth.forgot_password_otp",
-            "auth.forgot_password_otp_send",
             "auth.forgot_password_complete",
             "pricing.index",
             "pricing.register",
@@ -86,6 +87,8 @@ def create_app():
             "static",
             "health",
             "site_admin.dashboard",
+            "site_admin.contacts",
+            "site_admin.mark_upgrade_lead_contacted",
             "site_admin.organizations",
             "site_admin.create_organization",
             "site_admin.organization_detail",
@@ -98,7 +101,7 @@ def create_app():
         flash("Your account is pending admin approval.", "warning")
         return redirect(url_for("main.pending"))
 
-    from app.msg91 import init_msg91, msg91_enabled
+    from app.msg91 import init_msg91, msg91_enabled, widget_config
     from app.i18n import SUPPORTED_LANGUAGES, get_language, translate
 
     init_msg91(app)
@@ -111,7 +114,12 @@ def create_app():
         PLATFORM_TAGLINE,
         User,
     )
-    from app.whatsapp import donation_whatsapp_url, pledge_whatsapp_url
+    from app.whatsapp import (
+        donation_whatsapp_url,
+        outreach_whatsapp_url,
+        pledge_whatsapp_url,
+        upgrade_outreach_whatsapp_url,
+    )
     from app.storage import get_image_url
 
     def profile_photo_url(user):
@@ -227,6 +235,9 @@ def create_app():
             "committee_payment_qr_url": committee_payment_qr_url,
             "nav_active": nav_active,
             "msg91_enabled": msg91_enabled(),
+            "msg91_widget": widget_config,
+            "outreach_whatsapp_url": outreach_whatsapp_url,
+            "upgrade_outreach_whatsapp_url": upgrade_outreach_whatsapp_url,
         }
 
     @login_manager.user_loader

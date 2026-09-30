@@ -80,3 +80,17 @@ variable "msg91_auth_key" {
   sensitive   = true
   default     = ""
 }
+
+variable "msg91_widget_id" {
+  description = "MSG91 OTP widget ID for forgot-password flow."
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "msg91_widget_token" {
+  description = "MSG91 OTP widget token auth for client-side integration."
+  type        = string
+  sensitive   = true
+  default     = ""
+}

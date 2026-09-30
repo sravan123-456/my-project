@@ -1,0 +1,7 @@
+{% macro required_label(field, label_class='form-label landing-label', optional_class='form-label landing-label') %}
+{% if field.flags.required %}
+<label class="{{ label_class }}" for="{{ field.id }}">{{ field.label.text }}<span class="text-danger ms-1" aria-hidden="true">*</span></label>
+{% else %}
+{{ field.label(class=optional_class) }}
+{% endif %}
+{% endmacro %}
