@@ -472,8 +472,8 @@ def update_festival_year():
     )
     db.session.commit()
     flash(
-        f"Festival year is now {new_year}. The dashboard shows {new_year} records. "
-        f"Past years stay in Reports and Gallery.",
+        f"Festival year is now {new_year}. Donations, expenses, and pledges now show only "
+        f"{new_year} data. Past years stay in Reports and Gallery.",
         "success",
     )
     return redirect(url_for("admin.users"))

@@ -21,6 +21,7 @@ from app.forms import ExpenseForm
 from app.models import EXPENSE_CATEGORIES, Expense
 from app.org_scope import org_get, org_query
 from app.permissions import expenses_write_required
+from app.year_scope import filter_expenses_by_year, get_current_festival_year
 
 expenses_bp = Blueprint("expenses", __name__)
 
@@ -46,15 +47,27 @@ def save_bill(file):
     return unique_name
 
 
+def _current_festival_year():
+    return get_current_festival_year(current_user.organization)
+
+
+def _expenses_for_current_year():
+    return filter_expenses_by_year(org_query(Expense), _current_festival_year())
+
+
 @expenses_bp.route("/")
 @login_required
 def list_expenses():
     expenses = (
-        org_query(Expense)
+        _expenses_for_current_year()
         .order_by(Expense.expense_date.desc(), Expense.id.desc())
         .all()
     )
-    return render_template("expenses/list.html", expenses=expenses)
+    return render_template(
+        "expenses/list.html",
+        expenses=expenses,
+        festival_year=_current_festival_year(),
+    )
 
 
 @expenses_bp.route("/add", methods=["GET", "POST"])
@@ -75,6 +88,7 @@ def add_expense():
             balance_amount=form.balance_amount.data or 0,
             description=form.description.data.strip() if form.description.data else None,
             expense_date=form.expense_date.data,
+            festival_year=_current_festival_year(),
             bill_filename=bill_filename,
             recorded_by_id=current_user.id,
             amount=0,
@@ -126,6 +140,7 @@ def edit_expense(expense_id):
         expense.sync_amount()
         expense.description = form.description.data.strip() if form.description.data else None
         expense.expense_date = form.expense_date.data
+        expense.festival_year = _current_festival_year()
 
         new_bill = save_bill(request.files.get("bill"))
         if new_bill:

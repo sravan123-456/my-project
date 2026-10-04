@@ -20,19 +20,36 @@ from app.models import (
 from app.org_scope import org_get, org_query
 from app.permissions import donations_write_required
 from app.whatsapp import donation_whatsapp_url
+from app.year_scope import (
+    filter_donations_by_year,
+    filter_pledges_by_year,
+    get_current_festival_year,
+)
 
 donations_bp = Blueprint("donations", __name__)
 
 
+def _current_festival_year():
+    return get_current_festival_year(current_user.organization)
+
+
+def _donations_for_current_year():
+    return filter_donations_by_year(org_query(Donation), _current_festival_year())
+
+
+def _pledges_for_current_year():
+    return filter_pledges_by_year(org_query(Pledge), _current_festival_year())
+
+
 def _donation_totals():
     committee = (
-        org_query(Donation)
+        _donations_for_current_year()
         .filter(Donation.donor_group == DONOR_GROUP_COMMITTEE)
         .with_entities(func.coalesce(func.sum(Donation.amount), 0))
         .scalar()
     )
     other = (
-        org_query(Donation)
+        _donations_for_current_year()
         .filter(Donation.donor_group == DONOR_GROUP_OTHER)
         .with_entities(func.coalesce(func.sum(Donation.amount), 0))
         .scalar()
@@ -60,7 +77,7 @@ def _escape_like_pattern(value):
     )
 
 
-def _save_donation_from_form(form, recorded_by_id, organization_id):
+def _save_donation_from_form(form, recorded_by_id, organization_id, festival_year):
     donation = Donation(
         organization_id=organization_id,
         donor_name=form.donor_name.data.strip(),
@@ -75,6 +92,7 @@ def _save_donation_from_form(form, recorded_by_id, organization_id):
         phone=_normalize_phone(form.phone.data),
         notes=form.notes.data.strip() if form.notes.data else None,
         donation_date=form.donation_date.data,
+        festival_year=festival_year,
         recorded_by_id=recorded_by_id,
     )
     db.session.add(donation)
@@ -91,7 +109,7 @@ def donor_suggestions():
     pattern = f"%{_escape_like_pattern(query)}%"
     names = set()
     for row in (
-        org_query(Donation)
+        _donations_for_current_year()
         .filter(Donation.donor_name.ilike(pattern, escape="\\"))
         .with_entities(Donation.donor_name)
         .distinct()
@@ -99,7 +117,7 @@ def donor_suggestions():
     ):
         names.add(row[0])
     for row in (
-        org_query(Pledge)
+        _pledges_for_current_year()
         .filter(Pledge.donor_name.ilike(pattern, escape="\\"))
         .with_entities(Pledge.donor_name)
         .distinct()
@@ -116,7 +134,7 @@ def donor_suggestions():
 def list_donations():
     group_filter = request.args.get("group", "all")
     search_q = (request.args.get("q") or "").strip()
-    query = org_query(Donation)
+    query = _donations_for_current_year()
     if group_filter in (DONOR_GROUP_COMMITTEE, DONOR_GROUP_OTHER):
         query = query.filter_by(donor_group=group_filter)
     if search_q:
@@ -127,8 +145,9 @@ def list_donations():
     ).all()
     committee_total, other_total = _donation_totals()
     pending_pledge_count = (
-        org_query(Pledge).filter_by(status=PLEDGE_STATUS_PENDING).count()
+        _pledges_for_current_year().filter_by(status=PLEDGE_STATUS_PENDING).count()
     )
+    festival_year = _current_festival_year()
 
     return render_template(
         "donations/list.html",
@@ -139,6 +158,7 @@ def list_donations():
         other_total=other_total,
         active_tab="received",
         pending_pledge_count=pending_pledge_count,
+        festival_year=festival_year,
     )
 
 
@@ -155,7 +175,10 @@ def add_donation():
 
     if form.validate_on_submit():
         donation = _save_donation_from_form(
-            form, current_user.id, current_user.organization_id
+            form,
+            current_user.id,
+            current_user.organization_id,
+            _current_festival_year(),
         )
         db.session.flush()
         log_activity(
@@ -214,6 +237,7 @@ def edit_donation(donation_id):
         donation.phone = _normalize_phone(form.phone.data)
         donation.notes = form.notes.data.strip() if form.notes.data else None
         donation.donation_date = form.donation_date.data
+        donation.festival_year = _current_festival_year()
         log_activity(
             current_user,
             "updated",

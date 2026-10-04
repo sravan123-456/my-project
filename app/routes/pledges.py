@@ -22,6 +22,7 @@ from app.models import (
 from app.org_scope import org_get, org_query
 from app.permissions import donations_write_required
 from app.routes.donations import _normalize_phone
+from app.year_scope import filter_pledges_by_year, get_current_festival_year
 
 pledges_bp = Blueprint("pledges", __name__)
 
@@ -30,21 +31,31 @@ def _prepare_pledge_form(form):
     form.donor_group.choices = DONOR_GROUP_CHOICES
 
 
+def _current_festival_year():
+    return get_current_festival_year(current_user.organization)
+
+
+def _pledges_for_current_year():
+    return filter_pledges_by_year(org_query(Pledge), _current_festival_year())
+
+
 def _pledge_totals():
     pending_total = (
-        org_query(Pledge)
+        _pledges_for_current_year()
         .filter(Pledge.status == PLEDGE_STATUS_PENDING)
         .with_entities(func.coalesce(func.sum(Pledge.promised_amount), 0))
         .scalar()
     )
     overdue_total = (
-        org_query(Pledge)
+        _pledges_for_current_year()
         .filter(Pledge.status == PLEDGE_STATUS_PENDING)
         .all()
     )
     overdue_amount = sum(p.promised_amount for p in overdue_total if p.is_overdue())
     overdue_count = sum(1 for p in overdue_total if p.is_overdue())
-    pending_count = org_query(Pledge).filter(Pledge.status == PLEDGE_STATUS_PENDING).count()
+    pending_count = (
+        _pledges_for_current_year().filter(Pledge.status == PLEDGE_STATUS_PENDING).count()
+    )
     return pending_total, pending_count, overdue_amount, overdue_count
 
 
@@ -55,7 +66,7 @@ def list_pledges():
     group_filter = request.args.get("group", "all")
     search_q = (request.args.get("q") or "").strip()
 
-    query = org_query(Pledge)
+    query = _pledges_for_current_year()
     if status_filter in (PLEDGE_STATUS_PENDING, PLEDGE_STATUS_COLLECTED, PLEDGE_STATUS_CANCELLED):
         query = query.filter_by(status=status_filter)
 
@@ -86,6 +97,7 @@ def list_pledges():
         overdue_count=overdue_count,
         active_tab="pledges",
         pending_pledge_count=pending_count,
+        festival_year=_current_festival_year(),
     )
 
 
@@ -107,6 +119,7 @@ def add_pledge():
             promised_amount=form.promised_amount.data,
             phone=_normalize_phone(form.phone.data),
             promised_date=form.promised_date.data,
+            festival_year=_current_festival_year(),
             follow_up_date=form.follow_up_date.data,
             notes=form.notes.data.strip() if form.notes.data else None,
             status=PLEDGE_STATUS_PENDING,
@@ -152,6 +165,7 @@ def edit_pledge(pledge_id):
         pledge.promised_amount = form.promised_amount.data
         pledge.phone = _normalize_phone(form.phone.data)
         pledge.promised_date = form.promised_date.data
+        pledge.festival_year = _current_festival_year()
         pledge.follow_up_date = form.follow_up_date.data
         pledge.notes = form.notes.data.strip() if form.notes.data else None
         log_activity(
@@ -209,6 +223,7 @@ def collect_pledge(pledge_id):
             phone=_normalize_phone(form.phone.data) or pledge.phone,
             notes=form.notes.data.strip() if form.notes.data else pledge.notes,
             donation_date=form.donation_date.data,
+            festival_year=_current_festival_year(),
             recorded_by_id=current_user.id,
         )
         db.session.add(donation)

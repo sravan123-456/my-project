@@ -8,7 +8,12 @@ from app import db
 from app.i18n import set_language
 from app.models import ActivityLog, DONOR_GROUP_COMMITTEE, DONOR_GROUP_OTHER, Donation, Expense, PasswordResetRequest, Pledge, PLEDGE_STATUS_PENDING
 from app.org_scope import org_query
-from app.year_scope import filter_donations_by_year, filter_expenses_by_year, get_current_festival_year
+from app.year_scope import (
+    filter_donations_by_year,
+    filter_expenses_by_year,
+    filter_pledges_by_year,
+    get_current_festival_year,
+)
 
 main_bp = Blueprint("main", __name__)
 
@@ -102,7 +107,11 @@ def dashboard():
         .scalar()
     )
 
-    pending_pledges = org_query(Pledge).filter_by(status=PLEDGE_STATUS_PENDING).all()
+    pending_pledges = (
+        filter_pledges_by_year(org_query(Pledge), festival_year)
+        .filter_by(status=PLEDGE_STATUS_PENDING)
+        .all()
+    )
     pending_pledge_total = sum(p.promised_amount for p in pending_pledges)
     pending_pledge_count = len(pending_pledges)
     overdue_pledges = [p for p in pending_pledges if p.is_overdue()]

@@ -9,6 +9,7 @@ from app.models import (
     Donation,
     Expense,
     Organization,
+    Pledge,
     User,
 )
 
@@ -383,6 +384,31 @@ def migrate_user_phone_per_organization():
         )
 
 
+def migrate_record_festival_years():
+    table_columns = {
+        "donations": "festival_year",
+        "expenses": "festival_year",
+        "pledges": "festival_year",
+    }
+    inspector = inspect(db.engine)
+
+    for table_name, column_name in table_columns.items():
+        if table_name not in inspector.get_table_names():
+            continue
+        columns = {column["name"] for column in inspector.get_columns(table_name)}
+        if column_name not in columns:
+            with db.engine.begin() as conn:
+                conn.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {column_name} INTEGER"))
+
+    for donation in Donation.query.filter(Donation.festival_year.is_(None)).all():
+        donation.festival_year = donation.donation_date.year if donation.donation_date else None
+    for expense in Expense.query.filter(Expense.festival_year.is_(None)).all():
+        expense.festival_year = expense.expense_date.year if expense.expense_date else None
+    for pledge in Pledge.query.filter(Pledge.festival_year.is_(None)).all():
+        pledge.festival_year = pledge.promised_date.year if pledge.promised_date else None
+    db.session.commit()
+
+
 def run_migrations():
     migrate_gallery_and_profiles()
     migrate_user_auth_fields()
@@ -400,3 +426,4 @@ def run_migrations():
     migrate_organizations()
     migrate_pledges()
     migrate_expense_payment_columns()
+    migrate_record_festival_years()

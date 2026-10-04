@@ -181,6 +181,7 @@ class Donation(db.Model):
     phone = db.Column(db.String(20))
     notes = db.Column(db.Text)
     donation_date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
+    festival_year = db.Column(db.Integer, index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     recorded_by_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
 
@@ -218,6 +219,7 @@ class Pledge(db.Model):
     phone = db.Column(db.String(20))
     notes = db.Column(db.Text)
     promised_date = db.Column(db.Date, nullable=False)
+    festival_year = db.Column(db.Integer, index=True)
     follow_up_date = db.Column(db.Date)
     status = db.Column(db.String(20), nullable=False, default=PLEDGE_STATUS_PENDING, index=True)
     donation_id = db.Column(db.Integer, db.ForeignKey("donations.id"))
@@ -261,6 +263,7 @@ class Expense(db.Model):
     description = db.Column(db.Text)
     bill_filename = db.Column(db.String(255))
     expense_date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
+    festival_year = db.Column(db.Integer, index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     recorded_by_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
 
