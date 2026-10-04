@@ -53,9 +53,13 @@ def create_app():
     app.config["MSG91_OTP_TEMPLATE_ID"] = os.getenv("MSG91_OTP_TEMPLATE_ID", "").strip()
 
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
-    db_dir = os.path.dirname(app.config["SQLALCHEMY_DATABASE_URI"].replace("sqlite:///", ""))
-    if db_dir and db_dir != app.config["SQLALCHEMY_DATABASE_URI"]:
-        os.makedirs(db_dir, exist_ok=True)
+    database_uri = app.config["SQLALCHEMY_DATABASE_URI"] or ""
+    if database_uri.startswith("sqlite:///"):
+        sqlite_path = database_uri[len("sqlite:///") :]
+        if sqlite_path and sqlite_path != ":memory:":
+            sqlite_dir = os.path.dirname(sqlite_path)
+            if sqlite_dir:
+                os.makedirs(sqlite_dir, exist_ok=True)
 
     db.init_app(app)
     login_manager.init_app(app)

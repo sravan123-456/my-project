@@ -158,13 +158,30 @@ def _extract_csrf(html: str) -> str:
     return match.group(1) if match else ""
 
 
+def _prepare_ci_database_path():
+    database_uri = os.getenv("DATABASE_URL", "")
+    if not database_uri.startswith("sqlite:///"):
+        return
+    sqlite_path = database_uri[len("sqlite:///") :]
+    if not sqlite_path or sqlite_path == ":memory:":
+        return
+    sqlite_dir = os.path.dirname(sqlite_path)
+    if sqlite_dir:
+        os.makedirs(sqlite_dir, exist_ok=True)
+
+
 def run_app_smoke(runner: SmokeRunner):
     from app import create_app, db
     from sqlalchemy import inspect
 
     from app.models import MarketingContact, Organization
 
-    app = create_app()
+    _prepare_ci_database_path()
+    try:
+        app = create_app()
+    except Exception as exc:
+        runner.record("create_app", False, str(exc))
+        return
 
     with app.test_client() as client:
         # Health
@@ -293,12 +310,18 @@ def main():
     print("DanSetu smoke tests")
     print("=" * 40)
 
-    if args.url:
-        print(f"Mode: HTTP ({args.url})")
-        run_http_smoke(args.url, runner)
-    else:
-        print("Mode: Flask test client (in-app)")
-        run_app_smoke(runner)
+    try:
+        if args.url:
+            print(f"Mode: HTTP ({args.url})")
+            run_http_smoke(args.url, runner)
+        else:
+            print("Mode: Flask test client (in-app)")
+            run_app_smoke(runner)
+    except Exception as exc:
+        runner.record("smoke test runner", False, str(exc))
+        import traceback
+
+        traceback.print_exc()
 
     runner.summary()
     sys.exit(0 if runner.ok() else 1)

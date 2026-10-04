@@ -42,13 +42,13 @@ jobs:
         run: pip install --no-cache-dir -r requirements.txt
 
       - name: Prepare CI environment
-        run: mkdir -p data uploads
+        run: mkdir -p /tmp/dansetu-uploads
 
       - name: Run smoke tests (Flask test client)
         env:
           SECRET_KEY: ci-smoke-test-secret-key
-          DATABASE_URL: sqlite:///data/ci-smoke.db
-          UPLOAD_FOLDER: uploads
+          DATABASE_URL: sqlite:////tmp/dansetu-ci-smoke.db
+          UPLOAD_FOLDER: /tmp/dansetu-uploads
           FLASK_ENV: testing
         run: python scripts/smoke_test.py
 
