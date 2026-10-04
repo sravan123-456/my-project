@@ -248,6 +248,66 @@ def send_whatsapp(donation_id):
     return redirect(whatsapp_url)
 
 
+def _remove_donation(donation):
+    Pledge.query.filter_by(donation_id=donation.id).update(
+        {"donation_id": None},
+        synchronize_session=False,
+    )
+    donor_name = donation.donor_name
+    amount = donation.amount
+    deleted_id = donation.id
+    db.session.delete(donation)
+    log_activity(
+        current_user,
+        "deleted",
+        "donation",
+        f"Deleted donation of ₹{amount:,.2f} from {donor_name}",
+        deleted_id,
+    )
+
+
+def _donations_list_redirect():
+    group = (request.form.get("group") or "").strip()
+    search_q = (request.form.get("q") or "").strip()
+    return redirect(
+        url_for(
+            "donations.list_donations",
+            group=group if group and group != "all" else None,
+            q=search_q or None,
+        )
+    )
+
+
+@donations_bp.route("/bulk-delete", methods=["POST"])
+@donations_write_required
+def bulk_delete_donations():
+    donation_ids = []
+    for raw in request.form.getlist("donation_ids"):
+        try:
+            donation_ids.append(int(raw))
+        except (TypeError, ValueError):
+            continue
+
+    if not donation_ids:
+        flash("Select at least one donation to delete.", "warning")
+        return _donations_list_redirect()
+
+    deleted = 0
+    for donation_id in donation_ids:
+        donation = org_get(Donation, donation_id)
+        if not donation:
+            continue
+        _remove_donation(donation)
+        deleted += 1
+
+    if deleted:
+        db.session.commit()
+        flash(f"Deleted {deleted} donation(s).", "success")
+    else:
+        flash("No donations were deleted.", "warning")
+    return _donations_list_redirect()
+
+
 @donations_bp.route("/<int:donation_id>/delete", methods=["POST"])
 @donations_write_required
 def delete_donation(donation_id):
@@ -255,17 +315,7 @@ def delete_donation(donation_id):
     if not donation:
         flash("Donation not found.", "danger")
     else:
-        donor_name = donation.donor_name
-        amount = donation.amount
-        deleted_id = donation.id
-        db.session.delete(donation)
-        log_activity(
-            current_user,
-            "deleted",
-            "donation",
-            f"Deleted donation of ₹{amount:,.2f} from {donor_name}",
-            deleted_id,
-        )
+        _remove_donation(donation)
         db.session.commit()
         flash("Donation deleted.", "info")
     return redirect(url_for("donations.list_donations"))

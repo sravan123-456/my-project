@@ -71,13 +71,33 @@
     </li>
 </ul>
 
-<div class="card border-0 shadow-sm">
+<div class="card border-0 shadow-sm" {% if user_can_edit_donations() and donations %}data-bulk-select data-bulk-confirm="{{ t('donations.delete_selected_confirm') }}"{% endif %}>
+    {% if user_can_edit_donations() and donations %}
+    <div class="card-header bg-white border-0 py-2 d-flex justify-content-end">
+        <button type="button" class="btn btn-sm btn-outline-danger" data-bulk-delete-btn form="bulkDeleteDonationsForm" disabled>
+            <i class="bi bi-trash"></i> {{ t('donations.delete_selected') }}
+        </button>
+    </div>
+    {% endif %}
     <div class="card-body p-0">
         {% if donations %}
+        <form method="POST" action="{{ url_for('donations.bulk_delete_donations') }}" id="bulkDeleteDonationsForm" data-bulk-delete-form>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% if group_filter != 'all' %}
+            <input type="hidden" name="group" value="{{ group_filter }}">
+            {% endif %}
+            {% if search_q %}
+            <input type="hidden" name="q" value="{{ search_q }}">
+            {% endif %}
         <div class="table-responsive d-none d-md-block">
             <table class="table table-hover mb-0">
                 <thead class="table-light">
                     <tr>
+                        {% if user_can_edit_donations() %}
+                        <th class="text-center" style="width:2.5rem;">
+                            <input type="checkbox" class="form-check-input" data-bulk-select-all aria-label="{{ t('common.select_all') }}">
+                        </th>
+                        {% endif %}
                         <th>#</th>
                         <th>{{ t('donations.donor_name') }}</th>
                         <th>{{ t('dashboard.from') }}</th>
@@ -93,6 +113,11 @@
                 <tbody>
                     {% for d in donations %}
                     <tr>
+                        {% if user_can_edit_donations() %}
+                        <td class="text-center">
+                            <input type="checkbox" class="form-check-input" name="donation_ids" value="{{ d.id }}" data-bulk-select-item>
+                        </td>
+                        {% endif %}
                         <td>{{ loop.index }}</td>
                         <td class="fw-semibold">{{ d.donor_name }}</td>
                         <td>
@@ -139,7 +164,7 @@
                 </tbody>
                 <tfoot class="table-light">
                     <tr>
-                        <td colspan="7" class="text-end fw-bold">{{ t('common.total') }}</td>
+                        <td colspan="{% if user_can_edit_donations() %}8{% else %}7{% endif %}" class="text-end fw-bold">{{ t('common.total') }}</td>
                         <td class="text-end fw-bold text-success">₹{{ "{:,.2f}".format(donations|sum(attribute='amount')) }}</td>
                         <td colspan="2"></td>
                     </tr>
@@ -151,6 +176,12 @@
             {% for d in donations %}
             <div class="donation-mobile-card card border-0 shadow-sm mb-3">
                 <div class="card-body">
+                    {% if user_can_edit_donations() %}
+                    <div class="mb-2">
+                        <input type="checkbox" class="form-check-input" name="donation_ids" value="{{ d.id }}" data-bulk-select-item id="donation-mobile-{{ d.id }}">
+                        <label class="form-check-label small text-muted" for="donation-mobile-{{ d.id }}">{{ t('common.select') }}</label>
+                    </div>
+                    {% endif %}
                     <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
                         <div>
                             <div class="fw-bold">{{ d.donor_name }}</div>
@@ -196,6 +227,7 @@
                 {{ t('common.total') }}: ₹{{ "{:,.2f}".format(donations|sum(attribute='amount')) }}
             </div>
         </div>
+        </form>
         {% else %}
         <div class="text-center py-5">
             <i class="bi bi-{% if search_q %}search{% else %}heart{% endif %} display-4 text-muted"></i>
@@ -213,4 +245,10 @@
         {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{% if user_can_edit_donations() and donations %}
+<script src="{{ url_for('static', filename='js/bulk-select.js') }}"></script>
+{% endif %}
 {% endblock %}

@@ -11,10 +11,15 @@ from app.forms import (
     CommitteePaymentQrForm,
     FestivalYearForm,
 )
-from app.models import ActivityLog, Donation, Expense, PasswordResetRequest, User
+from app.models import ActivityLog, PasswordResetRequest, User
 from app.org_scope import org_get, org_users_query
 from app.permissions import org_admin_required
 from app.storage import delete_image, get_image_url, save_image, serve_image
+from app.user_cleanup import (
+    prepare_user_for_deletion,
+    remaining_admin_count_after_deletions,
+    user_deletion_block_reason,
+)
 
 admin_bp = Blueprint("admin", __name__)
 
@@ -123,8 +128,7 @@ def reject_user(user_id):
         return redirect(url_for("admin.users"))
 
     full_name = user.full_name
-    ActivityLog.query.filter_by(user_id=user.id).delete()
-    PasswordResetRequest.query.filter_by(user_id=user.id).delete()
+    prepare_user_for_deletion(user, current_user.id)
     db.session.delete(user)
     log_activity(
         current_user,
@@ -269,35 +273,24 @@ def toggle_admin(user_id):
     return redirect(url_for("admin.users"))
 
 
-@admin_bp.route("/users/<int:user_id>/delete", methods=["POST"])
-@org_admin_required
-def delete_user(user_id):
-    user = _org_user(user_id)
-    if not user:
-        flash("User not found.", "danger")
-        return redirect(url_for("admin.users"))
+def _parse_selected_ids(form_key="user_ids"):
+    ids = []
+    for raw in request.form.getlist(form_key):
+        try:
+            ids.append(int(raw))
+        except (TypeError, ValueError):
+            continue
+    return ids
 
-    if user.is_site_admin:
-        flash("Cannot delete a site administrator.", "warning")
-        return redirect(url_for("admin.users"))
 
-    if user.id == current_user.id:
-        flash("You cannot delete your own account.", "warning")
-        return redirect(url_for("admin.users"))
-
-    if user.is_admin and org_users_query().filter_by(is_admin=True).count() <= 1:
-        flash("Cannot delete the only committee admin.", "warning")
-        return redirect(url_for("admin.users"))
+def _delete_org_user(user, remaining_admins):
+    reason = user_deletion_block_reason(user, current_user, remaining_admins)
+    if reason:
+        return reason
 
     full_name = user.full_name
-    Donation.query.filter_by(recorded_by_id=user.id).update(
-        {"recorded_by_id": current_user.id}
-    )
-    Expense.query.filter_by(recorded_by_id=user.id).update(
-        {"recorded_by_id": current_user.id}
-    )
-    ActivityLog.query.filter_by(user_id=user.id).delete()
-    PasswordResetRequest.query.filter_by(user_id=user.id).delete()
+    user_id = user.id
+    prepare_user_for_deletion(user, current_user.id)
     db.session.delete(user)
     log_activity(
         current_user,
@@ -306,8 +299,73 @@ def delete_user(user_id):
         f"Deleted user account: {full_name}",
         user_id,
     )
+    return None
+
+
+@admin_bp.route("/users/<int:user_id>/delete", methods=["POST"])
+@org_admin_required
+def delete_user(user_id):
+    user = _org_user(user_id)
+    if not user:
+        flash("User not found.", "danger")
+        return redirect(url_for("admin.users"))
+
+    remaining_admins = (
+        org_users_query().filter_by(is_admin=True).count() - (1 if user.is_admin else 0)
+    )
+    error = _delete_org_user(user, remaining_admins)
+    if error:
+        flash(error, "warning")
+        return redirect(url_for("admin.users"))
+
     db.session.commit()
-    flash(f"User {full_name} has been deleted.", "info")
+    flash(f"User {user.full_name} has been deleted.", "info")
+    return redirect(url_for("admin.users"))
+
+
+@admin_bp.route("/users/bulk-delete", methods=["POST"])
+@org_admin_required
+def bulk_delete_users():
+    user_ids = _parse_selected_ids("user_ids")
+    if not user_ids:
+        flash("Select at least one user to delete.", "warning")
+        return redirect(url_for("admin.users"))
+
+    users = []
+    for user_id in user_ids:
+        user = _org_user(user_id)
+        if user:
+            users.append(user)
+
+    if not users:
+        flash("No matching users found.", "warning")
+        return redirect(url_for("admin.users"))
+
+    remaining_admins = remaining_admin_count_after_deletions(users)
+    if remaining_admins is not None and remaining_admins < 1:
+        flash("Cannot delete all committee admins.", "warning")
+        return redirect(url_for("admin.users"))
+
+    admin_count = org_users_query().filter_by(is_admin=True).count()
+    deleted = 0
+    skipped = []
+    for user in users:
+        remaining = admin_count - (1 if user.is_admin else 0)
+        error = _delete_org_user(user, remaining)
+        if error:
+            skipped.append(f"{user.full_name}: {error}")
+            continue
+        if user.is_admin:
+            admin_count -= 1
+        deleted += 1
+
+    db.session.commit()
+    if deleted:
+        flash(f"Deleted {deleted} user(s).", "success")
+    if skipped:
+        flash("Skipped: " + "; ".join(skipped), "warning")
+    if not deleted and not skipped:
+        flash("No users were deleted.", "info")
     return redirect(url_for("admin.users"))
 
 

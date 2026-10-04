@@ -149,6 +149,54 @@ def edit_expense(expense_id):
     return render_template("expenses/form.html", form=form, title="Edit Expense", expense=expense)
 
 
+def _remove_expense(expense):
+    title = expense.title
+    amount = expense.amount
+    deleted_id = expense.id
+    if expense.bill_filename:
+        filepath = os.path.join(current_app.config["UPLOAD_FOLDER"], expense.bill_filename)
+        if os.path.exists(filepath):
+            os.remove(filepath)
+    db.session.delete(expense)
+    log_activity(
+        current_user,
+        "deleted",
+        "expense",
+        f"Deleted expense '{title}' of ₹{amount:,.2f}",
+        deleted_id,
+    )
+
+
+@expenses_bp.route("/bulk-delete", methods=["POST"])
+@expenses_write_required
+def bulk_delete_expenses():
+    expense_ids = []
+    for raw in request.form.getlist("expense_ids"):
+        try:
+            expense_ids.append(int(raw))
+        except (TypeError, ValueError):
+            continue
+
+    if not expense_ids:
+        flash("Select at least one expense to delete.", "warning")
+        return redirect(url_for("expenses.list_expenses"))
+
+    deleted = 0
+    for expense_id in expense_ids:
+        expense = org_get(Expense, expense_id)
+        if not expense:
+            continue
+        _remove_expense(expense)
+        deleted += 1
+
+    if deleted:
+        db.session.commit()
+        flash(f"Deleted {deleted} expense(s).", "success")
+    else:
+        flash("No expenses were deleted.", "warning")
+    return redirect(url_for("expenses.list_expenses"))
+
+
 @expenses_bp.route("/<int:expense_id>/delete", methods=["POST"])
 @expenses_write_required
 def delete_expense(expense_id):
@@ -156,21 +204,7 @@ def delete_expense(expense_id):
     if not expense:
         flash("Expense not found.", "danger")
     else:
-        title = expense.title
-        amount = expense.amount
-        deleted_id = expense.id
-        if expense.bill_filename:
-            filepath = os.path.join(current_app.config["UPLOAD_FOLDER"], expense.bill_filename)
-            if os.path.exists(filepath):
-                os.remove(filepath)
-        db.session.delete(expense)
-        log_activity(
-            current_user,
-            "deleted",
-            "expense",
-            f"Deleted expense '{title}' of ₹{amount:,.2f}",
-            deleted_id,
-        )
+        _remove_expense(expense)
         db.session.commit()
         flash("Expense deleted.", "info")
     return redirect(url_for("expenses.list_expenses"))

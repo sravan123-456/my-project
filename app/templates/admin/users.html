@@ -228,16 +228,27 @@
 </div>
 {% endif %}
 
-<div class="card border-0 shadow-sm">
-    <div class="card-header bg-white border-0 py-3">
+<div class="card border-0 shadow-sm" data-bulk-select data-bulk-confirm="{{ t('admin.delete_selected_confirm') }}">
+    <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
         <h5 class="mb-0"><i class="bi bi-people"></i> {{ t('admin.approved_users') }}</h5>
+        {% if users %}
+        <button type="button" class="btn btn-sm btn-outline-danger" data-bulk-delete-btn form="bulkDeleteUsersForm" disabled>
+            <i class="bi bi-trash"></i> {{ t('admin.delete_selected') }}
+        </button>
+        {% endif %}
     </div>
     <div class="card-body p-0">
         {% if users %}
+        {% set admin_count = users|selectattr('is_admin')|list|length %}
+        <form method="POST" action="{{ url_for('admin.bulk_delete_users') }}" id="bulkDeleteUsersForm" data-bulk-delete-form>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead class="table-light">
                     <tr>
+                        <th class="text-center" style="width:2.5rem;">
+                            <input type="checkbox" class="form-check-input" data-bulk-select-all aria-label="{{ t('common.select_all') }}">
+                        </th>
                         <th>#</th>
                         <th>{{ t('activity.person') }}</th>
                         <th>Username</th>
@@ -250,6 +261,11 @@
                 <tbody>
                     {% for user in users %}
                     <tr>
+                        <td class="text-center">
+                            {% if user.id != current_user.id and not user.is_site_admin and not (user.is_admin and admin_count <= 1) %}
+                            <input type="checkbox" class="form-check-input" name="user_ids" value="{{ user.id }}" data-bulk-select-item>
+                            {% endif %}
+                        </td>
                         <td>{{ loop.index }}</td>
                         <td>
                             <div class="d-flex align-items-center gap-2">
@@ -391,6 +407,7 @@
                 </tbody>
             </table>
         </div>
+        </form>
         {% else %}
         <p class="text-muted text-center py-5 mb-0">{{ t('admin.no_users') }}</p>
         {% endif %}
@@ -399,6 +416,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/bulk-select.js') }}"></script>
 <script>
 (function () {
   var copyBtn = document.getElementById("copyInviteBtn");
