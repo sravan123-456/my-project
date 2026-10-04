@@ -11,6 +11,7 @@ from sqlalchemy.exc import IntegrityError
 from app import db
 from app.forms import (
     ChangePasswordForm,
+    FindCommitteeForm,
     ForgotPasswordForm,
     JoinRegisterForm,
     LoginForm,
@@ -372,6 +373,37 @@ def _clear_password_reset_session():
     _clear_otp_session()
 
 
+def _clear_find_committee_session():
+    session.pop("find_committee_phone", None)
+    session.pop("find_committee_username", None)
+    _clear_otp_session()
+
+
+def _find_committee_candidates(normalized_phone, username=None):
+    query = User.query.filter_by(phone=normalized_phone, is_approved=True)
+    if username:
+        query = query.filter_by(username=username.strip().lower())
+    users = query.all()
+    results = []
+    seen = set()
+    for user in users:
+        org = user.organization
+        if not org or not org.is_active():
+            continue
+        key = (org.slug, user.username)
+        if key in seen:
+            continue
+        seen.add(key)
+        results.append(
+            {
+                "committee_code": org.slug,
+                "committee_name": org.display_name(),
+                "username": user.username,
+            }
+        )
+    return results
+
+
 def _otp_send_response(phone_raw):
     if not msg91_enabled():
         return jsonify({"ok": False, "error": "OTP is not configured."}), 503
@@ -681,6 +713,96 @@ def change_password():
             return redirect(url_for("main.dashboard"))
 
     return render_template("auth/change_password.html", form=form)
+
+
+@auth_bp.route("/find-committee", methods=["GET", "POST"])
+def find_committee():
+    if current_user.is_authenticated:
+        return redirect(url_for("main.dashboard"))
+
+    form = FindCommitteeForm()
+    if form.validate_on_submit():
+        if not msg91_enabled():
+            flash(
+                "Phone OTP lookup is not configured yet. Contact your committee admin.",
+                "warning",
+            )
+        else:
+            normalized_phone = normalize_phone(form.phone.data)
+            if not normalized_phone:
+                flash("Enter a valid 10-digit Indian mobile number.", "danger")
+            else:
+                username = (form.username.data or "").strip().lower() or None
+                candidates = _find_committee_candidates(normalized_phone, username)
+                if not candidates:
+                    flash(
+                        "No approved account found with that phone number."
+                        + (" Try without the username filter." if username else ""),
+                        "danger",
+                    )
+                else:
+                    session["find_committee_phone"] = normalized_phone
+                    session["find_committee_username"] = username
+                    return redirect(url_for("auth.find_committee_otp"))
+
+    return render_template("auth/find_committee.html", form=form)
+
+
+@auth_bp.route("/find-committee/otp")
+def find_committee_otp():
+    if current_user.is_authenticated:
+        return redirect(url_for("main.dashboard"))
+
+    phone = session.get("find_committee_phone")
+    if not phone:
+        flash("Start again by entering your phone number.", "warning")
+        return redirect(url_for("auth.find_committee"))
+
+    if not msg91_widget_enabled():
+        flash("Phone OTP lookup is not configured yet. Contact your committee admin.", "warning")
+        return redirect(url_for("auth.find_committee"))
+
+    widget_identifier = phone_to_widget_identifier(phone)
+    if not widget_identifier:
+        _clear_find_committee_session()
+        flash("Enter a valid 10-digit Indian mobile number.", "danger")
+        return redirect(url_for("auth.find_committee"))
+
+    return render_template(
+        "auth/find_committee_otp.html",
+        masked_phone=_mask_phone(phone),
+        widget_identifier=widget_identifier,
+        msg91_widget=widget_config(),
+    )
+
+
+@auth_bp.route("/find-committee/complete", methods=["POST"])
+def find_committee_complete():
+    if not msg91_enabled():
+        return jsonify({"ok": False, "error": "Phone OTP lookup is not configured."}), 503
+
+    phone = session.get("find_committee_phone")
+    username = session.get("find_committee_username")
+    if not phone:
+        return jsonify({"ok": False, "error": "Session expired. Start again."}), 400
+
+    payload = request.get_json(silent=True) or {}
+    access_token = (payload.get("access_token") or "").strip()
+    if not access_token:
+        raise BadRequest("Missing access_token.")
+
+    normalized_phone = normalize_phone(phone)
+    if not _otp_session_valid(normalized_phone):
+        ok, error = verify_access_token(access_token)
+        if not ok:
+            return jsonify({"ok": False, "error": error or "Invalid or expired OTP. Try again."}), 401
+
+    committees = _find_committee_candidates(normalized_phone, username)
+    _clear_find_committee_session()
+    if not committees:
+        return jsonify({"ok": False, "error": "No committee found for this phone number."}), 404
+
+    return jsonify({"ok": True, "committees": committees})
 
 
 @auth_bp.route("/logout")

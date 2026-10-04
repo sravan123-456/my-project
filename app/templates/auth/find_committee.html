@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Forgot Password - {{ platform_name }}{% endblock %}
+{% block title %}Find Committee Code - {{ platform_name }}{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
@@ -8,25 +8,26 @@
         <div class="card shadow border-0 auth-card">
             <div class="card-body p-4">
                 <div class="text-center mb-4">
-                    <div class="hero-icon-sm">🔑</div>
-                    <h3 class="fw-bold">Forgot Password</h3>
+                    <div class="hero-icon-sm">🔍</div>
+                    <h3 class="fw-bold">Find Committee Code</h3>
                     <p class="text-muted small mb-0">
-                        Enter your committee code and username. We will send an OTP to the mobile number saved on your account.
+                        Enter the mobile number saved on your account. We will send an OTP and show your committee code(s).
                     </p>
                 </div>
 
                 <form method="POST" novalidate>
                     {{ form.hidden_tag() }}
                     <div class="mb-3">
-                        {{ form.committee_code.label(class="form-label") }}
-                        {{ form.committee_code(class="form-control form-control-lg" + (" is-invalid" if form.committee_code.errors else ""), placeholder="e.g. indukuru") }}
-                        {% for error in form.committee_code.errors %}
+                        {{ form.phone.label(class="form-label") }}
+                        {{ form.phone(class="form-control form-control-lg" + (" is-invalid" if form.phone.errors else ""), placeholder="10-digit mobile number", inputmode="numeric", autocomplete="tel") }}
+                        {% for error in form.phone.errors %}
                             <div class="invalid-feedback">{{ error }}</div>
                         {% endfor %}
                     </div>
                     <div class="mb-4">
                         {{ form.username.label(class="form-label") }}
-                        {{ form.username(class="form-control form-control-lg" + (" is-invalid" if form.username.errors else "")) }}
+                        {{ form.username(class="form-control form-control-lg" + (" is-invalid" if form.username.errors else ""), placeholder="Leave blank to see all committees") }}
+                        <div class="form-text">Optional — use if you belong to multiple committees.</div>
                         {% for error in form.username.errors %}
                             <div class="invalid-feedback">{{ error }}</div>
                         {% endfor %}
@@ -35,7 +36,6 @@
                 </form>
 
                 <div class="text-center mt-4">
-                    <a href="{{ url_for('auth.find_committee') }}" class="small d-block mb-2">Forgot committee code?</a>
                     <a href="{{ url_for('auth.login', _anchor='login') }}">Back to Login</a>
                 </div>
             </div>

@@ -183,6 +183,24 @@
 
             <div class="accordion-item border-0 shadow-sm mb-3">
                 <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#helpCommitteeCode">
+                        {{ t('help.committee_code_title') }}
+                    </button>
+                </h2>
+                <div id="helpCommitteeCode" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                    <div class="accordion-body">
+                        <ol class="mb-0">
+                            <li>{{ t('help.committee_code_1') }}</li>
+                            <li>{{ t('help.committee_code_2') }}</li>
+                            <li>{{ t('help.committee_code_3') }}</li>
+                        </ol>
+                        <a href="{{ url_for('auth.find_committee') }}" class="btn btn-outline-festival btn-sm mt-3">{{ t('login.forgot_committee_code') }}</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item border-0 shadow-sm mb-3">
+                <h2 class="accordion-header">
                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#helpLanguage">
                         {{ t('help.language_title') }}
                     </button>

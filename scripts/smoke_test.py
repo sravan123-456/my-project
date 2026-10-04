@@ -203,7 +203,7 @@ def run_app_smoke(runner: SmokeRunner):
             response.status_code == 200 and "csrf_token" in html,
         )
 
-        for path in ("/pricing", "/help", "/reports/"):
+        for path in ("/pricing", "/help", "/reports/", "/find-committee"):
             response = client.get(path)
             runner.record(
                 f"GET {path}",

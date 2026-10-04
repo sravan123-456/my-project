@@ -32,6 +32,18 @@ class ForgotPasswordForm(FlaskForm):
     submit = SubmitField("Send OTP to My Phone")
 
 
+class FindCommitteeForm(FlaskForm):
+    phone = StringField(
+        "Phone Number",
+        validators=[DataRequired(), Length(min=10, max=15)],
+    )
+    username = StringField(
+        "Username (optional)",
+        validators=[Optional(), Length(min=3, max=80)],
+    )
+    submit = SubmitField("Send OTP to My Phone")
+
+
 class AdminResetPasswordForm(FlaskForm):
     password = PasswordField("New Password", validators=[DataRequired(), Length(min=6)])
     confirm_password = PasswordField(

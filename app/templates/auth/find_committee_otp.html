@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Verify Phone - {{ platform_name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="card shadow border-0 auth-card">
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <div class="hero-icon-sm">📱</div>
+                    <h3 class="fw-bold">Verify Your Phone</h3>
+                    <p class="text-muted small mb-0">
+                        OTP will be sent to <strong>{{ masked_phone }}</strong>
+                    </p>
+                </div>
+
+                <div id="findCommitteeError" class="alert alert-danger py-2 d-none" role="alert"></div>
+                <div id="findCommitteeInfo" class="alert alert-info py-2 d-none" role="status"></div>
+
+                <div id="otpSendStep">
+                    <button type="button" id="sendFindOtpBtn" class="btn btn-festival btn-lg w-100 mb-2">
+                        Send OTP
+                    </button>
+                </div>
+
+                <div id="otpVerifyStep" class="d-none">
+                    <div class="mb-3">
+                        <label class="form-label" for="findOtp">Enter OTP</label>
+                        <input type="text" id="findOtp" class="form-control form-control-lg"
+                               inputmode="numeric" maxlength="6" placeholder="6-digit OTP" autocomplete="one-time-code">
+                    </div>
+                    <button type="button" id="completeFindBtn" class="btn btn-festival btn-lg w-100 mb-2">
+                        Show My Committee Codes
+                    </button>
+                    <button type="button" id="resendFindOtpBtn" class="btn btn-link w-100">
+                        Resend OTP
+                    </button>
+                </div>
+
+                <div id="committeeResults" class="d-none mt-4">
+                    <h5 class="fw-semibold mb-3">Your committee codes</h5>
+                    <div id="committeeList" class="d-flex flex-column gap-2"></div>
+                </div>
+
+                <div class="text-center mt-4" id="findCommitteeStartOver">
+                    <a href="{{ url_for('auth.find_committee') }}">Start over</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if msg91_widget %}
+<script>
+  window.findCommitteeConfig = {
+    widgetId: {{ msg91_widget.widget_id|tojson }},
+    widgetToken: {{ msg91_widget.widget_token|tojson }},
+    identifier: {{ widget_identifier|tojson }},
+    completeUrl: {{ url_for('auth.find_committee_complete')|tojson }},
+    loginUrl: {{ url_for('auth.login')|tojson }}
+  };
+</script>
+<script src="{{ url_for('static', filename='js/msg91-registration.js') }}"></script>
+<script src="{{ url_for('static', filename='js/find-committee-otp.js') }}"></script>
+{% endif %}
+{% endblock %}

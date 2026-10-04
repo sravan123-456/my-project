@@ -222,7 +222,9 @@
                             </button>
                         </div>
                         {% for error in login_form.password.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-                        <div class="text-end mt-1">
+                        <div class="text-end mt-1 d-flex justify-content-end gap-2 flex-wrap">
+                            <a href="{{ url_for('auth.find_committee') }}" class="small landing-switch-link">{{ t('login.forgot_committee_code') }}</a>
+                            <span class="small text-muted">·</span>
                             <a href="{{ url_for('auth.forgot_password') }}" class="small landing-switch-link">{{ t('login.forgot_password') }}</a>
                         </div>
                     </div>
