@@ -26,8 +26,15 @@ if [ -n "$BRANCH" ] && [ "$BRANCH" != "dev" ]; then
   echo "NOTE: You are on branch '$BRANCH'. Local dev workflow uses the 'dev' branch."
 fi
 
+if ! docker info >/dev/null 2>&1; then
+  echo "ERROR: Docker is not running. Start Docker Desktop, then rerun this script."
+  exit 1
+fi
+
+COMPOSE_FILES=(-f docker-compose.yml -f docker-compose.local.yml)
+
 echo "==> Building and starting containers..."
-docker compose up --build -d
+docker compose "${COMPOSE_FILES[@]}" up --build -d
 
 echo "==> Waiting for health check..."
 for i in $(seq 1 24); do
@@ -43,7 +50,7 @@ for i in $(seq 1 24); do
 done
 
 echo "==> Running smoke tests inside container..."
-docker compose exec -T festival-app python scripts/smoke_test.py --url http://127.0.0.1:5000
+docker compose "${COMPOSE_FILES[@]}" exec -T festival-app python scripts/smoke_test.py --url http://127.0.0.1:5000
 
 echo ""
 echo "Local dev deploy OK."

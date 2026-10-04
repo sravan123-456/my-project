@@ -1,0 +1,11 @@
+# Local dev overrides — use with: docker compose -f docker-compose.yml -f docker-compose.local.yml up --build -d
+services:
+  festival-app:
+    ports: !override
+      - "8080:5000"
+    environment:
+      FLASK_ENV: development
+      GCS_BUCKET_NAME: ""
+    volumes: !override
+      - festival_data:/app/data
+      - festival_uploads:/app/uploads

@@ -41,9 +41,23 @@ Open **http://localhost:8080** and test.
 Manual alternative:
 
 ```powershell
-docker compose up --build -d
-docker compose exec -T festival-app python scripts/smoke_test.py --url http://127.0.0.1:5000
+docker compose -f docker-compose.yml -f docker-compose.local.yml up --build -d
+docker compose -f docker-compose.yml -f docker-compose.local.yml exec -T festival-app python scripts/smoke_test.py --url http://127.0.0.1:5000
 ```
+
+## Troubleshooting localhost:8080
+
+1. **Docker Desktop must be running** — open Docker Desktop and wait until the whale icon says **Running** (not "Starting").
+2. **Use the local compose file** — `docker-compose.local.yml` skips the production GCS secret mount.
+3. **Check the app is up:**
+   ```powershell
+   docker compose -f docker-compose.yml -f docker-compose.local.yml ps
+   curl http://localhost:8080/health
+   ```
+4. **If it still fails**, view logs:
+   ```powershell
+   docker compose -f docker-compose.yml -f docker-compose.local.yml logs --tail 50
+   ```
 
 ## Ship to production
 
