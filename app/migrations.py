@@ -384,7 +384,7 @@ def migrate_user_phone_per_organization():
         )
 
 
-def migrate_record_festival_years():
+def migrate_record_festival_year_columns():
     table_columns = {
         "donations": "festival_year",
         "expenses": "festival_year",
@@ -400,6 +400,8 @@ def migrate_record_festival_years():
             with db.engine.begin() as conn:
                 conn.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {column_name} INTEGER"))
 
+
+def migrate_record_festival_year_backfill():
     for donation in Donation.query.filter(Donation.festival_year.is_(None)).all():
         donation.festival_year = donation.donation_date.year if donation.donation_date else None
     for expense in Expense.query.filter(Expense.festival_year.is_(None)).all():
@@ -410,6 +412,7 @@ def migrate_record_festival_years():
 
 
 def run_migrations():
+    migrate_record_festival_year_columns()
     migrate_gallery_and_profiles()
     migrate_user_auth_fields()
     migrate_user_roles()
@@ -426,4 +429,4 @@ def run_migrations():
     migrate_organizations()
     migrate_pledges()
     migrate_expense_payment_columns()
-    migrate_record_festival_years()
+    migrate_record_festival_year_backfill()
