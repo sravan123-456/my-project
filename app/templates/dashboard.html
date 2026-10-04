@@ -11,6 +11,14 @@
 </div>
 {% endif %}
 
+{% if dashboard_year %}
+<div class="alert alert-light border mb-3 py-2">
+    <i class="bi bi-calendar-range"></i>
+    {{ t('dashboard.year_scope_notice', year=dashboard_year) }}
+    <a href="{{ url_for('reports.reports') }}" class="ms-1">{{ t('dashboard.view_past_years') }}</a>
+</div>
+{% endif %}
+
 <div class="mobile-dashboard-header d-lg-none mb-3">
     <div class="d-flex align-items-center gap-3">
         <a href="{{ url_for('profile.view_profile') }}" class="text-decoration-none">

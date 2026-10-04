@@ -37,8 +37,13 @@ def _selected_media_files(field_name):
 @login_required
 def index():
     org_id = current_user.organization_id
-    selected_year = resolve_gallery_year(org_id, request.args.get("year", type=int))
-    available_years = get_gallery_years(org_id)
+    org_festival_year = (
+        current_user.organization.festival_year if current_user.organization else None
+    )
+    selected_year = resolve_gallery_year(
+        org_id, request.args.get("year", type=int), org_festival_year
+    )
+    available_years = get_gallery_years(org_id, org_festival_year)
     photo_count = count_gallery_photos(org_id, selected_year)
     can_upload = gallery_has_room(org_id, selected_year)
 
@@ -69,8 +74,13 @@ def index():
 @write_required
 def upload():
     org_id = current_user.organization_id
+    org_festival_year = (
+        current_user.organization.festival_year if current_user.organization else None
+    )
     form = GalleryUploadForm()
-    form.festival_year.choices = [(year, str(year)) for year in get_gallery_years(org_id)]
+    form.festival_year.choices = [
+        (year, str(year)) for year in get_gallery_years(org_id, org_festival_year)
+    ]
 
     if not form.validate_on_submit():
         for field_errors in form.errors.values():

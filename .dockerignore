@@ -9,4 +9,5 @@ data/
 uploads/
 *.db
 README.md
-scripts/
+scripts/*
+!scripts/smoke_test.py

@@ -75,8 +75,6 @@
         {% from "partials/required_label.html" import required_label %}
         <div id="committeeAuthError" class="alert alert-danger py-2 d-none" role="alert"></div>
         <div id="committeeAuthInfo" class="alert alert-info py-2 d-none" role="status"></div>
-        <div id="msg91Captcha" class="mb-2"></div>
-
         <form method="POST" novalidate class="pricing-register-form">
             {{ form.hidden_tag() }}
             <input type="hidden" name="subscription_plan" value="{{ plan.id }}">
@@ -140,8 +138,8 @@
                 <input type="text" id="committeeOtpInput" class="form-control" inputmode="numeric" maxlength="6" placeholder="6-digit OTP" autocomplete="one-time-code">
                 <button type="button" id="committeeResendOtpBtn" class="btn btn-link px-0 mt-1">{{ t('landing.auth.resend_otp') }}</button>
             </div>
-            <button type="button" id="committeeSubmitBtn" class="btn pricing-submit-btn" {% if msg91_widget %}disabled{% endif %}>
-                {{ t('landing.auth.verify_phone') if msg91_widget else t('pricing.register_submit') }}
+            <button type="button" id="committeeSubmitBtn" class="btn pricing-submit-btn">
+                {{ t('pricing.register_submit') }}
             </button>
         </form>
     </main>
@@ -153,7 +151,6 @@
       window.committeeRegistrationConfig = {
         widgetId: {{ msg91_widget.widget_id|tojson }},
         widgetToken: {{ msg91_widget.widget_token|tojson }},
-        captchaId: "msg91Captcha",
         verifyLabel: {{ t('landing.auth.verify_phone')|tojson }},
         otpSentLabel: {{ t('landing.auth.otp_sent')|tojson }}
       };

@@ -29,6 +29,32 @@
 </div>
 {% endif %}
 
+<div class="card border-0 shadow-sm mb-4 border-start border-info border-4">
+    <div class="card-body">
+        <h5 class="fw-semibold mb-2"><i class="bi bi-calendar-event"></i> {{ t('admin.festival_year_title') }}</h5>
+        <p class="text-muted small mb-3">{{ t('admin.festival_year_desc') }}</p>
+        {% if festival_year %}
+        <p class="mb-3">
+            <span class="badge bg-info text-dark">{{ t('nav.festival_year') }} {{ festival_year }}</span>
+        </p>
+        {% endif %}
+        <form method="POST" action="{{ url_for('admin.update_festival_year') }}" class="row g-2 align-items-end">
+            {{ festival_year_form.hidden_tag() }}
+            <div class="col-md-4">
+                {{ festival_year_form.festival_year.label(class="form-label") }}
+                {{ festival_year_form.festival_year(class="form-control") }}
+            </div>
+            <div class="col-md-8 d-flex gap-2 flex-wrap">
+                {{ festival_year_form.submit(class="btn btn-outline-festival") }}
+                <button type="submit" name="start_next_year" value="1" class="btn btn-festival">
+                    {{ t('admin.festival_year_start_next', year=next_festival_year) }}
+                </button>
+            </div>
+        </form>
+        <p class="small text-muted mt-3 mb-0">{{ t('admin.festival_year_hint') }}</p>
+    </div>
+</div>
+
 <div class="card border-0 shadow-sm mb-4 border-start border-warning border-4">
     <div class="card-body">
         <h5 class="fw-semibold mb-2"><i class="bi bi-image"></i> {{ t('admin.banner_title') }}</h5>

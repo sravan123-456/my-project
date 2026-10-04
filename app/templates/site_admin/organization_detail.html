@@ -57,7 +57,7 @@
             {% endif %}
             {% if org.slug != 'indukuru' %}
             <form method="POST" action="{{ url_for('site_admin.delete_organization', org_id=org.id) }}"
-                  onsubmit="return confirm('Delete {{ org.display_name() }} permanently? All users, donations, and expenses will be removed.');">
+                  onsubmit="return confirm('Delete {{ org.display_name() }} permanently? Donations, expenses, and gallery will be removed. User phone numbers will be saved in Site Admin → Contacts → Archived for offers and outreach.');">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn btn-sm btn-outline-danger">Delete Committee</button>
             </form>

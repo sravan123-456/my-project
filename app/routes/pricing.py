@@ -10,24 +10,33 @@ from app.models import ORG_STATUS_PENDING, Organization, User
 from app.pricing_plans import get_plan, list_plans
 from app.msg91 import msg91_enabled, verify_access_token, widget_config
 from app.phone_utils import normalize_phone
-from app.routes.auth import SLUG_PATTERN, USERNAME_IN_USE_MESSAGE, _normalize_slug
+from app.routes.auth import (
+    SLUG_PATTERN,
+    USERNAME_IN_USE_MESSAGE,
+    _normalize_slug,
+    _otp_session_valid,
+)
 
 pricing_bp = Blueprint("pricing", __name__)
 
 
 def _handle_register(start_form, plan):
     if msg91_enabled():
+        normalized_phone = normalize_phone(start_form.phone.data)
         phone_access_token = (request.form.get("phone_access_token") or "").strip()
-        if not phone_access_token:
+        if _otp_session_valid(normalized_phone):
+            pass
+        elif phone_access_token:
+            ok, error = verify_access_token(phone_access_token)
+            if not ok:
+                start_form.phone.errors.append(error or "Phone verification failed. Try again.")
+                flash(error or "Phone verification failed. Try again.", "danger")
+                return None
+        else:
             start_form.phone.errors.append(
                 "Verify your phone number with OTP before registering."
             )
             flash("Verify your phone number with OTP before registering.", "danger")
-            return None
-        ok, error = verify_access_token(phone_access_token)
-        if not ok:
-            start_form.phone.errors.append(error or "Phone verification failed. Try again.")
-            flash(error or "Phone verification failed. Try again.", "danger")
             return None
 
     slug = _normalize_slug(start_form.slug.data)
@@ -44,13 +53,6 @@ def _handle_register(start_form, plan):
     if not normalized_phone:
         start_form.phone.errors.append("Enter a valid 10-digit Indian mobile number.")
         flash("Enter a valid 10-digit Indian mobile number.", "danger")
-        return None
-
-    if User.query.filter_by(phone=normalized_phone).first():
-        start_form.phone.errors.append(
-            "This phone number is already linked to another account."
-        )
-        flash("This phone number is already linked to another account.", "danger")
         return None
 
     if User.query.filter_by(username=username).first():

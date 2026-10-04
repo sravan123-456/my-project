@@ -1,8 +1,6 @@
 from datetime import date, datetime, timedelta
 
-import os
-
-from flask import Blueprint, current_app, flash, redirect, render_template, url_for
+from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user
 from sqlalchemy import func
 
@@ -10,32 +8,18 @@ from app import db
 from app.forms import CreateOrganizationForm
 from app.models import (
     ORG_STATUS_ACTIVE,
-    ActivityLog,
     Donation,
     Expense,
     LoginEvent,
+    MarketingContact,
     Organization,
     UpgradeLead,
     User,
 )
+from app.outreach_service import delete_organization_data
 from app.permissions import site_admin_required
 
 site_admin_bp = Blueprint("site_admin", __name__, url_prefix="/site-admin")
-
-
-def _delete_organization(org):
-    for expense in Expense.query.filter_by(organization_id=org.id).all():
-        if expense.bill_filename:
-            bill_path = os.path.join(current_app.config["UPLOAD_FOLDER"], expense.bill_filename)
-            if os.path.exists(bill_path):
-                os.remove(bill_path)
-
-    LoginEvent.query.filter_by(organization_id=org.id).delete(synchronize_session=False)
-    ActivityLog.query.filter_by(organization_id=org.id).delete(synchronize_session=False)
-    Donation.query.filter_by(organization_id=org.id).delete(synchronize_session=False)
-    Expense.query.filter_by(organization_id=org.id).delete(synchronize_session=False)
-    User.query.filter_by(organization_id=org.id).delete(synchronize_session=False)
-    db.session.delete(org)
 
 
 @site_admin_bp.route("/")
@@ -100,12 +84,25 @@ def dashboard():
 @site_admin_bp.route("/contacts")
 @site_admin_required
 def contacts():
-    users = (
+    tab = request.args.get("tab", "active")
+    if tab not in ("active", "archived"):
+        tab = "active"
+
+    active_users = (
         User.query.filter(User.phone.isnot(None), User.phone != "")
         .order_by(User.created_at.desc())
         .all()
     )
-    return render_template("site_admin/contacts.html", users=users)
+    archived_contacts = MarketingContact.query.order_by(
+        MarketingContact.archived_at.desc()
+    ).all()
+
+    return render_template(
+        "site_admin/contacts.html",
+        tab=tab,
+        users=active_users,
+        archived_contacts=archived_contacts,
+    )
 
 
 @site_admin_bp.route("/upgrade-leads/<int:lead_id>/contacted", methods=["POST"])
@@ -250,7 +247,20 @@ def delete_organization(org_id):
         return redirect(url_for("site_admin.organization_detail", org_id=org.id))
 
     org_name = org.display_name()
-    _delete_organization(org)
-    db.session.commit()
-    flash(f"Committee '{org_name}' and all its data were permanently deleted.", "info")
+    try:
+        delete_organization_data(org)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        flash(
+            f"Could not delete '{org_name}'. Please try again or contact support.",
+            "danger",
+        )
+        return redirect(url_for("site_admin.organization_detail", org_id=org.id))
+
+    flash(
+        f"Committee '{org_name}' deleted. User phone numbers were saved under "
+        f"Site Admin → Contacts → Archived.",
+        "success",
+    )
     return redirect(url_for("site_admin.organizations"))

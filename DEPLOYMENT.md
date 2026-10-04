@@ -14,6 +14,8 @@ App URL: `http://<VM_IP>:8080`
 | **Provision GCP VM (Terraform)** | First time + infra changes | Creates VM, static IP, firewall, installs Docker |
 | **Deploy Application to GCP VM** | Every code change | Pulls latest code and runs `docker compose up` |
 
+After every deploy, automated smoke tests run via `scripts/smoke_test.py`. On every push to `main`, GitHub Actions runs **Smoke Tests** (`.github/workflows/smoke-test.yml`). For a full manual pass, use **[POST_DEPLOY_CHECKLIST.md](POST_DEPLOY_CHECKLIST.md)**.
+
 ---
 
 ## One-time setup (do this once)

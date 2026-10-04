@@ -50,6 +50,7 @@ def create_app():
     app.config["MSG91_WIDGET_TOKEN"] = os.getenv("MSG91_WIDGET_TOKEN", "").strip()
     app.config["MSG91_OTP_LENGTH"] = os.getenv("MSG91_OTP_LENGTH", "6").strip()
     app.config["MSG91_OTP_EXPIRY"] = os.getenv("MSG91_OTP_EXPIRY", "5").strip()
+    app.config["MSG91_OTP_TEMPLATE_ID"] = os.getenv("MSG91_OTP_TEMPLATE_ID", "").strip()
 
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
     db_dir = os.path.dirname(app.config["SQLALCHEMY_DATABASE_URI"].replace("sqlite:///", ""))

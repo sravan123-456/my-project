@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  if (!window.passwordResetConfig) {
+  if (!window.passwordResetConfig || !window.Msg91Registration) {
     return;
   }
 
@@ -16,12 +16,18 @@
   var confirmInput = document.getElementById("resetPasswordConfirm");
   var errorEl = document.getElementById("resetAuthError");
   var infoEl = document.getElementById("resetAuthInfo");
-  var widgetReady = false;
+  var widget = new window.Msg91Registration(resetConfig);
 
-  function csrfToken() {
-    var meta = document.querySelector('meta[name="csrf-token"]');
-    return meta ? meta.getAttribute("content") : "";
-  }
+  widget.config.onReady = function () {
+    if (sendBtn) {
+      sendBtn.disabled = false;
+      sendBtn.textContent = "Send OTP";
+    }
+  };
+
+  widget.config.onError = showError;
+
+  widget.init();
 
   function showError(message) {
     if (!errorEl) return;
@@ -44,7 +50,7 @@
 
   function setLoading(button, loading, label) {
     if (!button) return;
-    button.disabled = loading || !widgetReady;
+    button.disabled = !!loading;
     if (loading) {
       button.dataset.originalText = button.textContent;
       button.textContent = label || "Please wait…";
@@ -53,42 +59,14 @@
     }
   }
 
-  function widgetErrorMessage(error) {
-    if (!error) return "OTP request failed.";
-    if (typeof error === "string") return error;
-    if (error.message) return String(error.message);
-    if (error.reason) return String(error.reason);
-    return "OTP request failed.";
-  }
-
-  function extractAccessToken(data) {
-    if (!data) return "";
-    if (typeof data === "string") return data;
-    return (
-      data["access-token"] ||
-      data.access_token ||
-      data.accessToken ||
-      data.token ||
-      data.message ||
-      ""
-    );
-  }
-
-  function ensureWidgetReady() {
-    if (!widgetReady || typeof window.sendOtp !== "function") {
-      showError("OTP service is still loading. Please wait a moment and try again.");
-      return false;
-    }
-    return true;
-  }
-
   function postJson(url, payload) {
+    var meta = document.querySelector('meta[name="csrf-token"]');
     return fetch(url, {
       method: "POST",
       credentials: "same-origin",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRFToken": csrfToken(),
+        "X-CSRFToken": meta ? meta.getAttribute("content") : "",
       },
       body: JSON.stringify(payload),
     }).then(function (response) {
@@ -98,14 +76,10 @@
           try {
             data = JSON.parse(text);
           } catch (err) {
-            if (!response.ok) {
-              throw new Error("Request failed. Please refresh and try again.");
-            }
+            if (!response.ok) throw new Error("Request failed. Please refresh and try again.");
           }
         }
-        if (!response.ok) {
-          throw new Error(data.error || "Request failed.");
-        }
+        if (!response.ok) throw new Error(data.error || "Request failed.");
         return data;
       });
     });
@@ -119,46 +93,36 @@
   }
 
   function sendOtp(button) {
-    if (!ensureWidgetReady()) return;
     clearError();
     setLoading(button, true, "Sending OTP…");
-    window.sendOtp(
-      resetConfig.identifier,
-      function () {
+    widget.sendOtp(resetConfig.identifier, {
+      onSuccess: function () {
         showVerifyStep();
         setLoading(button, false);
       },
-      function (error) {
-        showError(widgetErrorMessage(error));
+      onError: function (message) {
+        showError(message);
         setLoading(button, false);
-      }
-    );
+      },
+    });
   }
 
   function resendOtp(button) {
-    if (!ensureWidgetReady()) return;
-    if (typeof window.retryOtp !== "function") {
-      sendOtp(button);
-      return;
-    }
     clearError();
-    setLoading(button, true, "Resending OTP…");
-    window.retryOtp(
-      null,
-      function () {
+    setLoading(button, true, "Resending…");
+    widget.resendOtp({
+      onSuccess: function () {
         showInfo("OTP resent to your registered mobile number.");
         setLoading(button, false);
       },
-      function (error) {
-        showError(widgetErrorMessage(error));
+      onError: function (message) {
+        showError(message);
         setLoading(button, false);
-      }
-    );
+      },
+    });
   }
 
   function completeReset() {
-    if (!ensureWidgetReady()) return;
-
     clearError();
     var code = (otpInput.value || "").trim();
     var password = (passwordInput.value || "").trim();
@@ -175,25 +139,13 @@
       showError("Passwords do not match.");
       return;
     }
-    if (typeof window.verifyOtp !== "function") {
-      showError("OTP verification is not available. Refresh and try again.");
-      return;
-    }
 
     setLoading(completeBtn, true, "Verifying OTP…");
-    window.verifyOtp(
-      code,
-      function (data) {
-        var accessToken = extractAccessToken(data);
-        if (!accessToken) {
-          showError("OTP verified but no access token was returned. Try again.");
-          setLoading(completeBtn, false);
-          return;
-        }
-
+    widget.verifyOtp(code, {
+      onSuccess: function (token) {
         setLoading(completeBtn, true, "Updating…");
         postJson(resetConfig.completeUrl, {
-          access_token: accessToken,
+          access_token: token,
           password: password,
         })
           .then(function (result) {
@@ -201,68 +153,14 @@
           })
           .catch(function (error) {
             showError(error.message || "Could not reset password.");
-          })
-          .finally(function () {
             setLoading(completeBtn, false);
           });
       },
-      function (error) {
-        showError(widgetErrorMessage(error));
+      onError: function (message) {
+        showError(message);
         setLoading(completeBtn, false);
-      }
-    );
-  }
-
-  function initWidget() {
-    var configuration = {
-      widgetId: resetConfig.widgetId,
-      tokenAuth: resetConfig.widgetToken,
-      identifier: resetConfig.identifier,
-      exposeMethods: true,
-      captchaRenderId: "msg91Captcha",
-      success: function () {},
-      failure: function (error) {
-        showError(widgetErrorMessage(error));
       },
-    };
-
-    function markReady() {
-      widgetReady = true;
-      if (sendBtn) {
-        sendBtn.disabled = false;
-        sendBtn.textContent = "Send OTP";
-      }
-    }
-
-    function loadScript(urls, index) {
-      if (index >= urls.length) {
-        showError("Could not load OTP service. Refresh and try again.");
-        return;
-      }
-      var script = document.createElement("script");
-      script.src = urls[index];
-      script.async = true;
-      script.onload = function () {
-        if (typeof window.initSendOTP === "function") {
-          window.initSendOTP(configuration);
-          markReady();
-        } else {
-          loadScript(urls, index + 1);
-        }
-      };
-      script.onerror = function () {
-        loadScript(urls, index + 1);
-      };
-      document.head.appendChild(script);
-    }
-
-    loadScript(
-      [
-        "https://verify.msg91.com/otp-provider.js",
-        "https://verify.phone91.com/otp-provider.js",
-      ],
-      0
-    );
+    });
   }
 
   if (sendBtn) {
@@ -280,6 +178,4 @@
   if (completeBtn) {
     completeBtn.addEventListener("click", completeReset);
   }
-
-  initWidget();
 })();

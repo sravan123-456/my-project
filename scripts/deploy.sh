@@ -76,5 +76,38 @@ fi
 echo "==> Cleaning old images..."
 docker image prune -f
 
-echo "==> Deployment complete."
+if [ "${SKIP_SMOKE_TEST:-0}" != "1" ]; then
+  echo "==> Waiting for app to become healthy..."
+  for i in $(seq 1 30); do
+    if docker compose exec -T festival-app python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health', timeout=5)" >/dev/null 2>&1; then
+      echo "==> App is healthy."
+      break
+    fi
+    if [ "$i" -eq 30 ]; then
+      echo "ERROR: App did not become healthy in time." >&2
+      docker compose logs --tail=50 festival-app >&2
+      exit 1
+    fi
+    sleep 2
+  done
+
+  echo "==> Running post-deploy smoke tests..."
+  if docker compose exec -T festival-app python scripts/smoke_test.py --url http://127.0.0.1:5000; then
+    echo "==> Container smoke tests passed."
+  else
+    echo "ERROR: Container smoke tests failed. Check logs: docker compose logs --tail=80 festival-app" >&2
+    exit 1
+  fi
+  SMOKE_URL="${SMOKE_URL:-https://${DOMAIN}}"
+  if docker compose exec -T festival-app python scripts/smoke_test.py --url "${SMOKE_URL}"; then
+    echo "==> Live URL smoke tests passed (${SMOKE_URL})."
+  else
+    echo "ERROR: Live URL smoke tests failed (${SMOKE_URL})." >&2
+    exit 1
+  fi
+else
+  echo "==> Smoke tests skipped (SKIP_SMOKE_TEST=1)."
+fi
+
+echo "==> Deployment complete. See POST_DEPLOY_CHECKLIST.md for manual checks."
 docker compose ps

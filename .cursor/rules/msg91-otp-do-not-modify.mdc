@@ -1,0 +1,32 @@
+---
+description: Do not modify MSG91 OTP integration unless explicitly requested
+alwaysApply: true
+---
+
+# MSG91 OTP — do not modify
+
+OTP via MSG91 is working in production. **Do not change OTP-related code** unless the user explicitly asks for OTP/MSG91 work.
+
+## Off-limits unless explicitly requested
+
+- `app/msg91.py`
+- OTP routes and verification in `app/routes/auth.py` (`/otp/*`, `verify_access_token`, join/forgot-password OTP handling)
+- `app/static/js/msg91-registration.js`
+- `app/static/js/join-registration.js`
+- `app/static/js/committee-registration.js`
+- `app/static/js/forgot-password-otp.js`
+- `app/static/js/server-otp.js`
+- OTP sections in `app/templates/landing.html`, `app/templates/pricing/register.html`, `app/templates/auth/forgot_password_otp.html`
+- MSG91 env vars (`MSG91_*` in `.env`, `.env.example`, deploy/terraform secrets)
+- `scripts/test-msg91*.sh`, `scripts/test-sms-otp.py`
+
+## When building other features
+
+- Do not refactor, “fix”, or rewire OTP as part of unrelated tasks.
+- If a feature touches registration or password reset, reuse the existing widget flow; do not switch to server-side OTP or change templates/scripts listed above.
+- If OTP must change to complete a task, **stop and ask the user** instead of editing these files.
+
+## Allowed
+
+- Read OTP files for context only.
+- Change OTP code **only** when the user clearly requests OTP/MSG91 changes.

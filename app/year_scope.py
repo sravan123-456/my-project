@@ -7,6 +7,12 @@ from app import db
 from app.models import Donation, Expense
 
 
+def get_current_festival_year(org):
+    if org and org.festival_year:
+        return int(org.festival_year)
+    return date.today().year
+
+
 def get_available_years(org_id):
     years = set()
     donation_years = (

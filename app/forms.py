@@ -235,6 +235,14 @@ class CommitteeBannerForm(FlaskForm):
     remove_banner = SubmitField("Remove Banner")
 
 
+class FestivalYearForm(FlaskForm):
+    festival_year = IntegerField(
+        "Festival Year",
+        validators=[DataRequired(), NumberRange(min=2000, max=2100)],
+    )
+    submit = SubmitField("Update Festival Year")
+
+
 class CommitteePaymentQrForm(FlaskForm):
     payment_qr_image = FileField(
         "UPI Payment QR Code",

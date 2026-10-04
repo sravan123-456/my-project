@@ -1,11 +1,16 @@
-from datetime import datetime
+from datetime import date, datetime
 
-from flask import Blueprint, abort, flash, redirect, render_template, url_for
+from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from app import db
 from app.activity import log_activity
-from app.forms import AdminResetPasswordForm, CommitteeBannerForm, CommitteePaymentQrForm
+from app.forms import (
+    AdminResetPasswordForm,
+    CommitteeBannerForm,
+    CommitteePaymentQrForm,
+    FestivalYearForm,
+)
 from app.models import ActivityLog, Donation, Expense, PasswordResetRequest, User
 from app.org_scope import org_get, org_users_query
 from app.permissions import org_admin_required
@@ -47,6 +52,13 @@ def users():
             _anchor="existing-committee",
             _external=True,
         )
+    festival_year_form = FestivalYearForm()
+    next_festival_year = date.today().year + 1
+    if current_user.organization:
+        if current_user.organization.festival_year:
+            festival_year_form.festival_year.data = current_user.organization.festival_year
+        next_festival_year = (current_user.organization.festival_year or date.today().year) + 1
+
     return render_template(
         "admin/users.html",
         pending_users=pending_users,
@@ -56,6 +68,8 @@ def users():
         committee_code=committee_code,
         banner_form=CommitteeBannerForm(),
         payment_qr_form=CommitteePaymentQrForm(),
+        festival_year_form=festival_year_form,
+        next_festival_year=next_festival_year,
     )
 
 
@@ -367,6 +381,43 @@ def cancel_password_reset(reset_id):
     )
     db.session.commit()
     flash(f"Password reset request for {user.full_name} was cancelled.", "info")
+    return redirect(url_for("admin.users"))
+
+
+@admin_bp.route("/festival-year", methods=["POST"])
+@org_admin_required
+def update_festival_year():
+    org = current_user.organization
+    if not org:
+        flash("Committee not found.", "danger")
+        return redirect(url_for("admin.users"))
+
+    form = FestivalYearForm()
+    if request.form.get("start_next_year"):
+        base_year = org.festival_year or date.today().year
+        new_year = int(base_year) + 1
+    elif form.validate_on_submit():
+        new_year = int(form.festival_year.data)
+    else:
+        for field_errors in form.errors.values():
+            for message in field_errors:
+                flash(message, "danger")
+        return redirect(url_for("admin.users"))
+
+    old_year = org.festival_year
+    org.festival_year = new_year
+    log_activity(
+        current_user,
+        "updated",
+        "organization",
+        f"Changed festival year from {old_year or 'unset'} to {new_year}",
+    )
+    db.session.commit()
+    flash(
+        f"Festival year is now {new_year}. The dashboard shows {new_year} records. "
+        f"Past years stay in Reports and Gallery.",
+        "success",
+    )
     return redirect(url_for("admin.users"))
 
 

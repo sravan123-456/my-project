@@ -6,7 +6,7 @@ from app.org_scope import org_query
 GALLERY_MAX_PHOTOS_PER_YEAR = 20
 
 
-def get_gallery_years(org_id):
+def get_gallery_years(org_id, festival_year=None):
     years = {
         row[0]
         for row in org_query(GalleryImage)
@@ -15,6 +15,8 @@ def get_gallery_years(org_id):
         .all()
         if row[0]
     }
+    if festival_year:
+        years.add(int(festival_year))
     years.add(date.today().year)
     return sorted(years, reverse=True)
 
@@ -31,8 +33,10 @@ def gallery_has_room(org_id, year, limit=GALLERY_MAX_PHOTOS_PER_YEAR):
     return count_gallery_photos(org_id, year) < limit
 
 
-def resolve_gallery_year(org_id, year_arg):
-    available = get_gallery_years(org_id)
+def resolve_gallery_year(org_id, year_arg, festival_year=None):
+    available = get_gallery_years(org_id, festival_year)
     if year_arg and year_arg in available:
         return year_arg
+    if festival_year and festival_year in available:
+        return int(festival_year)
     return available[0] if available else date.today().year

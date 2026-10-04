@@ -327,6 +327,62 @@ def migrate_upgrade_leads():
     UpgradeLead.__table__.create(bind=db.engine)
 
 
+def migrate_marketing_contacts():
+    inspector = inspect(db.engine)
+    if "marketing_contacts" not in inspector.get_table_names():
+        from app.models import MarketingContact
+
+        MarketingContact.__table__.create(bind=db.engine)
+        return
+
+    _drop_unique_single_column_index("marketing_contacts", "phone")
+    with db.engine.begin() as conn:
+        conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS ix_marketing_contacts_phone "
+                "ON marketing_contacts (phone)"
+            )
+        )
+
+
+def _drop_unique_single_column_index(table_name, column_name):
+    inspector = inspect(db.engine)
+    if table_name not in inspector.get_table_names():
+        return
+    for idx in inspector.get_indexes(table_name):
+        if idx.get("unique") and idx.get("column_names") == [column_name]:
+            with db.engine.begin() as conn:
+                conn.execute(text(f'DROP INDEX IF EXISTS "{idx["name"]}"'))
+
+
+def migrate_user_phone_per_organization():
+    inspector = inspect(db.engine)
+    if "users" not in inspector.get_table_names():
+        return
+
+    indexes = inspector.get_indexes("users")
+    has_org_phone_index = any(
+        idx.get("name") == "uq_users_org_phone"
+        or (
+            idx.get("unique")
+            and set(idx.get("column_names") or []) == {"organization_id", "phone"}
+        )
+        for idx in indexes
+    )
+    if has_org_phone_index:
+        return
+
+    _drop_unique_single_column_index("users", "phone")
+    with db.engine.begin() as conn:
+        conn.execute(
+            text(
+                "CREATE UNIQUE INDEX IF NOT EXISTS uq_users_org_phone "
+                "ON users (organization_id, phone) "
+                "WHERE phone IS NOT NULL AND organization_id IS NOT NULL"
+            )
+        )
+
+
 def run_migrations():
     migrate_gallery_and_profiles()
     migrate_user_auth_fields()
@@ -339,6 +395,8 @@ def run_migrations():
     migrate_organization_payment_qr()
     migrate_subscription_plan()
     migrate_upgrade_leads()
+    migrate_marketing_contacts()
+    migrate_user_phone_per_organization()
     migrate_organizations()
     migrate_pledges()
     migrate_expense_payment_columns()

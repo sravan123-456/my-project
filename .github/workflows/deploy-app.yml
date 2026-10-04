@@ -146,3 +146,9 @@ jobs:
           done
           echo "Health check failed: app did not respond after 5 minutes"
           exit 1
+
+      - name: Production smoke tests (live URL)
+        run: |
+          python3 scripts/smoke_test.py --url "https://${APP_DOMAIN}"
+          echo "## Production smoke tests passed" >> "$GITHUB_STEP_SUMMARY"
+          echo "Live URL: https://${APP_DOMAIN} (19 checks)" >> "$GITHUB_STEP_SUMMARY"

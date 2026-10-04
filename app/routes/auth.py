@@ -1,4 +1,5 @@
 import re
+import time
 from datetime import datetime
 
 from flask import Blueprint, flash, jsonify, redirect, render_template, request, session, url_for
@@ -17,12 +18,18 @@ from app.forms import (
 )
 from app.msg91 import (
     msg91_enabled,
+    msg91_widget_enabled,
+    otp_cooldown_seconds,
     phone_to_widget_identifier,
+    resend_phone_otp,
+    send_phone_otp,
     verify_access_token,
+    verify_phone_otp,
     widget_config,
 )
 from app.services.upgrade_leads import maybe_create_upgrade_lead
 from app.phone_utils import normalize_email, normalize_phone
+from app.user_uniqueness import phone_exists_in_organization
 from app.models import (
     ORG_STATUS_PENDING,
     LoginEvent,
@@ -31,6 +38,8 @@ from app.models import (
 )
 
 auth_bp = Blueprint("auth", __name__)
+
+OTP_VERIFY_TTL_SECONDS = 900
 
 SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 NAME_IN_USE_MESSAGE = "This name is already in use. Please choose another name."
@@ -119,22 +128,44 @@ def _mark_join_form_error(join_form, field_name, message):
     flash(message, "danger")
 
 
+def _otp_session_valid(normalized_phone):
+    verified_phone = session.get("otp_verified_phone")
+    verified_at = session.get("otp_verified_at", 0)
+    if not verified_phone or verified_phone != normalized_phone:
+        return False
+    return (time.time() - verified_at) <= OTP_VERIFY_TTL_SECONDS
+
+
+def _clear_otp_session():
+    session.pop("otp_mobile", None)
+    session.pop("otp_req_id", None)
+    session.pop("otp_channel", None)
+    session.pop("otp_sent_at", None)
+    session.pop("otp_verified_phone", None)
+    session.pop("otp_verified_at", None)
+    session.pop("otp_access_token", None)
+
+
 def _process_join_registration(join_form, org, login_form, committee_code):
     if msg91_enabled():
+        normalized_phone = normalize_phone(join_form.phone.data)
         phone_access_token = (request.form.get("phone_access_token") or "").strip()
-        if not phone_access_token:
+        if _otp_session_valid(normalized_phone):
+            pass
+        elif phone_access_token:
+            ok, error = verify_access_token(phone_access_token)
+            if not ok:
+                _mark_join_form_error(
+                    join_form,
+                    "phone",
+                    error or "Phone verification failed. Try again.",
+                )
+                return
+        else:
             _mark_join_form_error(
                 join_form,
                 "phone",
                 "Verify your phone number with OTP before creating an account.",
-            )
-            return
-        ok, error = verify_access_token(phone_access_token)
-        if not ok:
-            _mark_join_form_error(
-                join_form,
-                "phone",
-                error or "Phone verification failed. Try again.",
             )
             return
 
@@ -154,11 +185,11 @@ def _process_join_registration(join_form, org, login_form, committee_code):
             "Enter a valid 10-digit Indian mobile number.",
         )
         return
-    if User.query.filter_by(phone=normalized_phone).first():
+    if phone_exists_in_organization(normalized_phone, org.id):
         _mark_join_form_error(
             join_form,
             "phone",
-            "This phone number is already linked to another account.",
+            "This phone number is already registered in this committee.",
         )
         return
     if normalized_email and User.query.filter_by(email=normalized_email).first():
@@ -195,6 +226,7 @@ def _process_join_registration(join_form, org, login_form, committee_code):
     )
     login_form.committee_code.data = committee_code
     join_form.committee_code.data = committee_code
+    _clear_otp_session()
 
 
 def _post_login_redirect(user, next_page):
@@ -260,6 +292,17 @@ def _handle_landing_post(login_form, join_form):
             flash(org_error, "danger")
         else:
             _process_join_registration(join_form, org, login_form, committee_code)
+            if not join_form.errors:
+                return (
+                    redirect(
+                        url_for(
+                            "main.index",
+                            view="existing-login",
+                            org=committee_code,
+                        )
+                    ),
+                    active_tab,
+                )
 
     elif request.form.get("join_submit") and request.method == "POST":
         active_tab = "existing"
@@ -297,7 +340,14 @@ def render_landing_page():
         join_form.committee_code.data = org_slug
 
     landing_view = _landing_view(login_form, join_form, active_tab)
-    if org_slug and request.method == "GET" and landing_view == "choice":
+    view_param = request.args.get("view", "").strip()
+    if request.method == "GET" and view_param in (
+        "choice",
+        "existing-join",
+        "existing-login",
+    ):
+        landing_view = view_param
+    elif org_slug and request.method == "GET" and landing_view == "choice":
         landing_view = "existing-join"
 
     return render_template(
@@ -319,6 +369,149 @@ def _mask_phone(phone):
 def _clear_password_reset_session():
     session.pop("pwd_reset_user_id", None)
     session.pop("pwd_reset_phone", None)
+    _clear_otp_session()
+
+
+def _otp_send_response(phone_raw):
+    if not msg91_enabled():
+        return jsonify({"ok": False, "error": "OTP is not configured."}), 503
+
+    mobile = phone_to_widget_identifier(phone_raw)
+    if not mobile:
+        return jsonify({"ok": False, "error": "Enter a valid 10-digit Indian mobile number."}), 400
+
+    now = time.time()
+    sent_at = session.get("otp_sent_at", 0)
+    cooldown = otp_cooldown_seconds()
+    if session.get("otp_mobile") == mobile and now - sent_at < cooldown:
+        wait = int(cooldown - (now - sent_at))
+        return (
+            jsonify(
+                {
+                    "ok": False,
+                    "error": f"Please wait {wait} seconds before requesting another OTP.",
+                    "retry_after": wait,
+                }
+            ),
+            429,
+        )
+
+    ok, req_id, error, channel = send_phone_otp(mobile)
+    if not ok:
+        return jsonify({"ok": False, "error": error or "Could not send OTP."}), 400
+
+    session["otp_mobile"] = mobile
+    session["otp_req_id"] = req_id
+    session["otp_channel"] = channel
+    session["otp_sent_at"] = now
+    session.pop("otp_verified_phone", None)
+    session.pop("otp_verified_at", None)
+    session.pop("otp_access_token", None)
+
+    return jsonify(
+        {
+            "ok": True,
+            "message": (
+                "OTP sent by SMS (text message). It may take 1-2 minutes. "
+                "Check your SMS inbox — not WhatsApp — before resending."
+            ),
+            "retry_after": cooldown,
+        }
+    )
+
+
+@auth_bp.route("/otp/send", methods=["POST"])
+def otp_send():
+    payload = request.get_json(silent=True) or {}
+    phone_raw = payload.get("phone") or session.get("pwd_reset_phone")
+    return _otp_send_response(phone_raw)
+
+
+@auth_bp.route("/otp/resend", methods=["POST"])
+def otp_resend():
+    if not msg91_enabled():
+        return jsonify({"ok": False, "error": "OTP is not configured."}), 503
+
+    payload = request.get_json(silent=True) or {}
+    phone_raw = payload.get("phone") or session.get("pwd_reset_phone")
+    mobile = phone_to_widget_identifier(phone_raw)
+    if not mobile:
+        return jsonify({"ok": False, "error": "Enter a valid 10-digit Indian mobile number."}), 400
+
+    if session.get("otp_mobile") != mobile:
+        return _otp_send_response(phone_raw)
+
+    now = time.time()
+    sent_at = session.get("otp_sent_at", 0)
+    cooldown = otp_cooldown_seconds()
+    if now - sent_at < cooldown:
+        wait = int(cooldown - (now - sent_at))
+        return (
+            jsonify(
+                {
+                    "ok": False,
+                    "error": f"Please wait {wait} seconds before resending OTP.",
+                    "retry_after": wait,
+                }
+            ),
+            429,
+        )
+
+    ok, error = resend_phone_otp(
+        mobile,
+        req_id=session.get("otp_req_id"),
+        channel=session.get("otp_channel") or "widget",
+    )
+    if not ok:
+        return jsonify({"ok": False, "error": error or "Could not resend OTP."}), 400
+
+    session["otp_sent_at"] = now
+    return jsonify(
+        {
+            "ok": True,
+            "message": "OTP resent. SMS may take 1-2 minutes to arrive.",
+            "retry_after": cooldown,
+        }
+    )
+
+
+@auth_bp.route("/otp/verify", methods=["POST"])
+def otp_verify():
+    if not msg91_enabled():
+        return jsonify({"ok": False, "error": "OTP is not configured."}), 503
+
+    payload = request.get_json(silent=True) or {}
+    phone_raw = payload.get("phone") or session.get("pwd_reset_phone")
+    otp = (payload.get("otp") or "").strip()
+    mobile = phone_to_widget_identifier(phone_raw)
+    if not mobile:
+        return jsonify({"ok": False, "error": "Enter a valid 10-digit Indian mobile number."}), 400
+    if session.get("otp_mobile") and session.get("otp_mobile") != mobile:
+        return jsonify({"ok": False, "error": "Phone number changed. Request a new OTP."}), 400
+
+    ok, access_token, error = verify_phone_otp(
+        mobile,
+        otp,
+        req_id=session.get("otp_req_id"),
+        channel=session.get("otp_channel") or "widget",
+    )
+    if not ok:
+        return jsonify({"ok": False, "error": error or "Invalid or expired OTP."}), 401
+
+    from app.phone_utils import normalize_phone
+
+    normalized = normalize_phone(phone_raw) or normalize_phone(mobile)
+    session["otp_verified_phone"] = normalized
+    session["otp_verified_at"] = time.time()
+    session["otp_access_token"] = access_token
+
+    return jsonify(
+        {
+            "ok": True,
+            "access_token": access_token,
+            "message": "Phone verified.",
+        }
+    )
 
 
 @auth_bp.route("/forgot-password/otp")
@@ -338,7 +531,7 @@ def forgot_password_otp():
         flash("Password reset session expired. Please try again.", "warning")
         return redirect(url_for("auth.forgot_password"))
 
-    if not msg91_enabled():
+    if not msg91_widget_enabled():
         flash("Phone OTP reset is not configured yet. Contact your committee admin.", "warning")
         return redirect(url_for("auth.forgot_password"))
 
@@ -378,9 +571,13 @@ def forgot_password_complete():
     if len(password) < 6:
         return jsonify({"ok": False, "error": "Password must be at least 6 characters."}), 400
 
-    ok, error = verify_access_token(access_token)
-    if not ok:
-        return jsonify({"ok": False, "error": error or "Invalid or expired OTP. Try again."}), 401
+    normalized_phone = normalize_phone(phone)
+    if _otp_session_valid(normalized_phone):
+        pass
+    else:
+        ok, error = verify_access_token(access_token)
+        if not ok:
+            return jsonify({"ok": False, "error": error or "Invalid or expired OTP. Try again."}), 401
 
     user.set_password(password)
     db.session.commit()

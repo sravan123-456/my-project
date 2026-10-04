@@ -16,6 +16,15 @@
   var infoEl = document.getElementById("committeeAuthInfo");
   var phoneInput = document.getElementById("committeePhone");
   var widget = new window.Msg91Registration(cfg);
+  var isSubmitting = false;
+
+  widget.config.onReady = function () {
+    if (submitBtn) submitBtn.disabled = false;
+  };
+
+  widget.config.onError = showError;
+
+  widget.init();
 
   function showError(message) {
     if (!errorEl) return;
@@ -38,7 +47,7 @@
 
   function setLoading(button, loading, label) {
     if (!button) return;
-    button.disabled = loading;
+    button.disabled = !!loading;
     if (loading) {
       button.dataset.originalText = button.textContent;
       button.textContent = label || "Please wait…";
@@ -51,16 +60,6 @@
     if (otpSection) otpSection.classList.remove("d-none");
     if (otpInput) otpInput.focus();
   }
-
-  widget.init();
-
-  widget.config.onReady = function () {
-    if (submitBtn) {
-      submitBtn.disabled = false;
-    }
-  };
-
-  widget.config.onError = showError;
 
   if (resendBtn) {
     resendBtn.addEventListener("click", function () {
@@ -81,21 +80,18 @@
 
   if (submitBtn && form) {
     submitBtn.addEventListener("click", function () {
+      if (isSubmitting) return;
       clearError();
-      if (!form.reportValidity()) {
-        return;
-      }
+      if (!form.reportValidity()) return;
 
       if (!widget.otpSent) {
         setLoading(submitBtn, true, "Sending OTP…");
         widget.sendOtp(phoneInput ? phoneInput.value : "", {
           onSuccess: function () {
-            showInfo(cfg.otpSentLabel || "OTP sent to your phone.");
+            showInfo(cfg.otpSentLabel || "OTP sent. Check your SMS.");
             showOtpStep();
             setLoading(submitBtn, false);
-            if (submitBtn.dataset.originalText) {
-              submitBtn.textContent = cfg.verifyLabel || "Verify phone & register";
-            }
+            submitBtn.textContent = cfg.verifyLabel || "Verify phone & register";
           },
           onError: function (message) {
             showError(message);
@@ -109,6 +105,7 @@
       widget.verifyOtp(otpInput ? otpInput.value : "", {
         onSuccess: function (token) {
           if (tokenInput) tokenInput.value = token;
+          isSubmitting = true;
           setLoading(submitBtn, true, "Registering…");
           form.submit();
         },

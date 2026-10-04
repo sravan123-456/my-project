@@ -26,22 +26,23 @@
     min-height: 0;
 }
 
-.landing-collage-1 { grid-row: span 2; background-image: url("../images/landing/ganesh-1.jpg"); }
-.landing-collage-2 { grid-row: span 3; background-image: url("../images/landing/ganesh-2.jpg"); background-position: center top; }
-.landing-collage-3 { grid-row: span 2; background-image: url("../images/landing/ganesh-3.jpg"); }
-.landing-collage-4 { grid-row: span 2; background-image: url("../images/landing/ganesh-4.jpg"); background-position: center 30%; }
-.landing-collage-5 { grid-row: span 3; background-image: url("../images/landing/ganesh-15.jpg"); background-position: center 35%; }
-.landing-collage-6 { grid-row: span 2; background-image: url("../images/landing/ganesh-6.jpg"); }
-.landing-collage-7 { grid-row: span 2; background-image: url("../images/landing/ganesh-7.jpg"); background-position: center 20%; }
-.landing-collage-8 { grid-row: span 3; background-image: url("../images/landing/ganesh-8.jpg"); }
-.landing-collage-9 { grid-row: span 2; background-image: url("../images/landing/ganesh-9.jpg"); }
-.landing-collage-10 { grid-row: span 2; background-image: url("../images/landing/ganesh-10.jpg"); background-position: center 40%; }
-.landing-collage-11 { grid-row: span 3; background-image: url("../images/landing/ganesh-11.jpg"); }
-.landing-collage-12 { grid-row: span 2; background-image: url("../images/landing/ganesh-12.jpg"); }
-.landing-collage-13 { grid-row: span 2; background-image: url("../images/landing/ganesh-9.jpg"); background-position: center 60%; }
-.landing-collage-14 { grid-row: span 3; background-image: url("../images/landing/ganesh-15.jpg"); }
-.landing-collage-15 { grid-row: span 2; background-image: url("../images/landing/ganesh-7.jpg"); background-position: center 70%; }
-.landing-collage-16 { grid-row: span 2; background-image: url("../images/landing/ganesh-11.jpg"); background-position: center 25%; }
+/* Famous places & wonders of India (Wikimedia Commons) */
+.landing-collage-1 { grid-row: span 2; background-image: url("../images/landing/india-01-taj-mahal.jpg"); }
+.landing-collage-2 { grid-row: span 3; background-image: url("../images/landing/india-02-golden-temple.jpg"); background-position: center top; }
+.landing-collage-3 { grid-row: span 2; background-image: url("../images/landing/india-03-india-gate.jpg"); }
+.landing-collage-4 { grid-row: span 2; background-image: url("../images/landing/india-04-hawa-mahal.jpg"); background-position: center 30%; }
+.landing-collage-5 { grid-row: span 3; background-image: url("../images/landing/india-05-gateway-of-india.jpg"); background-position: center 35%; }
+.landing-collage-6 { grid-row: span 2; background-image: url("../images/landing/india-06-mysore-palace.jpg"); }
+.landing-collage-7 { grid-row: span 2; background-image: url("../images/landing/india-07-charminar.jpg"); background-position: center 20%; }
+.landing-collage-8 { grid-row: span 3; background-image: url("../images/landing/india-08-red-fort.jpg"); }
+.landing-collage-9 { grid-row: span 2; background-image: url("../images/landing/india-09-qutub-minar.jpg"); }
+.landing-collage-10 { grid-row: span 2; background-image: url("../images/landing/india-10-ladakh.jpg"); background-position: center 40%; }
+.landing-collage-11 { grid-row: span 3; background-image: url("../images/landing/india-11-kerala-backwaters.jpg"); }
+.landing-collage-12 { grid-row: span 2; background-image: url("../images/landing/india-12-varanasi-ghats.jpg"); }
+.landing-collage-13 { grid-row: span 2; background-image: url("../images/landing/india-13-meenakshi-temple.jpg"); background-position: center 60%; }
+.landing-collage-14 { grid-row: span 3; background-image: url("../images/landing/india-14-konark-sun-temple.jpg"); }
+.landing-collage-15 { grid-row: span 2; background-image: url("../images/landing/india-15-ajanta-caves.jpg"); background-position: center 70%; }
+.landing-collage-16 { grid-row: span 2; background-image: url("../images/landing/india-16-victoria-memorial.jpg"); background-position: center 25%; }
 
 .landing-hero-scrim {
     position: absolute;
@@ -402,17 +403,19 @@
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
+        overflow: hidden;
     }
 
     .landing-card {
-        flex: 0 0 auto;
+        flex: 1 1 auto;
         max-width: none;
         max-height: 100%;
+        min-height: 0;
         margin: 0;
         border-radius: 1.5rem 1.5rem 0 0;
         padding: 1.25rem 1.15rem calc(0.85rem + env(safe-area-inset-bottom, 0px));
-        overflow-y: visible;
-        overscroll-behavior-y: auto;
+        overflow-y: auto;
+        overscroll-behavior-y: contain;
         -webkit-overflow-scrolling: touch;
     }
 
@@ -460,13 +463,66 @@
         font-size: 1.35rem;
     }
 
-    /* Home choice: compact sheet */
+    /* Home choice: card hugs content; hero stays prominent */
+    body[data-landing-view="choice"] .landing-hero {
+        height: 54vh;
+        min-height: 300px;
+    }
+
     body[data-landing-view="choice"] .landing-shell {
-        top: 58vh;
+        top: auto;
+        height: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+    }
+
+    body[data-landing-view="choice"] .landing-sheet {
+        position: relative;
+        justify-content: flex-end;
+    }
+
+    body[data-landing-view="choice"] .landing-card {
+        flex: 0 0 auto;
+        overflow-y: auto;
+        max-height: calc(46dvh - env(safe-area-inset-bottom, 0px));
+        padding: 1rem 1.15rem calc(0.7rem + env(safe-area-inset-bottom, 0px));
     }
 
     body[data-landing-view="choice"] .landing-hero-brand {
         display: block;
+    }
+
+    body[data-landing-view="choice"] .landing-footer {
+        display: none;
+    }
+
+    body[data-landing-view="choice"] .landing-alerts {
+        margin-bottom: 0.5rem !important;
+    }
+
+    body[data-landing-view="choice"] .landing-alerts .alert {
+        font-size: 0.82rem;
+        padding: 0.4rem 0.6rem;
+        margin-bottom: 0.3rem !important;
+    }
+
+    body[data-landing-view="choice"] .landing-step-title {
+        font-size: 1.25rem;
+        margin-bottom: 0.2rem;
+    }
+
+    body[data-landing-view="choice"] .landing-step-compact .landing-step-subtitle {
+        margin-bottom: 0.75rem;
+    }
+
+    body[data-landing-view="choice"] .landing-choice-card {
+        padding: 0.9rem 1rem;
+        margin-bottom: 0.6rem;
+    }
+
+    body[data-landing-view="choice"] .landing-step-compact .landing-choice-card:last-of-type {
+        margin-bottom: 0;
     }
 
     /* Form steps: smaller hero, hide brand, tall scrollable sheet */

@@ -75,7 +75,7 @@ class User(UserMixin, db.Model):
     organization_id = db.Column(db.Integer, db.ForeignKey("organizations.id"), index=True)
     username = db.Column(db.String(80), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(256), nullable=False)
-    phone = db.Column(db.String(20), unique=True, nullable=True, index=True)
+    phone = db.Column(db.String(20), nullable=True, index=True)
     email = db.Column(db.String(120), unique=True, nullable=True, index=True)
     firebase_uid = db.Column(db.String(128), unique=True, nullable=True, index=True)
     auth_provider = db.Column(db.String(20), nullable=False, default="password")
@@ -351,6 +351,22 @@ class PasswordResetRequest(db.Model):
 
 GALLERY_MEDIA_IMAGE = "image"
 GALLERY_MEDIA_VIDEO = "video"
+
+
+class MarketingContact(db.Model):
+    """Phone numbers kept when a committee is deleted — for offers and outreach."""
+
+    __tablename__ = "marketing_contacts"
+
+    id = db.Column(db.Integer, primary_key=True)
+    full_name = db.Column(db.String(120), nullable=False)
+    phone = db.Column(db.String(20), nullable=False, index=True)
+    email = db.Column(db.String(120))
+    username = db.Column(db.String(80))
+    former_committee_name = db.Column(db.String(160))
+    former_committee_slug = db.Column(db.String(80))
+    subscription_plan = db.Column(db.String(20))
+    archived_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
 
 
 class GalleryImage(db.Model):

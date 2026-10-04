@@ -16,22 +16,22 @@
 <body class="landing-page" data-landing-view="{{ landing_view }}">
     <div class="landing-hero" aria-hidden="false">
         <div class="landing-collage" aria-hidden="true">
-            <div class="landing-collage-item landing-collage-1"></div>
-            <div class="landing-collage-item landing-collage-2"></div>
-            <div class="landing-collage-item landing-collage-3"></div>
-            <div class="landing-collage-item landing-collage-4"></div>
-            <div class="landing-collage-item landing-collage-5"></div>
-            <div class="landing-collage-item landing-collage-6"></div>
-            <div class="landing-collage-item landing-collage-7"></div>
-            <div class="landing-collage-item landing-collage-8"></div>
-            <div class="landing-collage-item landing-collage-9"></div>
-            <div class="landing-collage-item landing-collage-10"></div>
-            <div class="landing-collage-item landing-collage-11"></div>
-            <div class="landing-collage-item landing-collage-12"></div>
-            <div class="landing-collage-item landing-collage-13"></div>
-            <div class="landing-collage-item landing-collage-14"></div>
-            <div class="landing-collage-item landing-collage-15"></div>
-            <div class="landing-collage-item landing-collage-16"></div>
+            <div class="landing-collage-item landing-collage-1" title="Taj Mahal, Agra"></div>
+            <div class="landing-collage-item landing-collage-2" title="Golden Temple, Amritsar"></div>
+            <div class="landing-collage-item landing-collage-3" title="India Gate, Delhi"></div>
+            <div class="landing-collage-item landing-collage-4" title="Hawa Mahal, Jaipur"></div>
+            <div class="landing-collage-item landing-collage-5" title="Gateway of India, Mumbai"></div>
+            <div class="landing-collage-item landing-collage-6" title="Mysore Palace"></div>
+            <div class="landing-collage-item landing-collage-7" title="Charminar, Hyderabad"></div>
+            <div class="landing-collage-item landing-collage-8" title="Red Fort, Delhi"></div>
+            <div class="landing-collage-item landing-collage-9" title="Qutub Minar, Delhi"></div>
+            <div class="landing-collage-item landing-collage-10" title="Pangong Lake, Ladakh"></div>
+            <div class="landing-collage-item landing-collage-11" title="Kerala Backwaters"></div>
+            <div class="landing-collage-item landing-collage-12" title="Varanasi Ghats"></div>
+            <div class="landing-collage-item landing-collage-13" title="Meenakshi Temple, Madurai"></div>
+            <div class="landing-collage-item landing-collage-14" title="Konark Sun Temple"></div>
+            <div class="landing-collage-item landing-collage-15" title="Ajanta Caves"></div>
+            <div class="landing-collage-item landing-collage-16" title="Victoria Memorial, Kolkata"></div>
         </div>
         <div class="landing-hero-scrim" aria-hidden="true"></div>
         <div class="landing-hero-content">
@@ -124,7 +124,6 @@
                 {% from "partials/required_label.html" import required_label %}
                 <div id="joinAuthError" class="alert alert-danger py-2 d-none" role="alert"></div>
                 <div id="joinAuthInfo" class="alert alert-info py-2 d-none" role="status"></div>
-                <div id="msg91Captcha" class="mb-2"></div>
                 <form method="POST" novalidate id="joinAccountForm">
                     {{ join_form.hidden_tag() }}
                     <input type="hidden" name="active_tab" value="existing">
@@ -165,15 +164,15 @@
                             </button>
                         </div>
                         {% for error in join_form.password.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-                        {{ join_form.confirm_password(class="d-none", id="joinConfirmPassword") }}
+                        {{ join_form.confirm_password(class="d-none", id="joinConfirmPassword", required=False) }}
                     </div>
                     <div id="joinOtpSection" class="mb-3 d-none">
                         <label class="form-label landing-label" for="joinOtpInput">{{ t('landing.auth.enter_otp') }}<span class="text-danger ms-1">*</span></label>
                         <input type="text" id="joinOtpInput" class="form-control landing-input" inputmode="numeric" maxlength="6" placeholder="6-digit OTP" autocomplete="one-time-code">
                         <button type="button" id="joinResendOtpBtn" class="btn btn-link px-0 mt-1">{{ t('landing.auth.resend_otp') }}</button>
                     </div>
-                    <button type="button" id="joinSubmitBtn" class="btn w-100 landing-btn-cta" disabled>
-                        {{ t('landing.auth.verify_phone') if msg91_widget else t('landing.join.create') }}
+                    <button type="button" id="joinSubmitBtn" class="btn w-100 landing-btn-cta">
+                        {{ t('landing.join.create') }}
                     </button>
                 </form>
 
@@ -262,7 +261,6 @@
       window.joinRegistrationConfig = {
         widgetId: {{ msg91_widget.widget_id|tojson }},
         widgetToken: {{ msg91_widget.widget_token|tojson }},
-        captchaId: "msg91Captcha",
         submitLabel: {{ t('landing.join.create')|tojson }},
         verifyLabel: {{ t('landing.auth.verify_phone')|tojson }},
         otpSentLabel: {{ t('landing.auth.otp_sent')|tojson }}

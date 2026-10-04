@@ -8,6 +8,7 @@
   var cfg = window.joinRegistrationConfig;
   var form = document.getElementById("joinAccountForm");
   var submitBtn = document.getElementById("joinSubmitBtn");
+  var joinStep = document.getElementById("landingExistingJoinStep");
   var otpSection = document.getElementById("joinOtpSection");
   var otpInput = document.getElementById("joinOtpInput");
   var resendBtn = document.getElementById("joinResendOtpBtn");
@@ -15,7 +16,20 @@
   var errorEl = document.getElementById("joinAuthError");
   var infoEl = document.getElementById("joinAuthInfo");
   var phoneInput = document.getElementById("joinPhone");
+  var passwordInput = document.getElementById("joinPassword");
+  var confirmInput = document.getElementById("joinConfirmPassword");
   var widget = new window.Msg91Registration(cfg);
+  var isSubmitting = false;
+  var resendCooldown = 0;
+
+  widget.config.onReady = function () {
+    if (submitBtn) submitBtn.disabled = false;
+  };
+
+  widget.config.onError = function (message) {
+    showError(message);
+    if (submitBtn) submitBtn.disabled = false;
+  };
 
   function showError(message) {
     if (!errorEl) return;
@@ -38,7 +52,7 @@
 
   function setLoading(button, loading, label) {
     if (!button) return;
-    button.disabled = loading;
+    button.disabled = !!loading;
     if (loading) {
       button.dataset.originalText = button.textContent;
       button.textContent = label || "Please wait…";
@@ -47,29 +61,96 @@
     }
   }
 
+  function syncPasswordConfirm() {
+    if (passwordInput && confirmInput) {
+      confirmInput.value = passwordInput.value;
+      confirmInput.removeAttribute("required");
+    }
+  }
+
+  function fieldIsHidden(field) {
+    if (field.classList.contains("d-none") || field.type === "hidden") return true;
+    return !!field.closest(".d-none");
+  }
+
+  function validateJoinForm() {
+    syncPasswordConfirm();
+    var firstInvalid = null;
+    form.querySelectorAll("input, select, textarea").forEach(function (field) {
+      if (fieldIsHidden(field)) {
+        field.removeAttribute("required");
+        return;
+      }
+      if (field.type === "email" && !field.value.trim()) {
+        field.removeAttribute("required");
+        return;
+      }
+      if (!field.checkValidity() && !firstInvalid) firstInvalid = field;
+    });
+    if (firstInvalid) {
+      showError(firstInvalid.validationMessage || "Please fill in all required fields.");
+      firstInvalid.focus();
+      return false;
+    }
+    return true;
+  }
+
   function showOtpStep() {
     if (otpSection) otpSection.classList.remove("d-none");
     if (otpInput) otpInput.focus();
   }
 
-  widget.init();
+  function ensureWidgetInit() {
+    if (!joinStep || !joinStep.classList.contains("active")) return;
+    if (!widget.initialized) widget.init();
+  }
 
-  widget.config.onReady = function () {
+  function resetJoinFlow() {
+    clearError();
+    if (infoEl) {
+      infoEl.textContent = "";
+      infoEl.classList.add("d-none");
+    }
+    if (tokenInput) tokenInput.value = "";
+    if (otpInput) otpInput.value = "";
+    if (otpSection) otpSection.classList.add("d-none");
+    widget.otpSent = false;
     if (submitBtn) {
       submitBtn.disabled = false;
       submitBtn.textContent = cfg.submitLabel || "Create account";
     }
-  };
+  }
 
-  widget.config.onError = showError;
+  document.addEventListener("landing-step-change", function (event) {
+    if (!event.detail) return;
+    if (event.detail.view === "existing-join") {
+      setTimeout(ensureWidgetInit, 100);
+    } else if (event.detail.view === "choice") {
+      resetJoinFlow();
+    }
+  });
+
+  document.querySelectorAll('[data-landing-go="existing-join"]').forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      setTimeout(ensureWidgetInit, 100);
+    });
+  });
+
+  if (document.body.getAttribute("data-landing-view") === "existing-join") {
+    ensureWidgetInit();
+  }
+
+  if (passwordInput) passwordInput.addEventListener("input", syncPasswordConfirm);
 
   if (resendBtn) {
     resendBtn.addEventListener("click", function () {
+      if (resendCooldown > 0) return;
       clearError();
       setLoading(resendBtn, true, "Resending…");
       widget.resendOtp({
         onSuccess: function () {
           showInfo(cfg.otpSentLabel || "OTP resent.");
+          resendCooldown = 45;
           setLoading(resendBtn, false);
         },
         onError: function (message) {
@@ -82,21 +163,21 @@
 
   if (submitBtn && form) {
     submitBtn.addEventListener("click", function () {
+      if (isSubmitting) return;
       clearError();
-      if (!form.reportValidity()) {
-        return;
-      }
+      syncPasswordConfirm();
+      if (!validateJoinForm()) return;
+
+      ensureWidgetInit();
 
       if (!widget.otpSent) {
         setLoading(submitBtn, true, "Sending OTP…");
         widget.sendOtp(phoneInput ? phoneInput.value : "", {
           onSuccess: function () {
-            showInfo(cfg.otpSentLabel || "OTP sent to your phone.");
+            showInfo(cfg.otpSentLabel || "OTP sent. Check your SMS.");
             showOtpStep();
             setLoading(submitBtn, false);
-            if (submitBtn.dataset.originalText) {
-              submitBtn.textContent = cfg.verifyLabel || "Verify phone & create account";
-            }
+            submitBtn.textContent = cfg.verifyLabel || "Verify phone & create account";
           },
           onError: function (message) {
             showError(message);
@@ -110,11 +191,8 @@
       widget.verifyOtp(otpInput ? otpInput.value : "", {
         onSuccess: function (token) {
           if (tokenInput) tokenInput.value = token;
-          var password = document.getElementById("joinPassword");
-          var confirm = document.getElementById("joinConfirmPassword");
-          if (password && confirm) {
-            confirm.value = password.value;
-          }
+          syncPasswordConfirm();
+          isSubmitting = true;
           setLoading(submitBtn, true, "Creating account…");
           form.submit();
         },

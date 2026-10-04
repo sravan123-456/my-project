@@ -9,6 +9,10 @@
   var backBtn = document.getElementById("landingBackBtn");
   var hash = (window.location.hash || "").replace("#", "");
   var initialView = document.body.getAttribute("data-landing-view") || "choice";
+  var viewParam = new URLSearchParams(window.location.search).get("view");
+  if (viewParam && steps[viewParam]) {
+    initialView = viewParam;
+  }
   if (hash === "existing-committee" || hash === "join") {
     initialView = "existing-join";
   } else if (hash === "login" || hash === "committee") {
@@ -32,6 +36,9 @@
     if (landingCard) {
       landingCard.scrollTop = 0;
     }
+    document.dispatchEvent(
+      new CustomEvent("landing-step-change", { detail: { view: view } })
+    );
   }
 
   document.querySelectorAll("[data-landing-go]").forEach(function (btn) {

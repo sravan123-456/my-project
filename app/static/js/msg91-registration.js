@@ -32,25 +32,75 @@
   function Msg91Registration(config) {
     this.config = config || {};
     this.widgetReady = false;
-    this.accessToken = "";
+    this.initializing = false;
+    this.initialized = false;
     this.otpSent = false;
   }
 
+  Msg91Registration.prototype._markReady = function () {
+    var self = this;
+    var attempts = 0;
+
+    function tryReady() {
+      if (typeof global.sendOtp === "function") {
+        self.widgetReady = true;
+        self.initializing = false;
+        if (self.config.onReady) self.config.onReady();
+        return;
+      }
+      attempts += 1;
+      if (attempts < 40) {
+        setTimeout(tryReady, 100);
+        return;
+      }
+      self.widgetReady = true;
+      self.initializing = false;
+      if (self.config.onReady) self.config.onReady();
+    }
+
+    tryReady();
+  };
+
   Msg91Registration.prototype.init = function () {
+    if (this.initialized || this.initializing) {
+      return;
+    }
+    if (!this.config.widgetId || !this.config.widgetToken) {
+      if (this.config.onError) {
+        this.config.onError("OTP service is not configured.");
+      }
+      return;
+    }
+
+    this.initializing = true;
+    this.initialized = true;
+
     var self = this;
     var configuration = {
       widgetId: this.config.widgetId,
       tokenAuth: this.config.widgetToken,
       exposeMethods: true,
-      captchaRenderId: this.config.captchaId || "msg91Captcha",
-      success: function () {},
+      success: function (data) {
+        if (self.config.onSuccess) self.config.onSuccess(data);
+      },
       failure: function (error) {
         if (self.config.onError) self.config.onError(widgetErrorMessage(error));
       },
     };
 
+    if (this.config.identifier) {
+      configuration.identifier = this.config.identifier;
+    }
+
+    var captchaId = this.config.captchaId || "msg91Captcha";
+    var captchaEl = document.getElementById(captchaId);
+    if (captchaEl) {
+      configuration.captchaRenderId = captchaId;
+    }
+
     function loadScript(urls, index) {
       if (index >= urls.length) {
+        self.initializing = false;
         if (self.config.onError) {
           self.config.onError("Could not load OTP service. Refresh and try again.");
         }
@@ -62,8 +112,7 @@
       script.onload = function () {
         if (typeof global.initSendOTP === "function") {
           global.initSendOTP(configuration);
-          self.widgetReady = true;
-          if (self.config.onReady) self.config.onReady();
+          self._markReady();
         } else {
           loadScript(urls, index + 1);
         }
@@ -84,12 +133,11 @@
   };
 
   Msg91Registration.prototype.sendOtp = function (phoneValue, callbacks) {
-    var self = this;
     if (!this.widgetReady || typeof global.sendOtp !== "function") {
-      callbacks.onError("OTP service is still loading. Please wait.");
+      callbacks.onError("OTP service is still loading. Please wait a moment and try again.");
       return;
     }
-    var identifier = normalizePhoneIdentifier(phoneValue);
+    var identifier = this.config.identifier || normalizePhoneIdentifier(phoneValue);
     if (!identifier) {
       callbacks.onError("Enter a valid 10-digit Indian mobile number.");
       return;
@@ -97,9 +145,9 @@
     global.sendOtp(
       identifier,
       function () {
-        self.otpSent = true;
+        this.otpSent = true;
         callbacks.onSuccess();
-      },
+      }.bind(this),
       function (error) {
         callbacks.onError(widgetErrorMessage(error));
       }
@@ -116,7 +164,7 @@
       return;
     }
     global.retryOtp(
-      null,
+      "11",
       function () {
         callbacks.onSuccess();
       },
@@ -127,7 +175,6 @@
   };
 
   Msg91Registration.prototype.verifyOtp = function (otpValue, callbacks) {
-    var self = this;
     if (!this.widgetReady || typeof global.verifyOtp !== "function") {
       callbacks.onError("OTP service is still loading. Please wait.");
       return;
@@ -145,7 +192,6 @@
           callbacks.onError("OTP verified but no access token was returned.");
           return;
         }
-        self.accessToken = token;
         callbacks.onSuccess(token);
       },
       function (error) {

@@ -8,6 +8,7 @@ from app import db
 from app.i18n import set_language
 from app.models import ActivityLog, DONOR_GROUP_COMMITTEE, DONOR_GROUP_OTHER, Donation, Expense, PasswordResetRequest, Pledge, PLEDGE_STATUS_PENDING
 from app.org_scope import org_query
+from app.year_scope import filter_donations_by_year, filter_expenses_by_year, get_current_festival_year
 
 main_bp = Blueprint("main", __name__)
 
@@ -53,51 +54,50 @@ def archive():
 @login_required
 def dashboard():
     org_id = current_user.organization_id
-    total_donations = (
-        db.session.query(func.coalesce(func.sum(Donation.amount), 0))
-        .filter(Donation.organization_id == org_id)
-        .scalar()
-    )
-    total_expenses = (
-        db.session.query(func.coalesce(func.sum(Expense.amount), 0))
-        .filter(Expense.organization_id == org_id)
-        .scalar()
-    )
+    festival_year = get_current_festival_year(current_user.organization)
+    donations_q = filter_donations_by_year(org_query(Donation), festival_year)
+    expenses_q = filter_expenses_by_year(org_query(Expense), festival_year)
+
+    total_donations = donations_q.with_entities(
+        func.coalesce(func.sum(Donation.amount), 0)
+    ).scalar()
+    total_expenses = expenses_q.with_entities(
+        func.coalesce(func.sum(Expense.amount), 0)
+    ).scalar()
     balance = total_donations - total_expenses
 
     recent_donations = (
-        org_query(Donation)
-        .order_by(Donation.donation_date.desc(), Donation.id.desc())
+        donations_q.order_by(Donation.donation_date.desc(), Donation.id.desc())
         .limit(5)
         .all()
     )
     recent_expenses = (
-        org_query(Expense)
-        .order_by(Expense.expense_date.desc(), Expense.id.desc())
+        expenses_q.order_by(Expense.expense_date.desc(), Expense.id.desc())
         .limit(5)
         .all()
     )
 
     expense_by_category = (
-        db.session.query(Expense.category, func.sum(Expense.amount).label("total"))
-        .filter(Expense.organization_id == org_id)
+        filter_expenses_by_year(
+            db.session.query(Expense.category, func.sum(Expense.amount).label("total"))
+            .filter(Expense.organization_id == org_id),
+            festival_year,
+        )
         .group_by(Expense.category)
         .order_by(func.sum(Expense.amount).desc())
         .all()
     )
 
-    donation_count = org_query(Donation).count()
-    expense_count = org_query(Expense).count()
+    donation_count = donations_q.count()
+    expense_count = expenses_q.count()
 
     committee_donations = (
-        org_query(Donation)
-        .filter(Donation.donor_group == DONOR_GROUP_COMMITTEE)
+        donations_q.filter(Donation.donor_group == DONOR_GROUP_COMMITTEE)
         .with_entities(func.coalesce(func.sum(Donation.amount), 0))
         .scalar()
     )
     other_donations = (
-        org_query(Donation)
-        .filter(Donation.donor_group == DONOR_GROUP_OTHER)
+        donations_q.filter(Donation.donor_group == DONOR_GROUP_OTHER)
         .with_entities(func.coalesce(func.sum(Donation.amount), 0))
         .scalar()
     )
@@ -123,10 +123,9 @@ def dashboard():
         .all()
     )
 
-    from datetime import date
-
     return render_template(
         "dashboard.html",
+        dashboard_year=festival_year,
         balance=balance,
         total_donations=total_donations,
         total_expenses=total_expenses,
