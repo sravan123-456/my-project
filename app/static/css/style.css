@@ -1274,6 +1274,33 @@ a.mobile-stat-card:active {
     border-start: 4px solid #2e7d32 !important;
 }
 
+.payment-qr-image-modal {
+    max-width: 280px;
+}
+
+.nav-qr-btn {
+    color: rgba(255, 255, 255, 0.92) !important;
+    text-decoration: none;
+    padding: 0.35rem 0.65rem !important;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.nav-qr-btn:hover,
+.nav-qr-btn:focus {
+    color: #fff !important;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.nav-qr-label {
+    margin-left: 0.25rem;
+}
+
+.mobile-qr-btn {
+    line-height: 1;
+}
+
 @media (max-width: 991.98px) {
     main.container.has-mobile-bottom-nav {
         padding-left: 0.75rem;

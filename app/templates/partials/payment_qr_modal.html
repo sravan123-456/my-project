@@ -1,0 +1,19 @@
+{% if committee_payment_qr_url() %}
+<div class="modal fade" id="paymentQrModal" tabindex="-1" aria-labelledby="paymentQrModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-semibold" id="paymentQrModalLabel">
+                    <i class="bi bi-qr-code text-success"></i> {{ t('donations.qr_title') }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t('lightbox.close') }}"></button>
+            </div>
+            <div class="modal-body text-center pt-2">
+                <p class="text-muted small mb-3">{{ t('donations.qr_hint') }}</p>
+                <img src="{{ committee_payment_qr_url() }}" alt="{{ t('donations.qr_title') }}" class="payment-qr-image payment-qr-image-modal">
+                <p class="small text-muted mt-3 mb-0">{{ t('donations.qr_tap') }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}

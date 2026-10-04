@@ -2,7 +2,7 @@ name: Smoke Tests
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
     paths-ignore:
       - "terraform/**"
       - "README.md"
@@ -10,7 +10,7 @@ on:
       - "BOOTSTRAP.md"
       - "POST_DEPLOY_CHECKLIST.md"
   pull_request:
-    branches: [main]
+    branches: [main, dev]
     paths-ignore:
       - "terraform/**"
       - "README.md"

@@ -1,0 +1,23 @@
+---
+description: Use dev branch for local work; main is production only
+alwaysApply: true
+---
+
+# Dev vs production branches
+
+- **`dev`** — local development. Commit feature work here. Deploy locally with `scripts/deploy-local.ps1` (Windows) or `scripts/deploy-local.sh`.
+- **`main`** — production only. Merging to `main` triggers GitHub Actions deploy to https://indukuru.online.
+
+## When implementing features
+
+1. Work on `dev` (create/checkout if missing).
+2. After changes, run local deploy script so the user can test at http://localhost:8080.
+3. Do **not** push to `main` until the user confirms local testing passed.
+4. When the user approves, merge `dev` → `main` and push `main`.
+
+## Do not
+
+- Push untested feature commits directly to `main`.
+- Run production GCP deploy scripts for local testing — use Docker Compose instead.
+
+See `LOCAL_DEV.md` for full workflow.
