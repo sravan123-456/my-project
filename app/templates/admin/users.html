@@ -11,6 +11,35 @@
     </div>
 </div>
 
+{% if plan_usage %}
+<div class="card border-0 shadow-sm mb-4 border-start border-success border-4">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+            <h5 class="fw-semibold mb-0"><i class="bi bi-box-seam"></i> {{ t('admin.plan_title') }}</h5>
+            <span class="badge bg-success">{{ plan_usage.plan_name }}</span>
+        </div>
+        <p class="text-muted small mb-3">{{ t('admin.plan_desc') }}</p>
+        <ul class="list-unstyled small mb-3">
+            {% macro plan_row(label, used, cap) %}
+            <li class="mb-1">
+                {% if cap is none %}
+                {{ label }}: {{ used }} ({{ t('admin.plan_unlimited') }})
+                {% else %}
+                {{ t('admin.plan_row', label=label, used=used, cap=cap) }}
+                {% endif %}
+            </li>
+            {% endmacro %}
+            {{ plan_row(t('pricing.feature_members'), plan_usage.usage.members, plan_usage.limits.members) }}
+            {{ plan_row(t('pricing.feature_admins'), plan_usage.usage.admins, plan_usage.limits.admins) }}
+            {{ plan_row(t('pricing.feature_donations'), plan_usage.usage.donations, plan_usage.limits.donations) }}
+            {{ plan_row(t('pricing.feature_expenses'), plan_usage.usage.expenses, plan_usage.limits.expenses) }}
+            {{ plan_row(t('pricing.feature_gallery'), plan_usage.usage.gallery_photos, plan_usage.limits.gallery_photos) }}
+        </ul>
+        <a href="{{ url_for('pricing.index') }}" class="btn btn-sm btn-outline-success">{{ t('admin.plan_view_pricing') }}</a>
+    </div>
+</div>
+{% endif %}
+
 {% if invite_url %}
 <div class="card border-0 shadow-sm mb-4 border-start border-primary border-4">
     <div class="card-body">

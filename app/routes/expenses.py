@@ -21,6 +21,7 @@ from app.forms import ExpenseForm
 from app.models import EXPENSE_CATEGORIES, Expense
 from app.org_scope import org_get, org_query
 from app.permissions import expenses_write_required
+from app.plan_enforcement import can_add_expense
 from app.year_scope import filter_expenses_by_year, get_current_festival_year
 
 expenses_bp = Blueprint("expenses", __name__)
@@ -78,6 +79,11 @@ def add_expense():
     form.expense_date.data = date.today()
 
     if form.validate_on_submit():
+        ok, limit_message = can_add_expense(current_user.organization)
+        if not ok:
+            flash(limit_message, "warning")
+            return render_template("expenses/form.html", form=form, title="Add Expense")
+
         bill_filename = save_bill(request.files.get("bill"))
         expense = Expense(
             organization_id=current_user.organization_id,

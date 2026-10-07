@@ -17,6 +17,7 @@
                         <th>Festival</th>
                         <th>Code</th>
                         <th>Location</th>
+                        <th>Plan</th>
                         <th>Users</th>
                         <th>Donations</th>
                         <th>Last Login</th>
@@ -33,6 +34,7 @@
                         </td>
                         <td><code>{{ item.org.slug }}</code></td>
                         <td>{{ item.org.village or '-' }}</td>
+                        <td><span class="badge bg-light text-dark border">{{ item.org.subscription_plan or 'free' }}</span></td>
                         <td>{{ item.approved_users }}/{{ item.users }}</td>
                         <td>{{ item.donations }}</td>
                         <td>

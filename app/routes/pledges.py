@@ -22,6 +22,7 @@ from app.models import (
 from app.org_scope import org_get, org_query
 from app.permissions import donations_write_required
 from app.routes.donations import _normalize_phone
+from app.plan_enforcement import can_add_donation
 from app.year_scope import filter_pledges_by_year, get_current_festival_year
 
 pledges_bp = Blueprint("pledges", __name__)
@@ -209,6 +210,15 @@ def collect_pledge(pledge_id):
         form.phone.data = pledge.phone or ""
 
     if form.validate_on_submit():
+        ok, limit_message = can_add_donation(current_user.organization)
+        if not ok:
+            flash(limit_message, "warning")
+            return render_template(
+                "donations/collect_pledge.html",
+                form=form,
+                pledge=pledge,
+            )
+
         donation = Donation(
             organization_id=current_user.organization_id,
             donor_name=pledge.donor_name,

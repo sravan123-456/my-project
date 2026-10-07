@@ -2,8 +2,10 @@ from datetime import date
 
 from app.models import GalleryImage
 from app.org_scope import org_query
-
-GALLERY_MAX_PHOTOS_PER_YEAR = 20
+from app.plan_enforcement import (
+    count_gallery_items_for_year,
+    gallery_photo_limit,
+)
 
 
 def get_gallery_years(org_id, festival_year=None):
@@ -29,8 +31,22 @@ def count_gallery_photos(org_id, year):
     )
 
 
-def gallery_has_room(org_id, year, limit=GALLERY_MAX_PHOTOS_PER_YEAR):
-    return count_gallery_photos(org_id, year) < limit
+def max_gallery_photos_for_org(org):
+    if not org:
+        return 0
+    cap = gallery_photo_limit(org)
+    if cap is None:
+        return None
+    return cap
+
+
+def gallery_has_room(org, year, extra=1):
+    if not org:
+        return False
+    cap = gallery_photo_limit(org)
+    if cap is None:
+        return True
+    return count_gallery_items_for_year(org, year) + extra <= cap
 
 
 def resolve_gallery_year(org_id, year_arg, festival_year=None):

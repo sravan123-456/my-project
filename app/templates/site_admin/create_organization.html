@@ -29,9 +29,13 @@
                         {{ form.festival_name.label(class="form-label") }}
                         {{ form.festival_name(class="form-control", placeholder="Name shown in dashboard") }}
                     </div>
-                    <div class="mb-4">
+                    <div class="mb-3">
                         {{ form.festival_year.label(class="form-label") }}
                         {{ form.festival_year(class="form-control") }}
+                    </div>
+                    <div class="mb-4">
+                        {{ form.subscription_plan.label(class="form-label") }}
+                        {{ form.subscription_plan(class="form-select") }}
                     </div>
                     {{ form.submit(class="btn btn-festival") }}
                     <a href="{{ url_for('site_admin.dashboard') }}" class="btn btn-outline-secondary ms-2">Cancel</a>

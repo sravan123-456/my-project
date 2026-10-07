@@ -32,6 +32,34 @@
     </div>
 </div>
 
+<div class="card border-0 shadow-sm mb-4 border-start border-success border-4">
+    <div class="card-body">
+        <h5 class="mb-2">Subscription plan</h5>
+        <p class="text-muted small mb-3">
+            Current: <strong>{{ current_plan.name }}</strong> ({{ current_plan.price_display }}).
+            Limits apply immediately for donations, expenses, members, and gallery.
+        </p>
+        {% if plan_usage %}
+        <ul class="list-unstyled small mb-3">
+            <li>Members: {{ plan_usage.usage.members }}{% if plan_usage.limits.members is not none %} / {{ plan_usage.limits.members }}{% else %} (unlimited){% endif %}</li>
+            <li>Donations ({{ plan_usage.festival_year }}): {{ plan_usage.usage.donations }}{% if plan_usage.limits.donations is not none %} / {{ plan_usage.limits.donations }}{% else %} (unlimited){% endif %}</li>
+            <li>Expenses ({{ plan_usage.festival_year }}): {{ plan_usage.usage.expenses }}{% if plan_usage.limits.expenses is not none %} / {{ plan_usage.limits.expenses }}{% else %} (unlimited){% endif %}</li>
+            <li>Gallery ({{ plan_usage.festival_year }}): {{ plan_usage.usage.gallery_photos }} / {{ plan_usage.limits.gallery_photos }}</li>
+        </ul>
+        {% endif %}
+        <form method="POST" action="{{ url_for('site_admin.update_organization_plan', org_id=org.id) }}" class="row g-2 align-items-end">
+            {{ plan_form.hidden_tag() }}
+            <div class="col-md-6">
+                {{ plan_form.subscription_plan.label(class="form-label") }}
+                {{ plan_form.subscription_plan(class="form-select") }}
+            </div>
+            <div class="col-md-6">
+                {{ plan_form.submit(class="btn btn-success") }}
+            </div>
+        </form>
+    </div>
+</div>
+
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body">
         <h5 class="mb-2">Committee Login Link</h5>

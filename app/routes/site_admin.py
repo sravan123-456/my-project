@@ -5,7 +5,9 @@ from flask_login import current_user
 from sqlalchemy import func
 
 from app import db
-from app.forms import CreateOrganizationForm
+from app.forms import CreateOrganizationForm, OrganizationPlanForm
+from app.plan_enforcement import plan_for_org, plan_usage_snapshot
+from app.pricing_plans import get_plan, plan_select_choices
 from app.models import (
     ORG_STATUS_ACTIVE,
     Donation,
@@ -144,12 +146,14 @@ def organizations():
 @site_admin_required
 def create_organization():
     form = CreateOrganizationForm()
+    form.subscription_plan.choices = plan_select_choices()
     if form.validate_on_submit():
         slug = form.slug.data.strip().lower()
         if Organization.query.filter_by(slug=slug).first():
             flash("That committee code is already in use.", "warning")
             return render_template("site_admin/create_organization.html", form=form)
 
+        plan = get_plan(form.subscription_plan.data) or get_plan("free")
         org = Organization(
             name=form.name.data.strip(),
             slug=slug,
@@ -157,6 +161,7 @@ def create_organization():
             festival_name=form.festival_name.data.strip(),
             festival_year=form.festival_year.data or date.today().year,
             status=ORG_STATUS_ACTIVE,
+            subscription_plan=plan["id"],
         )
         db.session.add(org)
         db.session.commit()
@@ -169,6 +174,9 @@ def create_organization():
 
     if not form.festival_year.data:
         form.festival_year.data = date.today().year
+    form.subscription_plan.choices = plan_select_choices()
+    if not form.subscription_plan.data:
+        form.subscription_plan.data = "free"
 
     return render_template("site_admin/create_organization.html", form=form)
 
@@ -189,6 +197,12 @@ def organization_detail(org_id):
         .scalar()
     )
 
+    plan_form = OrganizationPlanForm()
+    plan_form.subscription_plan.choices = plan_select_choices()
+    plan_form.subscription_plan.data = org.subscription_plan or "free"
+    current_plan = plan_for_org(org)
+    plan_usage = plan_usage_snapshot(org)
+
     return render_template(
         "site_admin/organization_detail.html",
         org=org,
@@ -196,7 +210,39 @@ def organization_detail(org_id):
         login_count=login_count,
         donation_total=donation_total,
         register_url=url_for("auth.login", org=org.slug, _external=True),
+        plan_form=plan_form,
+        current_plan=current_plan,
+        plan_usage=plan_usage,
     )
+
+
+@site_admin_bp.route("/organizations/<int:org_id>/plan", methods=["POST"])
+@site_admin_required
+def update_organization_plan(org_id):
+    org = db.session.get(Organization, org_id)
+    if not org:
+        flash("Committee not found.", "danger")
+        return redirect(url_for("site_admin.organizations"))
+
+    form = OrganizationPlanForm()
+    form.subscription_plan.choices = plan_select_choices()
+    if not form.validate_on_submit():
+        flash("Could not update plan. Please try again.", "danger")
+        return redirect(url_for("site_admin.organization_detail", org_id=org.id))
+
+    plan = get_plan(form.subscription_plan.data)
+    if not plan:
+        flash("Invalid subscription plan.", "warning")
+        return redirect(url_for("site_admin.organization_detail", org_id=org.id))
+
+    old_plan = plan_for_org(org)["name"]
+    org.subscription_plan = plan["id"]
+    db.session.commit()
+    flash(
+        f"Subscription plan for {org.display_name()} changed from {old_plan} to {plan['name']}.",
+        "success",
+    )
+    return redirect(url_for("site_admin.organization_detail", org_id=org.id))
 
 
 @site_admin_bp.route("/organizations/<int:org_id>/toggle-status", methods=["POST"])

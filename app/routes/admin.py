@@ -15,6 +15,7 @@ from app.models import ActivityLog, PasswordResetRequest, User
 from app.org_scope import org_get, org_users_query
 from app.permissions import org_admin_required
 from app.storage import delete_image, get_image_url, save_image, serve_image
+from app.plan_enforcement import can_approve_member, can_grant_admin, plan_usage_snapshot
 from app.user_cleanup import (
     prepare_user_for_deletion,
     remaining_admin_count_after_deletions,
@@ -64,6 +65,12 @@ def users():
             festival_year_form.festival_year.data = current_user.organization.festival_year
         next_festival_year = (current_user.organization.festival_year or date.today().year) + 1
 
+    plan_usage = (
+        plan_usage_snapshot(current_user.organization)
+        if current_user.organization
+        else None
+    )
+
     return render_template(
         "admin/users.html",
         pending_users=pending_users,
@@ -75,6 +82,7 @@ def users():
         payment_qr_form=CommitteePaymentQrForm(),
         festival_year_form=festival_year_form,
         next_festival_year=next_festival_year,
+        plan_usage=plan_usage,
     )
 
 
@@ -92,6 +100,12 @@ def approve_user(user_id):
 
     if user.is_approved:
         flash(f"{user.full_name} is already approved.", "info")
+        return redirect(url_for("admin.users"))
+
+    org = current_user.organization
+    ok, limit_message = can_approve_member(org)
+    if not ok:
+        flash(limit_message, "warning")
         return redirect(url_for("admin.users"))
 
     user.is_approved = True
@@ -256,6 +270,10 @@ def toggle_admin(user_id):
         )
         flash(f"{user.full_name} is no longer a committee admin.", "info")
     else:
+        ok, limit_message = can_grant_admin(current_user.organization)
+        if not ok:
+            flash(limit_message, "warning")
+            return redirect(url_for("admin.users"))
         user.is_admin = True
         user.can_write_donations = True
         user.can_write_expenses = True

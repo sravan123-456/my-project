@@ -7,12 +7,13 @@ from app import db
 from app.activity import log_activity
 from app.forms import GalleryUploadForm
 from app.gallery_service import (
-    GALLERY_MAX_PHOTOS_PER_YEAR,
     count_gallery_photos,
     gallery_has_room,
     get_gallery_years,
+    max_gallery_photos_for_org,
     resolve_gallery_year,
 )
+from app.plan_enforcement import can_add_gallery_items
 from app.models import GALLERY_MEDIA_IMAGE, GALLERY_MEDIA_VIDEO, GalleryImage
 from app.org_scope import org_get, org_query
 from app.permissions import write_required
@@ -44,8 +45,10 @@ def index():
         org_id, request.args.get("year", type=int), org_festival_year
     )
     available_years = get_gallery_years(org_id, org_festival_year)
+    org = current_user.organization
     photo_count = count_gallery_photos(org_id, selected_year)
-    can_upload = gallery_has_room(org_id, selected_year)
+    max_photos = max_gallery_photos_for_org(org)
+    can_upload = gallery_has_room(org, selected_year)
 
     images = (
         org_query(GalleryImage)
@@ -65,7 +68,7 @@ def index():
         selected_year=selected_year,
         available_years=available_years,
         photo_count=photo_count,
-        max_photos=GALLERY_MAX_PHOTOS_PER_YEAR,
+        max_photos=max_photos,
         can_upload=can_upload,
     )
 
@@ -88,15 +91,18 @@ def upload():
                 flash(message, "danger")
         return _gallery_redirect(request.args.get("year", type=int) or date.today().year)
 
+    org = current_user.organization
     year = form.festival_year.data
     files = _selected_media_files(form.media_files.name)
-    remaining_slots = GALLERY_MAX_PHOTOS_PER_YEAR - count_gallery_photos(org_id, year)
-    if remaining_slots <= 0:
-        flash(
-            f"This year already has {GALLERY_MAX_PHOTOS_PER_YEAR} items. "
-            "Delete an old item or choose another year.",
-            "warning",
-        )
+    max_photos = max_gallery_photos_for_org(org)
+    current_count = count_gallery_photos(org_id, year)
+    if max_photos is not None:
+        remaining_slots = max_photos - current_count
+    else:
+        remaining_slots = len(files) or 1
+    if max_photos is not None and remaining_slots <= 0:
+        ok, message = can_add_gallery_items(org, year)
+        flash(message or f"This year already has {max_photos} items.", "warning")
         return _gallery_redirect(year)
 
     if len(files) > remaining_slots:

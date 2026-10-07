@@ -23,9 +23,11 @@
     </div>
 </div>
 
+{% set gallery_max = t('pricing.unlimited') if max_photos is none else max_photos %}
+
 <div class="alert alert-light border mb-4">
   <i class="bi bi-calendar-event"></i>
-  {{ t('gallery.year_summary', year=selected_year, count=photo_count, max=max_photos) }}
+  {{ t('gallery.year_summary', year=selected_year, count=photo_count, max=gallery_max) }}
 </div>
 
 {% if user_can_edit() %}
@@ -68,7 +70,7 @@
 </div>
 {% else %}
 <div class="alert alert-warning">
-    <i class="bi bi-exclamation-triangle"></i> {{ t('gallery.limit_reached', year=selected_year, max=max_photos) }}
+    <i class="bi bi-exclamation-triangle"></i> {{ t('gallery.limit_reached', year=selected_year, max=gallery_max) }}
 </div>
 {% endif %}
 {% else %}

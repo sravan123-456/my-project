@@ -134,7 +134,13 @@ class CreateOrganizationForm(FlaskForm):
     village = StringField("Town / City / Area", validators=[Optional(), Length(max=120)])
     festival_name = StringField("Festival Display Name", validators=[DataRequired(), Length(max=160)])
     festival_year = IntegerField("Festival Year", validators=[Optional()])
+    subscription_plan = SelectField("Subscription Plan", validators=[DataRequired()])
     submit = SubmitField("Create Committee")
+
+
+class OrganizationPlanForm(FlaskForm):
+    subscription_plan = SelectField("Subscription Plan", validators=[DataRequired()])
+    submit = SubmitField("Update Plan")
 
 
 class DonationForm(FlaskForm):

@@ -1,4 +1,4 @@
-"""Subscription plan definitions (display + future enforcement)."""
+"""Subscription plan definitions (display + enforcement via plan_enforcement)."""
 
 PLANS = {
     "free": {
@@ -90,6 +90,10 @@ def get_plan(plan_id):
 
 def list_plans():
     return [PLANS[plan_id] for plan_id in PLAN_ORDER]
+
+
+def plan_select_choices():
+    return [(plan["id"], f"{plan['name']} ({plan['price_display']})") for plan in list_plans()]
 
 
 def format_limit(value):

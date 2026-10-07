@@ -177,6 +177,7 @@ def create_app():
     @app.context_processor
     def inject_globals():
         pending_count = 0
+        plan_usage = None
         festival_name = PLATFORM_NAME
         organization_name = None
         organization_village = None
@@ -190,6 +191,10 @@ def create_app():
                 organization_village = org.village
                 organization_location = org.location_label()
                 festival_year = org.festival_year
+            if current_user.organization:
+                from app.plan_enforcement import plan_usage_snapshot
+
+                plan_usage = plan_usage_snapshot(current_user.organization)
             if current_user.is_admin:
                 pending_count = User.query.filter_by(
                     organization_id=current_user.organization_id,
@@ -232,6 +237,7 @@ def create_app():
             "user_is_admin": lambda: current_user.is_authenticated and current_user.is_admin,
             "user_is_site_admin": lambda: current_user.is_authenticated and current_user.is_site_admin,
             "pending_user_count": pending_count,
+            "plan_usage": plan_usage,
             "t": translate,
             "current_lang": get_language(),
             "languages": SUPPORTED_LANGUAGES,
