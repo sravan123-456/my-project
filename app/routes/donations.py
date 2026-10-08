@@ -20,6 +20,8 @@ from app.models import (
 from app.org_scope import org_get, org_query
 from app.permissions import donations_write_required
 from app.whatsapp import donation_whatsapp_url
+from app.donation_thank_you import normalize_thank_you_lang, thank_you_lang_choices
+from app.i18n import get_language
 from app.plan_enforcement import can_add_donation
 from app.year_scope import (
     filter_donations_by_year,
@@ -61,6 +63,7 @@ def _donation_totals():
 def _prepare_donation_form(form):
     form.donor_group.choices = DONOR_GROUP_CHOICES
     form.payment_mode.choices = PAYMENT_MODE_CHOICES
+    form.thank_you_lang.choices = thank_you_lang_choices()
 
 
 def _normalize_phone(phone_value):
@@ -94,6 +97,7 @@ def _save_donation_from_form(form, recorded_by_id, organization_id, festival_yea
         notes=form.notes.data.strip() if form.notes.data else None,
         donation_date=form.donation_date.data,
         festival_year=festival_year,
+        thank_you_lang=normalize_thank_you_lang(form.thank_you_lang.data),
         recorded_by_id=recorded_by_id,
     )
     db.session.add(donation)
@@ -173,6 +177,7 @@ def add_donation():
         form.donation_date.data = date.today()
         form.donor_group.data = DONOR_GROUP_COMMITTEE
         form.payment_mode.data = PAYMENT_CASH
+        form.thank_you_lang.data = get_language()
 
     if form.validate_on_submit():
         ok, limit_message = can_add_donation(current_user.organization)
@@ -244,6 +249,7 @@ def edit_donation(donation_id):
         donation.notes = form.notes.data.strip() if form.notes.data else None
         donation.donation_date = form.donation_date.data
         donation.festival_year = _current_festival_year()
+        donation.thank_you_lang = normalize_thank_you_lang(form.thank_you_lang.data)
         log_activity(
             current_user,
             "updated",

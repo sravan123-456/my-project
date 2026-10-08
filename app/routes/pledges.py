@@ -22,6 +22,8 @@ from app.models import (
 from app.org_scope import org_get, org_query
 from app.permissions import donations_write_required
 from app.routes.donations import _normalize_phone
+from app.donation_thank_you import normalize_thank_you_lang, thank_you_lang_choices
+from app.i18n import get_language
 from app.plan_enforcement import can_add_donation
 from app.year_scope import filter_pledges_by_year, get_current_festival_year
 
@@ -30,6 +32,11 @@ pledges_bp = Blueprint("pledges", __name__)
 
 def _prepare_pledge_form(form):
     form.donor_group.choices = DONOR_GROUP_CHOICES
+
+
+def _prepare_collect_pledge_form(form):
+    form.payment_mode.choices = PAYMENT_MODE_CHOICES
+    form.thank_you_lang.choices = thank_you_lang_choices()
 
 
 def _current_festival_year():
@@ -201,13 +208,14 @@ def collect_pledge(pledge_id):
         return redirect(url_for("pledges.list_pledges"))
 
     form = CollectPledgeForm()
-    form.payment_mode.choices = PAYMENT_MODE_CHOICES
+    _prepare_collect_pledge_form(form)
 
     if request.method == "GET":
         form.amount.data = pledge.promised_amount
         form.donation_date.data = date.today()
         form.payment_mode.data = PAYMENT_CASH
         form.phone.data = pledge.phone or ""
+        form.thank_you_lang.data = get_language()
 
     if form.validate_on_submit():
         ok, limit_message = can_add_donation(current_user.organization)
@@ -234,6 +242,7 @@ def collect_pledge(pledge_id):
             notes=form.notes.data.strip() if form.notes.data else pledge.notes,
             donation_date=form.donation_date.data,
             festival_year=_current_festival_year(),
+            thank_you_lang=normalize_thank_you_lang(form.thank_you_lang.data),
             recorded_by_id=current_user.id,
         )
         db.session.add(donation)

@@ -17,7 +17,7 @@
                 {% if whatsapp_url %}
                 <div class="d-flex gap-2 justify-content-center flex-wrap mb-4">
                     <a href="{{ whatsapp_url }}" target="_blank" rel="noopener" class="btn btn-success-festival btn-lg">
-                        <i class="bi bi-whatsapp"></i> Send Telugu Thank-You on WhatsApp
+                        <i class="bi bi-whatsapp"></i> {{ t('donations.whatsapp_send', lang=donation.thank_you_language_label()) }}
                     </a>
                 </div>
                 {% else %}

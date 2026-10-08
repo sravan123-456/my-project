@@ -1,0 +1,91 @@
+# -*- coding: utf-8 -*-
+"""WhatsApp thank-you message text per language."""
+
+from app.i18n import SUPPORTED_LANGUAGES
+
+DECOR = "\u2728"
+HEART = "\u2764\ufe0f"
+DEFAULT_THANK_YOU_LANG = "te"
+
+
+def thank_you_lang_choices():
+    return list(SUPPORTED_LANGUAGES.items())
+
+
+def normalize_thank_you_lang(lang):
+    code = (lang or "").strip().lower()
+    if code in SUPPORTED_LANGUAGES:
+        return code
+    return DEFAULT_THANK_YOU_LANG
+
+
+def thank_you_language_label(lang_code):
+    return SUPPORTED_LANGUAGES.get(normalize_thank_you_lang(lang_code), lang_code)
+
+
+def build_donation_thank_you_message(lang, donor_name, amount_str, date_str, festival_title):
+    code = normalize_thank_you_lang(lang)
+    rupee = "\u20b9"
+    builders = {
+        "en": _message_en,
+        "te": _message_te,
+        "hi": _message_hi,
+        "kn": _message_kn,
+    }
+    return builders[code](donor_name, amount_str, date_str, festival_title, rupee)
+
+
+def _message_en(donor_name, amount_str, date_str, festival_title, rupee):
+    return (
+        f"{DECOR} {festival_title} {DECOR}\n"
+        f"Dear {donor_name},\n\n"
+        f"We gratefully acknowledge your contribution of {rupee}{amount_str} "
+        f"received on {date_str}.\n\n"
+        f"{DECOR} Heartfelt thanks {DECOR}\n\n"
+        f"Thank you for supporting {festival_title}. Your generosity helps our "
+        f"committee serve the festival and our community. We wish you and your family "
+        f"happiness, prosperity, and good health. {DECOR}\n\n"
+        f"With sincere gratitude from the {festival_title} committee. {HEART}"
+    )
+
+
+def _message_te(donor_name, amount_str, date_str, festival_title, rupee):
+    return (
+        f"{DECOR} {festival_title} {DECOR}\n"
+        f"\u0c2a\u0c4d\u0c30\u0c3f\u0c2f\u0c2e\u0c48\u0c28 {donor_name} \u0c17\u0c3e\u0c30\u0c3f\u0c15\u0c3f,\n\n"
+        f"\u0c2e\u0c40 \u0c35\u0c3f\u0c30\u0c3e\u0c33\u0c02 {rupee}{amount_str} \u0c38\u0c3e\u0c26\u0c30\u0c02\u0c17\u0c3e \u0c28\u0c2e\u0c4b\u0c26\u0c41 \u0c1a\u0c47\u0c2f\u0c2c\u0c21\u0c3f\u0c02\u0c26\u0c3f.\n"
+        f"\u0c24\u0c47\u0c26\u0c40: {date_str}\n\n"
+        f"{DECOR} \u0c39\u0c43\u0c26\u0c2f\u0c2a\u0c42\u0c30\u0c4d\u0c35\u0c15 \u0c27\u0c28\u0c4d\u0c2f\u0c35\u0c3e\u0c26\u0c3e\u0c32\u0c41 {DECOR}\n\n"
+        f"\u0c2e\u0c28 {festival_title} \u0c15\u0c3e\u0c30\u0c4d\u0c2f\u0c15\u0c4d\u0c30\u0c2e\u0c3e\u0c28\u0c3f\u0c15\u0c3f \u0c2e\u0c40\u0c30\u0c41 \u0c05\u0c02\u0c26\u0c3f\u0c02\u0c1a\u0c3f\u0c28 \u0c1a\u0c02\u0c26\u0c3e \u0c38\u0c39\u0c3e\u0c2f\u0c3e\u0c28\u0c3f\u0c15\u0c3f \u0c27\u0c28\u0c4d\u0c2f\u0c35\u0c3e\u0c26\u0c3e\u0c32\u0c41. "
+        f"\u0c2e\u0c40 \u0c38\u0c39\u0c15\u0c3e\u0c30\u0c02 \u0c2e\u0c28\u0c15\u0c41 \u0c0e\u0c02\u0c24\u0c4b \u0c35\u0c3f\u0c32\u0c41\u0c35\u0c48\u0c28\u0c26\u0c3f. \u0c2e\u0c40\u0c15\u0c41, \u0c2e\u0c40 \u0c15\u0c41\u0c1f\u0c41\u0c02\u0c2c \u0c38\u0c2d\u0c4d\u0c2f\u0c41\u0c32\u0c15\u0c41 "
+        f"\u0c06\u0c2f\u0c41\u0c30\u0c3e\u0c30\u0c4b\u0c17\u0c4d\u0c2f\u0c3e\u0c32\u0c41, \u0c38\u0c41\u0c16\u0c38\u0c02\u0c24\u0c4b\u0c37\u0c3e\u0c32\u0c41 \u0c15\u0c32\u0c17\u0c3e\u0c32\u0c28\u0c3f \u0c2e\u0c28\u0c38\u0c4d\u0c2b\u0c42\u0c30\u0c4d\u0c24\u0c3f\u0c17\u0c3e \u0c15\u0c4b\u0c30\u0c41\u0c15\u0c41\u0c02\u0c1f\u0c41\u0c28\u0c4d\u0c28\u0c3e\u0c2e\u0c41. {DECOR}\n\n"
+        f"\u0c2e\u0c40 \u0c05\u0c2e\u0c42\u0c32\u0c4d\u0c2f\u0c2e\u0c48\u0c28 \u0c38\u0c39\u0c15\u0c3e\u0c30\u0c3e\u0c28\u0c3f\u0c15\u0c3f \u0c2e\u0c30\u0c4b\u0c38\u0c3e\u0c30\u0c3f \u0c27\u0c28\u0c4d\u0c2f\u0c35\u0c3e\u0c26\u0c3e\u0c32\u0c41. {HEART}"
+    )
+
+
+def _message_hi(donor_name, amount_str, date_str, festival_title, rupee):
+    return (
+        f"{DECOR} {festival_title} {DECOR}\n"
+        f"\u092a\u094d\u0930\u093f\u092f {donor_name} \u091c\u0940,\n\n"
+        f"\u0906\u092a\u0915\u093e {rupee}{amount_str} \u0915\u093e \u0926\u093e\u0928 {date_str} \u092a\u0930 \u0938\u094d\u0935\u0940\u0915\u093e\u0930\u094d\u092f\u0924\u093e\u092a\u0942\u0930\u094d\u0935\u0915 \u0938\u094d\u0935\u0940\u0915\u093e\u0930 \u0915\u093f\u092f\u093e \u0917\u092f\u093e\u0964\n"
+        f"\u0924\u093f\u0925\u093f: {date_str}\n\n"
+        f"{DECOR} \u0939\u0930\u094d\u0926\u093f\u0915 \u0927\u0928\u094d\u092f\u0935\u093e\u0926 {DECOR}\n\n"
+        f"{festival_title} \u0915\u0947 \u0906\u092f\u094b\u091c\u0928 \u092e\u0947\u0902 \u0939\u092e\u093e\u0930\u093e \u0938\u093e\u0925 \u0926\u0947\u0928\u0947 \u0915\u0947 \u0932\u093f\u090f \u0927\u0928\u094d\u092f\u0935\u093e\u0926\u0964 "
+        f"\u0906\u092a\u0915\u093e \u0938\u0939\u092f\u094b\u0917 \u0939\u092e\u093e\u0930\u0947 \u0938\u092e\u093e\u091c \u0914\u0930 \u0924\u094d\u092f\u094b\u0939\u093e\u0930 \u0915\u0947 \u0932\u093f\u090f \u092c\u0939\u0941\u0924 \u092e\u0939\u0924\u094d\u0935\u092a\u0942\u0930\u094d\u0923 \u0939\u0948\u0964 "
+        f"\u0906\u092a\u0915\u094b \u0914\u0930 \u0906\u092a\u0915\u0947 \u092a\u0930\u093f\u0935\u093e\u0930 \u0915\u094b \u0938\u0941\u0916, \u0938\u092e\u0943\u0926\u094d\u0927\u093f \u0914\u0930 \u0906\u0930\u094b\u0917\u094d\u092f \u0915\u093e \u0906\u0936\u0940\u0930\u094d\u0935\u093e\u0926\u0964 {DECOR}\n\n"
+        f"{festival_title} \u0938\u092e\u093f\u0924\u093f \u0915\u0940 \u0913\u0930 \u0938\u0947 \u0939\u093e\u0930\u094d\u0926\u093f\u0915 \u0927\u0928\u094d\u092f\u0935\u093e\u0926\u0964 {HEART}"
+    )
+
+
+def _message_kn(donor_name, amount_str, date_str, festival_title, rupee):
+    return (
+        f"{DECOR} {festival_title} {DECOR}\n"
+        f"\u0caa\u0ccd\u0cb0\u0cbf\u0caf {donor_name} \u0c85\u0cb5\u0cb0\u0cc6,\n\n"
+        f"\u0ca8\u0cbf\u0cae\u0ccd\u0cae {rupee}{amount_str} \u0ca6\u0cbe\u0ca8 {date_str} \u0ca6\u0cbf\u0ca8 \u0c85\u0c82\u0c97\u0cc0\u0c95\u0cb0\u0cbf\u0cb8\u0cbf\u0ca6\u0ccd\u0ca6\u0cc6\u0cb5\u0cc1.\n"
+        f"\u0ca4\u0cbe\u0cb0\u0cc0\u0c96: {date_str}\n\n"
+        f"{DECOR} \u0cb9\u0cc3\u0ca6\u0caf\u0caa\u0cc2\u0cb0\u0ccd\u0cb5\u0c95 \u0ca7\u0ca8\u0ccd\u0caf\u0cb5\u0cbe\u0ca6\u0c97\u0cb3\u0cc1 {DECOR}\n\n"
+        f"{festival_title} \u0c86\u0caf\u0ccb\u0c9c\u0ca8\u0cc6\u0caf\u0cb2\u0ccd\u0cb2\u0cbf \u0ca8\u0cae\u0ccd\u0cae \u0cb8\u0cb9\u0c95\u0cbe\u0cb0\u0cb5\u0cc1 \u0ca8\u0cbf\u0cae\u0ccd\u0c97\u0cc6 \u0ca7\u0ca8\u0ccd\u0caf\u0cb5\u0cbe\u0ca6\u0c97\u0cb3\u0cc1. "
+        f"\u0ca8\u0cbf\u0cae\u0ccd\u0cae \u0cb8\u0cb9\u0cbe\u0caf \u0ca8\u0c82\u0ca1\u0cc1 \u0ca8\u0cbe\u0ca1\u0cc1 \u0cae\u0ca4\u0ccd\u0ca4\u0cc1 \u0cb8\u0c82\u0c97\u0cc0\u0ca4\u0cb5\u0cc1 \u0c85\u0ca4\u0ccd\u0caf\u0c82\u0ca4 \u0cae\u0cb9\u0ca4\u0ccd\u0cb5\u0cb5\u0cbe\u0ca6\u0cc1. "
+        f"\u0ca8\u0cbf\u0cae\u0c97\u0cc6 \u0cae\u0ca4\u0ccd\u0ca4\u0cc1 \u0ca8\u0cbf\u0cae\u0ccd\u0cae \u0c95\u0cc1\u0c9f\u0cc1\u0c82\u0cac\u0c97\u0cc6 \u0cb8\u0cc1\u0c96, \u0cb8\u0cae\u0ccd\u0cb0\u0ca6\u0ccd\u0ca7\u0cbf \u0cae\u0ca4\u0ccd\u0ca4\u0cc1 \u0c86\u0cb0\u0ccb\u0c97\u0ccd\u0caf\u0cb5\u0cbe\u0ca6\u0cc1. {DECOR}\n\n"
+        f"{festival_title} \u0cb8\u0cae\u0cbf\u0ca4\u0cbf\u0caf\u0cb5\u0cb0\u0cc1 \u0cae\u0ca8\u0ca6\u0cac\u0c82\u0ca6\u0cbf\u0ca8\u0c82\u0ca6 \u0ca7\u0ca8\u0ccd\u0caf\u0cb5\u0cbe\u0ca6\u0c97\u0cb3\u0cc1. {HEART}"
+    )

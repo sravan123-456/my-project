@@ -61,6 +61,14 @@
                                 <div class="invalid-feedback">{{ error }}</div>
                             {% endfor %}
                         </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="{{ form.thank_you_lang.id }}">{{ t('donations.thank_you_lang') }}</label>
+                            {{ form.thank_you_lang(class="form-select" + (" is-invalid" if form.thank_you_lang.errors else "")) }}
+                            <small class="text-muted">{{ t('donations.thank_you_lang_hint') }}</small>
+                            {% for error in form.thank_you_lang.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                        </div>
                         <div class="col-12">
                             {{ form.notes.label(class="form-label") }}
                             {{ form.notes(class="form-control", rows="2", placeholder="Any additional notes (optional)") }}

@@ -384,6 +384,20 @@ def migrate_user_phone_per_organization():
         )
 
 
+def migrate_donation_thank_you_lang():
+    inspector = inspect(db.engine)
+    if "donations" not in inspector.get_table_names():
+        return
+    columns = {column["name"] for column in inspector.get_columns("donations")}
+    if "thank_you_lang" not in columns:
+        with db.engine.begin() as conn:
+            conn.execute(
+                text(
+                    "ALTER TABLE donations ADD COLUMN thank_you_lang VARCHAR(5) NOT NULL DEFAULT 'te'"
+                )
+            )
+
+
 def migrate_record_festival_year_columns():
     table_columns = {
         "donations": "festival_year",
@@ -430,3 +444,4 @@ def run_migrations():
     migrate_pledges()
     migrate_expense_payment_columns()
     migrate_record_festival_year_backfill()
+    migrate_donation_thank_you_lang()

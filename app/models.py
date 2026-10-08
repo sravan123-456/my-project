@@ -182,8 +182,14 @@ class Donation(db.Model):
     notes = db.Column(db.Text)
     donation_date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
     festival_year = db.Column(db.Integer, index=True)
+    thank_you_lang = db.Column(db.String(5), nullable=False, default="te")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     recorded_by_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+
+    def thank_you_language_label(self):
+        from app.donation_thank_you import thank_you_language_label
+
+        return thank_you_language_label(self.thank_you_lang)
 
     def donor_group_label(self):
         return LEGACY_DONOR_GROUP_LABELS.get(

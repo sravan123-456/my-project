@@ -159,6 +159,7 @@ class DonationForm(FlaskForm):
     )
     notes = TextAreaField("Notes (optional)", validators=[Optional(), Length(max=500)])
     donation_date = DateField("Date", validators=[DataRequired()], format="%Y-%m-%d")
+    thank_you_lang = SelectField("Thank-you message language", validators=[DataRequired()])
     submit = SubmitField("Save Donation")
 
 
@@ -193,6 +194,7 @@ class CollectPledgeForm(FlaskForm):
         validators=[Optional(), Length(min=10, max=20, message="Enter a valid mobile number.")],
     )
     donation_date = DateField("Collection Date", validators=[DataRequired()], format="%Y-%m-%d")
+    thank_you_lang = SelectField("Thank-you message language", validators=[DataRequired()])
     notes = TextAreaField("Notes (optional)", validators=[Optional(), Length(max=500)])
     submit = SubmitField("Mark as Collected")
 

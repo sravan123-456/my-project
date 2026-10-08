@@ -39,6 +39,11 @@
                             <label class="form-label" for="{{ form.phone.id }}">{{ t('donations.phone_optional') }}</label>
                             {{ form.phone(class="form-control", placeholder=t('donations.phone_placeholder')) }}
                         </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="{{ form.thank_you_lang.id }}">{{ t('donations.thank_you_lang') }}</label>
+                            {{ form.thank_you_lang(class="form-select") }}
+                            <small class="text-muted">{{ t('donations.thank_you_lang_hint') }}</small>
+                        </div>
                         <div class="col-12">
                             {{ form.notes.label(class="form-label") }}
                             {{ form.notes(class="form-control", rows="2") }}
