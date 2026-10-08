@@ -109,6 +109,37 @@ def create_app():
         flash("Your account is pending admin approval.", "warning")
         return redirect(url_for("main.pending"))
 
+    @app.before_request
+    def require_active_organization():
+        if not current_user.is_authenticated or current_user.is_site_admin:
+            return None
+        org = current_user.organization
+        if not org or org.is_active():
+            return None
+
+        allowed = {
+            "auth.logout",
+            "static",
+            "health",
+            "main.suspended",
+            "main.set_language_route",
+            "main.help_page",
+        }
+        if request.endpoint in allowed:
+            return None
+
+        if org.is_pending():
+            flash(
+                "Your committee is waiting for site admin approval. Access is disabled until then.",
+                "warning",
+            )
+        else:
+            flash(
+                "This committee has been suspended. Contact the site administrator.",
+                "warning",
+            )
+        return redirect(url_for("main.suspended"))
+
     from app.msg91 import init_msg91, msg91_enabled, widget_config
     from app.i18n import SUPPORTED_LANGUAGES, get_language, translate
 

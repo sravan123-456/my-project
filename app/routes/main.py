@@ -38,6 +38,15 @@ def pending():
     return render_template("main/pending.html")
 
 
+@main_bp.route("/suspended")
+@login_required
+def suspended():
+    org = current_user.organization
+    if org and org.is_active():
+        return redirect(url_for("main.dashboard"))
+    return render_template("main/suspended.html")
+
+
 @main_bp.route("/set-language/<lang>")
 def set_language_route(lang):
     set_language(lang)

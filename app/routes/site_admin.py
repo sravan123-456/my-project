@@ -259,7 +259,14 @@ def toggle_organization_status(org_id):
 
     org.status = "suspended" if org.is_active() else "active"
     db.session.commit()
-    flash(f"{org.display_name()} is now {org.status}.", "info")
+    if org.is_active():
+        flash(f"{org.display_name()} is now active. Members can use the portal again.", "success")
+    else:
+        flash(
+            f"{org.display_name()} is suspended. Members are blocked on their next page load "
+            "(already logged-in users cannot add donations or expenses).",
+            "info",
+        )
     return redirect(url_for("site_admin.organization_detail", org_id=org.id))
 
 
