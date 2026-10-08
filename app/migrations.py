@@ -427,6 +427,7 @@ def migrate_record_festival_year_backfill():
 
 def run_migrations():
     migrate_record_festival_year_columns()
+    migrate_donation_thank_you_lang()
     migrate_gallery_and_profiles()
     migrate_user_auth_fields()
     migrate_user_roles()
@@ -444,4 +445,3 @@ def run_migrations():
     migrate_pledges()
     migrate_expense_payment_columns()
     migrate_record_festival_year_backfill()
-    migrate_donation_thank_you_lang()
