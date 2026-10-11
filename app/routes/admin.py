@@ -71,6 +71,7 @@ def users():
         if current_user.organization
         else None
     )
+    payment_qr_form = CommitteePaymentQrForm()
     if current_user.organization:
         payment_qr_form.upi_vpa.data = current_user.organization.upi_vpa or ""
 
@@ -82,7 +83,7 @@ def users():
         invite_url=invite_url,
         committee_code=committee_code,
         banner_form=CommitteeBannerForm(),
-        payment_qr_form=CommitteePaymentQrForm(),
+        payment_qr_form=payment_qr_form,
         festival_year_form=festival_year_form,
         next_festival_year=next_festival_year,
         plan_usage=plan_usage,
