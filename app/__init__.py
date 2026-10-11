@@ -278,6 +278,11 @@ def create_app():
             "storage_image_url": storage_image_url,
             "committee_banner_url": committee_banner_url,
             "committee_payment_qr_url": committee_payment_qr_url,
+            "committee_has_upi_vpa": lambda: (
+                current_user.is_authenticated
+                and current_user.organization
+                and current_user.organization.has_upi_vpa()
+            ),
             "nav_active": nav_active,
             "msg91_enabled": msg91_enabled(),
             "msg91_widget": widget_config,

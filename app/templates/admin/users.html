@@ -130,13 +130,19 @@
         {% else %}
         <p class="small text-muted mb-3">{{ t('admin.payment_qr_empty') }}</p>
         {% endif %}
-        <form method="POST" action="{{ url_for('admin.update_committee_payment_qr') }}" enctype="multipart/form-data" class="row g-2 align-items-end">
+        <form method="POST" action="{{ url_for('admin.update_committee_payment_qr') }}" enctype="multipart/form-data" class="row g-3">
             {{ payment_qr_form.hidden_tag() }}
-            <div class="col-md-8">
-                {{ payment_qr_form.payment_qr_image(class="form-control", accept="image/*") }}
-                <div class="form-text">{{ t('admin.payment_qr_hint') }}</div>
+            <div class="col-md-6">
+                <label class="form-label" for="{{ payment_qr_form.upi_vpa.id }}">{{ t('admin.upi_vpa_label') }}</label>
+                {{ payment_qr_form.upi_vpa(class="form-control", placeholder="9876543210@ybl") }}
+                <div class="form-text">{{ t('admin.upi_vpa_hint') }}</div>
             </div>
-            <div class="col-md-4 d-flex gap-2 flex-wrap">
+            <div class="col-md-6">
+                {{ payment_qr_form.payment_qr_image.label(class="form-label") }}
+                {{ payment_qr_form.payment_qr_image(class="form-control", accept="image/*") }}
+                <div class="form-text">{{ t('admin.upi_vpa_or_static') }} {{ t('admin.payment_qr_hint') }}</div>
+            </div>
+            <div class="col-12 d-flex gap-2 flex-wrap">
                 {{ payment_qr_form.submit(class="btn btn-success-festival") }}
                 {% if committee_payment_qr_url() %}
                 {{ payment_qr_form.remove_payment_qr(class="btn btn-outline-secondary", formaction=url_for('admin.update_committee_payment_qr')) }}

@@ -16,6 +16,7 @@ from app.org_scope import org_get, org_users_query
 from app.permissions import org_admin_required
 from app.storage import delete_image, get_image_url, save_image, serve_image
 from app.plan_enforcement import can_approve_member, can_grant_admin, plan_usage_snapshot
+from app.upi_pay import normalize_upi_vpa
 from app.user_cleanup import (
     prepare_user_for_deletion,
     remaining_admin_count_after_deletions,
@@ -70,6 +71,8 @@ def users():
         if current_user.organization
         else None
     )
+    if current_user.organization:
+        payment_qr_form.upi_vpa.data = current_user.organization.upi_vpa or ""
 
     return render_template(
         "admin/users.html",
@@ -589,21 +592,40 @@ def update_committee_payment_qr():
                 flash(message, "danger")
         return redirect(url_for("admin.users"))
 
-    if not form.payment_qr_image.data:
-        flash("Please choose a QR code image to upload.", "warning")
+    updated = False
+    raw_vpa = (form.upi_vpa.data or "").strip()
+    if raw_vpa:
+        normalized = normalize_upi_vpa(raw_vpa)
+        if not normalized:
+            flash("Enter a valid UPI ID (example: 9876543210@ybl or name@paytm).", "warning")
+            return redirect(url_for("admin.users"))
+        org.upi_vpa = normalized
+        updated = True
+    elif form.upi_vpa.data is not None and org.upi_vpa:
+        org.upi_vpa = None
+        updated = True
+
+    if form.payment_qr_image.data:
+        prefix = f"payment-qr/org-{org.id}"
+        if org.payment_qr_image_key:
+            delete_image(org.payment_qr_image_key)
+
+        storage_key = save_image(form.payment_qr_image.data, prefix)
+        if not storage_key:
+            flash("Invalid image file. Allowed: JPG, PNG, GIF, WEBP.", "warning")
+            return redirect(url_for("admin.users"))
+
+        org.payment_qr_image_key = storage_key
+        updated = True
+
+    if not updated:
+        flash("Enter a UPI ID or choose a QR image to save.", "warning")
         return redirect(url_for("admin.users"))
 
-    prefix = f"payment-qr/org-{org.id}"
-    if org.payment_qr_image_key:
-        delete_image(org.payment_qr_image_key)
-
-    storage_key = save_image(form.payment_qr_image.data, prefix)
-    if not storage_key:
-        flash("Invalid image file. Allowed: JPG, PNG, GIF, WEBP.", "warning")
-        return redirect(url_for("admin.users"))
-
-    org.payment_qr_image_key = storage_key
-    log_activity(current_user, "updated", "organization", "Updated UPI payment QR code for donations")
+    log_activity(current_user, "updated", "organization", "Updated UPI payment settings for donations")
     db.session.commit()
-    flash("Payment QR code saved. Collectors can show it on the Donations page.", "success")
+    flash(
+        "Payment settings saved. UPI donations can use amount-specific QR codes on the Add Donation page.",
+        "success",
+    )
     return redirect(url_for("admin.users"))

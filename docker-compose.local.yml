@@ -1,0 +1,11 @@
+# Local development overrides (no GCS secret mount required).
+services:
+  festival-app:
+    ports: !override
+      - "8080:5000"
+    volumes: !override
+      - festival_data:/app/data
+      - festival_uploads:/app/uploads
+    environment:
+      FLASK_ENV: development
+      GCS_BUCKET_NAME: ""

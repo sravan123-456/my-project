@@ -28,6 +28,7 @@ class Organization(db.Model):
     festival_year = db.Column(db.Integer)
     banner_image_key = db.Column(db.String(512))
     payment_qr_image_key = db.Column(db.String(512))
+    upi_vpa = db.Column(db.String(120))
     status = db.Column(db.String(20), nullable=False, default=ORG_STATUS_ACTIVE)
     subscription_plan = db.Column(db.String(20), nullable=False, default="free")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -66,6 +67,9 @@ class Organization(db.Model):
 
     def has_payment_qr(self):
         return bool(self.payment_qr_image_key)
+
+    def has_upi_vpa(self):
+        return bool(self.upi_vpa and str(self.upi_vpa).strip())
 
 
 class User(UserMixin, db.Model):

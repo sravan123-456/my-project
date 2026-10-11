@@ -264,13 +264,17 @@ class FestivalYearForm(FlaskForm):
 
 
 class CommitteePaymentQrForm(FlaskForm):
+    upi_vpa = StringField(
+        "Committee UPI ID (VPA)",
+        validators=[Optional(), Length(max=120)],
+    )
     payment_qr_image = FileField(
         "UPI Payment QR Code",
         validators=[
             FileAllowed(["jpg", "jpeg", "png", "gif", "webp"], "Images only (JPG, PNG, GIF, WEBP)."),
         ],
     )
-    submit = SubmitField("Save QR Code")
+    submit = SubmitField("Save payment settings")
     remove_payment_qr = SubmitField("Remove QR Code")
 
 

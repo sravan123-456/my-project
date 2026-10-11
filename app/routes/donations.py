@@ -1,6 +1,6 @@
 from datetime import date
 
-from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
+from flask import Blueprint, abort, flash, jsonify, redirect, render_template, request, send_file, url_for
 from flask_login import current_user, login_required
 from sqlalchemy import func
 
@@ -23,6 +23,7 @@ from app.whatsapp import donation_whatsapp_url
 from app.donation_thank_you import normalize_thank_you_lang, thank_you_lang_choices
 from app.i18n import get_language
 from app.plan_enforcement import can_add_donation
+from app.upi_pay import build_upi_pay_uri, generate_upi_qr_png
 from app.year_scope import (
     filter_donations_by_year,
     filter_pledges_by_year,
@@ -102,6 +103,30 @@ def _save_donation_from_form(form, recorded_by_id, organization_id, festival_yea
     )
     db.session.add(donation)
     return donation
+
+
+@donations_bp.route("/upi-qr")
+@login_required
+def donation_upi_qr():
+    org = current_user.organization
+    if not org or not org.has_upi_vpa():
+        abort(404)
+
+    amount = request.args.get("amount", type=float)
+    if amount is None or amount <= 0:
+        abort(400)
+
+    donor_name = (request.args.get("donor") or "").strip()
+    note = f"Donation from {donor_name}" if donor_name else "Festival donation"
+    uri = build_upi_pay_uri(org.upi_vpa, amount, org.display_name(), note)
+    if not uri:
+        abort(400)
+
+    return send_file(
+        generate_upi_qr_png(uri),
+        mimetype="image/png",
+        max_age=0,
+    )
 
 
 @donations_bp.route("/api/donor-suggestions")

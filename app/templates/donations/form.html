@@ -10,20 +10,30 @@
                 <h4 class="mb-0"><i class="bi bi-heart-fill text-success"></i> {{ title }}</h4>
             </div>
             <div class="card-body p-4">
+                {% if committee_payment_qr_url() and not committee_has_upi_vpa() %}
                 {% include "partials/payment_qr_card.html" %}
+                {% endif %}
+                <div id="dynamicUpiQr" class="payment-qr-card card border-0 shadow-sm mb-4 d-none">
+                    <div class="card-body text-center">
+                        <h5 class="fw-semibold mb-1"><i class="bi bi-qr-code-scan text-success"></i> {{ t('donations.dynamic_qr_title') }}</h5>
+                        <p class="text-muted small mb-3">{{ t('donations.dynamic_qr_hint') }}</p>
+                        <img id="dynamicUpiQrImage" src="" alt="{{ t('donations.dynamic_qr_title') }}" class="payment-qr-image">
+                        <p class="small text-muted mt-2 mb-0" id="dynamicUpiQrAmount"></p>
+                    </div>
+                </div>
                 <form method="POST" novalidate id="donationForm">
                     {{ form.hidden_tag() }}
                     <div class="row g-3">
                         <div class="col-md-8">
                             {{ form.donor_name.label(class="form-label") }}
-                            {{ form.donor_name(class="form-control" + (" is-invalid" if form.donor_name.errors else ""), placeholder="Full name of donor") }}
+                            {{ form.donor_name(class="form-control" + (" is-invalid" if form.donor_name.errors else ""), placeholder="Full name of donor", id="donorName") }}
                             {% for error in form.donor_name.errors %}
                                 <div class="invalid-feedback">{{ error }}</div>
                             {% endfor %}
                         </div>
                         <div class="col-md-4">
                             {{ form.amount.label(class="form-label") }}
-                            {{ form.amount(class="form-control" + (" is-invalid" if form.amount.errors else ""), placeholder="0.00", step="0.01") }}
+                            {{ form.amount(class="form-control" + (" is-invalid" if form.amount.errors else ""), placeholder="0.00", step="0.01", id="donationAmount") }}
                             {% for error in form.amount.errors %}
                                 <div class="invalid-feedback">{{ error }}</div>
                             {% endfor %}
@@ -89,12 +99,41 @@
 <script>
   const paymentMode = document.getElementById("paymentMode");
   const upiField = document.getElementById("upiField");
+  const donationAmount = document.getElementById("donationAmount");
+  const donorName = document.getElementById("donorName");
+  const dynamicUpiQr = document.getElementById("dynamicUpiQr");
+  const dynamicUpiQrImage = document.getElementById("dynamicUpiQrImage");
+  const dynamicUpiQrAmount = document.getElementById("dynamicUpiQrAmount");
+  const hasUpiVpa = {{ "true" if committee_has_upi_vpa() else "false" }};
+  const upiQrBaseUrl = {{ url_for("donations.donation_upi_qr") | tojson }};
 
   function toggleUpiField() {
     upiField.style.display = paymentMode.value === "upi" ? "block" : "none";
+    updateDynamicUpiQr();
+  }
+
+  function updateDynamicUpiQr() {
+    if (!dynamicUpiQr || !hasUpiVpa) {
+      return;
+    }
+    const isUpi = paymentMode.value === "upi";
+    const amount = parseFloat(donationAmount.value);
+    if (!isUpi || !amount || amount <= 0) {
+      dynamicUpiQr.classList.add("d-none");
+      return;
+    }
+    const params = new URLSearchParams({
+      amount: amount.toFixed(2),
+      donor: donorName.value.trim(),
+    });
+    dynamicUpiQrImage.src = `${upiQrBaseUrl}?${params.toString()}`;
+    dynamicUpiQrAmount.textContent = `₹${amount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    dynamicUpiQr.classList.remove("d-none");
   }
 
   paymentMode.addEventListener("change", toggleUpiField);
+  donationAmount.addEventListener("input", updateDynamicUpiQr);
+  donorName.addEventListener("input", updateDynamicUpiQr);
   toggleUpiField();
 </script>
 {% endblock %}

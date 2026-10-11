@@ -384,6 +384,16 @@ def migrate_user_phone_per_organization():
         )
 
 
+def migrate_organization_upi_vpa():
+    inspector = inspect(db.engine)
+    if "organizations" not in inspector.get_table_names():
+        return
+    columns = {column["name"] for column in inspector.get_columns("organizations")}
+    if "upi_vpa" not in columns:
+        with db.engine.begin() as conn:
+            conn.execute(text("ALTER TABLE organizations ADD COLUMN upi_vpa VARCHAR(120)"))
+
+
 def migrate_donation_thank_you_lang():
     inspector = inspect(db.engine)
     if "donations" not in inspector.get_table_names():
@@ -427,6 +437,7 @@ def migrate_record_festival_year_backfill():
 
 def run_migrations():
     migrate_record_festival_year_columns()
+    migrate_organization_upi_vpa()
     migrate_donation_thank_you_lang()
     migrate_gallery_and_profiles()
     migrate_user_auth_fields()
